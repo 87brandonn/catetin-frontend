@@ -5,16 +5,19 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "eslint .",
-    "format": "prettier --check .",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx,.json",
+    "lint-and-fix": "eslint . --ext .ts,.tsx,.js,.jsx,.json --fix",
+    "prettier-format": "prettier --config .prettierrc '**/*.{json,js,jsx,ts,tsx,css,scss,md}' --write",
     "prepare": "husky install",
     "eject": "expo eject"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "prettier --write",
-      "eslint --fix"
-    ]
+    "*.{ts,tsx,js,jsx,json}": "eslint --fix"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "yarn prettier-format && yarn lint"
+    }
   },
   "dependencies": {
     "expo": "~44.0.0",
