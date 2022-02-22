@@ -4,4 +4,3 @@ dist
 .expo-shared
 web-build
 babel.config.js
-.eslintrc.json
