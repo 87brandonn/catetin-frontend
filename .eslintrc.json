@@ -22,15 +22,12 @@
   },
   "plugins": ["react", "react-hooks", "@typescript-eslint", "prettier"],
   "rules": {
-    "indent": ["error", 4],
-    "linebreak-style": ["error", "unix"],
-    "quotes": ["error", "single"],
-    "semi": ["error", "always"],
     "no-empty-function": "off",
     "@typescript-eslint/no-empty-function": "off",
     "react/display-name": "off",
     "react/prop-types": "off",
-    "prettier/prettier": "error"
+    "prettier/prettier": "error",
+    "react/react-in-jsx-scope" : "off"
   },
   "settings": {
     "react": {
