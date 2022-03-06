@@ -7,7 +7,7 @@ export default function App() {
     <View style={styles.container}>
       <View style={tw`bg-red-500 flex flex-row justify-center rounded-lg py-2 px-5`}>
         <View>
-          <Text style={tw`text-red-200 text-3xl`}>Catetin</Text>
+          <Text style={tw`text-red-200 text-3xl`}>CatetinApp</Text>
         </View>
       </View>
       <StatusBar style="auto" />
