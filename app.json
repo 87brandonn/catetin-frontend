@@ -15,16 +15,23 @@
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier" : "com.brandonpardede.catetinapp"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
-      }
+      },
+      "package" : "com.brandonpardede.catetinapp"
+    },
+    "androidStatusBar": {
+      "backgroundColor": "#C2185B",
+      "translucent": false
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "scheme" : "com.brandonpardede.catetinapp"
   }
 }

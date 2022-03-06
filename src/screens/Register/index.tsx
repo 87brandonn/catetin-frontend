@@ -1,10 +1,9 @@
 import { yupResolver } from '@hookform/resolvers/yup';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ResponseType } from 'expo-auth-session';
 import * as Facebook from 'expo-auth-session/providers/facebook';
-import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Button } from 'react-native-elements';
@@ -30,12 +29,11 @@ const schema = yup
   })
   .required();
 
-function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackParamList, 'Login'>) {
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    expoClientId: '478756255587-1hsqks41ku9r9qp8qumvoe199oehu2v5.apps.googleusercontent.com',
-    iosClientId: '478756255587-9mnonnev35sl3tn0pd7i2hmnjjsuiivi.apps.googleusercontent.com',
-    androidClientId: '478756255587-v7qv1rvfemqarqad2jik5j03r6ubdoj8.apps.googleusercontent.com',
-  });
+function Register({ navigation: { navigate } }: NativeStackScreenProps<RootStackParamList, 'Register'>) {
+  const [loadingRegister, setLoadingRegister] = useState(false);
+  const [errorRegister, setErrorRegister] = useState('');
+
+  const dispatch = useAppDispatch();
 
   const {
     control,
@@ -48,51 +46,29 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
       password: '',
     },
   });
-
-  const dispatch = useAppDispatch();
-
-  const [loadingLogin, setLoadingLogin] = useState(false);
-  const [errorLogin, setErrorLogin] = useState('');
+  const onSubmit = async ({ username, password }: FormData) => {
+    setLoadingRegister(true);
+    try {
+      const {
+        data: { token },
+      } = await axiosCatetin.post('/auth/register', {
+        username,
+        password,
+      });
+      setErrorRegister('');
+      dispatch(setAccessToken(token));
+      navigate('Home');
+    } catch (err: any) {
+      setErrorRegister(err.response?.data?.message || 'Failed to register');
+    } finally {
+      setLoadingRegister(false);
+    }
+  };
 
   const [requestFb, responseFb, promptAsyncFb] = Facebook.useAuthRequest({
     clientId: '709036773596885',
     responseType: ResponseType.Code,
   });
-
-  const onSubmit = async ({ username, password }: FormData) => {
-    setLoadingLogin(true);
-    try {
-      const {
-        data: { token },
-      } = await axiosCatetin.post('/auth/login', {
-        username,
-        password,
-      });
-      setErrorLogin('');
-      dispatch(setAccessToken(token));
-      checkProfile(token);
-    } catch (err: any) {
-      setErrorLogin(err.response?.data?.message || 'Failed to register');
-    } finally {
-      setLoadingLogin(false);
-    }
-  };
-
-  const checkProfile = useCallback(
-    async (token: string) => {
-      const { data } = await axiosCatetin.get('/get/profile', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (!data.nama_toko) {
-        navigate('TokoLanding');
-      } else {
-        navigate('Home');
-      }
-    },
-    [navigate],
-  );
 
   useEffect(() => {
     if (responseFb?.type === 'success') {
@@ -101,36 +77,6 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
     }
   }, [responseFb]);
 
-  const getUserInfo = useCallback(
-    async (token: string | undefined) => {
-      const userInfo = await fetch('https://www.googleapis.com/userinfo/v2/me', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const serialized = await userInfo.json();
-      console.log(serialized.email);
-      try {
-        const {
-          data: { token },
-        } = await axiosCatetin.post('/auth/register/gmail', {
-          email: serialized.email,
-        });
-        dispatch(setAccessToken(token));
-        checkProfile(token);
-      } catch (err) {
-        console.log(err);
-      }
-    },
-    [dispatch, checkProfile],
-  );
-
-  useEffect(() => {
-    if (response?.type === 'success') {
-      const { authentication } = response;
-      getUserInfo(authentication?.accessToken);
-    }
-  }, [response, getUserInfo]);
   return (
     <SafeAreaView style={tw`px-2 flex-1 justify-center`}>
       <View style={tw`mb-3`}>
@@ -171,43 +117,32 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
           {errors.password && <Text style={tw`text-red-500 mt-1`}>{errors.password.message}</Text>}
         </View>
         <View style={tw`flex flex-row items-center mt-2`}>
-          <Text style={tw`text-gray-400 mr-1`}>Don&apos;t have an account?</Text>
+          <Text style={tw`text-gray-400 mr-1`}>Already have an account?</Text>
           <TouchableOpacity
             onPress={() => {
-              navigate('Register');
+              navigate('Login');
             }}
           >
-            <Text style={tw`text-blue-400`}>Register</Text>
+            <Text style={tw`text-blue-400`}>Login</Text>
           </TouchableOpacity>
         </View>
 
-        {!!errorLogin && (
+        {!!errorRegister && (
           <View>
-            <Text style={tw`text-red-500 mt-2`}>{errorLogin}</Text>
+            <Text style={tw`text-red-500 mt-2`}>{errorRegister}</Text>
           </View>
         )}
       </View>
 
       <Button
-        loading={loadingLogin}
-        title="Login"
+        loading={loadingRegister}
+        title="Register"
         buttonStyle={tw`bg-blue-500 rounded-[8px] mb-4`}
         onPress={handleSubmit(onSubmit)}
       />
-
-      <Button
-        disabled={!request}
-        title="Login with Gmail"
-        buttonStyle={tw`bg-blue-500 rounded-[8px] mb-4`}
-        onPress={() =>
-          promptAsync({
-            showInRecents: true,
-          })
-        }
-      />
       <Button
         disabled={!requestFb}
-        title="Login with Facebook"
+        title="Register with Facebook"
         buttonStyle={tw`bg-blue-500 rounded-[8px]`}
         onPress={() => {
           promptAsyncFb();
@@ -217,4 +152,4 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
   );
 }
 
-export default Login;
+export default Register;
