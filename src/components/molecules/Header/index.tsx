@@ -1,18 +1,16 @@
-import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import tw from 'twrnc';
-import { Avatar, Icon } from 'react-native-elements';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../../navigation';
 import { useNavigation } from '@react-navigation/native';
+import React from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
+import { Avatar } from 'react-native-elements';
+import tw from 'twrnc';
 
-function Header() {
+function Header({ title = '' }: { title?: string }) {
   const { navigate } = useNavigation();
 
   return (
     <View style={tw`bg-gray-100 py-4 px-2 flex flex-row justify-between items-center`}>
       <View>
-        <Icon name="menu" iconStyle={tw`text-gray-400`} size={28}></Icon>
+        <Text style={tw`text-2xl font-bold`}>{title}</Text>
       </View>
       <View>
         <TouchableOpacity

@@ -1,6 +1,7 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
+import Barang from '../screens/Barang';
 import HomeScreen from '../screens/Home';
 import Login from '../screens/Login';
 import ProfileScreen from '../screens/Profile';
@@ -13,6 +14,7 @@ type RootStackParamList = {
   Register: undefined;
   Profile: undefined;
   TokoLanding: undefined;
+  Barang: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -42,16 +44,17 @@ export default function RootNavigation() {
             headerShown: false,
           }}
         />
-        <Stack.Screen
-          name="Profile"
-          component={ProfileScreen}
-          // options={{
-          //   headerShown: false,
-          // }}
-        />
+        <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen
           name="TokoLanding"
           component={TokoLanding}
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="Barang"
+          component={Barang}
           options={{
             headerShown: false,
           }}
