@@ -1,5 +1,5 @@
 import { yupResolver } from '@hookform/resolvers/yup';
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
@@ -12,14 +12,19 @@ import { useAppSelector } from '../../hooks';
 import AppLayout from '../../layouts/AppLayout';
 import { RootState } from '../../store';
 
-interface FormData {
-  name: string;
-  stok: number;
+interface ICatetinBarang {
+  barang_id: number;
+  created_at: Date;
   harga: number;
+  nama_barang: string;
+  stok: number;
+  updated_at: Date;
+  user_id: number;
 }
 
 const schema = yup
   .object({
+    id: yup.number(),
     name: yup.string().required('Nama barang is required'),
     stok: yup.number().typeError('Please input number').required('Stok is required'),
     harga: yup.number().typeError('Please input number').required('Harga is required'),
@@ -36,6 +41,7 @@ function Barang() {
   } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
+      id: '',
       name: '',
       stok: '',
       harga: '',
@@ -45,45 +51,88 @@ function Barang() {
   const { accessToken } = useAppSelector((state: RootState) => state.auth);
 
   const [loading, setLoading] = useState(false);
+  const [barang, setBarang] = useState<ICatetinBarang[]>([]);
+  const [loadingFetch, setLoadingFetch] = useState(true);
 
-  const barang = [
-    {
-      name: 'Vitamin A',
-      stock: 25,
-      price: 50000,
-    },
-    {
-      name: 'Vitamin B',
-      stock: 25,
-      price: 50000,
-    },
-    {
-      name: 'Vitamin C',
-      stock: 25,
-      price: 50000,
-    },
-  ];
+  const fetchBarang = useCallback(async () => {
+    setLoadingFetch(true);
+    try {
+      const {
+        data: { barang },
+      } = await axiosCatetin.get('/get/barang', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      setBarang(barang);
+      setLoadingFetch(false);
+    } catch (err) {
+      console.log(err);
+    }
+  }, [accessToken]);
+
+  useEffect(() => {
+    fetchBarang();
+  }, [fetchBarang]);
+
+  const handleEdit = (barang: any) => {
+    console.log(barang);
+    reset({
+      name: barang.nama_barang,
+      stok: barang.stok,
+      harga: barang.harga,
+      id: barang.barang_id,
+    });
+    setShowModal(true);
+  };
+
+  const onPost = async (data: any) => {
+    await axiosCatetin.post(
+      '/insert/barang',
+      {
+        nama_barang: data.name,
+        stok: data.stok,
+        harga: data.harga,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+  };
+
+  const onPatch = async (data: any) => {
+    await axiosCatetin.post(
+      '/update/barang',
+      {
+        barang_id: data.id,
+        nama_barang: data.name,
+        stok: data.stok,
+        harga: data.harga,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+  };
 
   const onSubmit = async (data: any) => {
     setLoading(true);
     try {
-      await axiosCatetin.post(
-        '/insert/barang',
-        {
-          nama_barang: data.name,
-          stok: data.stok,
-          harga: data.harga,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        },
-      );
-      setShowModal(false);
+      console.log(data);
+      if (data.id) {
+        await onPatch(data);
+      } else {
+        await onPost(data);
+      }
       reset();
+      setShowModal(false);
+      fetchBarang();
     } catch (err: any) {
-      console.log(err);
+      console.log(err.response?.data?.message);
     } finally {
       setLoading(false);
     }
@@ -97,6 +146,7 @@ function Barang() {
             setModalVisible={setShowModal}
             onClose={() => {
               setShowModal(false);
+              reset();
             }}
             onSave={handleSubmit(onSubmit)}
             loadingSave={loading}
@@ -130,8 +180,11 @@ function Barang() {
                       placeholder="Masukkan jumlah stok"
                       style={tw`border border-gray-300 px-4 py-3 rounded`}
                       onBlur={onBlur}
-                      onChangeText={onChange}
-                      value={value}
+                      onChangeText={(value) => {
+                        onChange(value.replace(/[^0-9]/g, ''));
+                      }}
+                      value={value.toString()}
+                      keyboardType="numeric"
                       autoCapitalize="none"
                     />
                   )}
@@ -147,8 +200,10 @@ function Barang() {
                       placeholder="Masukkan harga"
                       style={tw`border border-gray-300 px-4 py-3 rounded`}
                       onBlur={onBlur}
-                      onChangeText={onChange}
-                      value={value}
+                      onChangeText={(value) => {
+                        onChange(value.replace(/[^0-9]/g, ''));
+                      }}
+                      value={value.toString()}
                       autoCapitalize="none"
                     />
                   )}
@@ -160,23 +215,44 @@ function Barang() {
           </CatetinModal>
         )}
 
-        <View style={tw`px-4 py-2 rounded-lg shadow-lg bg-white flex flex-row justify-between`}>
-          <View>
-            <View>
-              <Text style={tw`text-lg font-bold`}>Vitamin C</Text>
+        {loadingFetch ? (
+          <View></View>
+        ) : (
+          barang.map((singleBarang: ICatetinBarang) => (
+            <View
+              style={tw`px-4 py-2 rounded-lg shadow-lg bg-white flex flex-row justify-between mb-3`}
+              key={singleBarang.barang_id}
+            >
+              <View>
+                <View>
+                  <Text style={tw`text-lg font-bold`}>{singleBarang.nama_barang}</Text>
+                </View>
+                <View>
+                  <Text style={tw`text-gray-500`}>{singleBarang.stok}</Text>
+                </View>
+                <View>
+                  <Text style={tw`text-gray-500`}>{singleBarang.harga}</Text>
+                </View>
+              </View>
+              <View style={tw`self-center`}>
+                <TouchableOpacity
+                  onPress={() => {
+                    handleEdit(singleBarang);
+                  }}
+                >
+                  <Icon name="edit" type="feather" iconStyle={tw`text-gray-300`} />
+                </TouchableOpacity>
+              </View>
             </View>
-            <View>
-              <Text style={tw`text-gray-500`}>25</Text>
-            </View>
-            <View>
-              <Text style={tw`text-gray-500`}>Rp 50.000</Text>
-            </View>
-          </View>
-          <View style={tw`self-center`}>
-            <Icon name="edit" type="feather" iconStyle={tw`text-gray-300`} />
-          </View>
-        </View>
-        <PlusButton onPress={() => setShowModal(!showModal)} />
+          ))
+        )}
+
+        <PlusButton
+          onPress={() => {
+            reset();
+            setShowModal(!showModal);
+          }}
+        />
       </View>
     </AppLayout>
   );
