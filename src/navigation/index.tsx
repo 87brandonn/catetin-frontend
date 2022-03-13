@@ -7,6 +7,7 @@ import Login from '../screens/Login';
 import ProfileScreen from '../screens/Profile';
 import Register from '../screens/Register';
 import TokoLanding from '../screens/TokoLanding';
+import Transaksi from '../screens/Transaksi';
 
 type RootStackParamList = {
   Home: undefined;
@@ -15,6 +16,7 @@ type RootStackParamList = {
   Profile: undefined;
   TokoLanding: undefined;
   Barang: undefined;
+  Transaksi: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -55,6 +57,13 @@ export default function RootNavigation() {
         <Stack.Screen
           name="Barang"
           component={Barang}
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="Transaksi"
+          component={Transaksi}
           options={{
             headerShown: false,
           }}

@@ -72,6 +72,7 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
       dispatch(setAccessToken(token));
       checkProfile(token);
     } catch (err: any) {
+      console.log(err);
       setErrorLogin(err.response?.data?.message || 'Failed to register');
     } finally {
       setLoadingLogin(false);

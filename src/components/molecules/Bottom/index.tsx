@@ -19,7 +19,11 @@ function Bottom() {
         </TouchableOpacity>
       </View>
       <View style={tw`flex-1 items-center`}>
-        <TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            navigate('Transaksi');
+          }}
+        >
           <Icon name="user" type="font-awesome" iconStyle={tw`text-gray-100`} />
           <Text style={tw`text-gray-500`}>Transaksi</Text>
         </TouchableOpacity>

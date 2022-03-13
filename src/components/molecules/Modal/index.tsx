@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Modal, TouchableOpacity } from 'react-native';
+import { View, Modal, TouchableOpacity, ScrollView } from 'react-native';
 import { Button } from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import tw from 'twrnc';
+import CatetinScrollView from '../../../layouts/ScrollView';
 
 interface ICatetinModal {
   modalVisible: boolean;
@@ -31,28 +32,30 @@ function CatetinModal({
         }}
       >
         <SafeAreaView style={tw`flex-1 bg-white shadow-xl mx-4 my-[72px] rounded-xl`}>
-          <View style={tw`flex-1`}>
-            <View style={tw`flex-grow-1`}>{children}</View>
-            <View style={tw`flex flex-row px-4 py-2`}>
-              <View style={tw`flex-1 mr-2`}>
-                <Button
-                  title="Close"
-                  onPress={() => {
-                    onClose();
-                  }}
-                ></Button>
-              </View>
-              <View style={tw`flex-1`}>
-                <Button
-                  title="Save"
-                  loading={loadingSave}
-                  onPress={() => {
-                    onSave();
-                  }}
-                ></Button>
+          <CatetinScrollView>
+            <View style={tw`flex-1`}>
+              <View style={tw`flex-grow-1`}>{children}</View>
+              <View style={tw`flex flex-row px-4 py-2`}>
+                <View style={tw`flex-1 mr-2`}>
+                  <Button
+                    title="Close"
+                    onPress={() => {
+                      onClose();
+                    }}
+                  ></Button>
+                </View>
+                <View style={tw`flex-1`}>
+                  <Button
+                    title="Save"
+                    loading={loadingSave}
+                    onPress={() => {
+                      onSave();
+                    }}
+                  ></Button>
+                </View>
               </View>
             </View>
-          </View>
+          </CatetinScrollView>
         </SafeAreaView>
       </Modal>
     </View>

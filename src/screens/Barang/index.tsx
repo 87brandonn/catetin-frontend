@@ -1,7 +1,7 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import tw from 'twrnc';
 import * as yup from 'yup';
@@ -10,6 +10,7 @@ import PlusButton from '../../components/atoms/PlusButton';
 import CatetinModal from '../../components/molecules/Modal';
 import { useAppSelector } from '../../hooks';
 import AppLayout from '../../layouts/AppLayout';
+import CatetinScrollView from '../../layouts/ScrollView';
 import { RootState } from '../../store';
 
 interface ICatetinBarang {
@@ -22,14 +23,12 @@ interface ICatetinBarang {
   user_id: number;
 }
 
-const schema = yup
-  .object({
-    id: yup.number(),
-    name: yup.string().required('Nama barang is required'),
-    stok: yup.number().typeError('Please input number').required('Stok is required'),
-    harga: yup.number().typeError('Please input number').required('Harga is required'),
-  })
-  .required();
+const schema = yup.object().shape({
+  id: yup.number(),
+  name: yup.string().required('Nama barang is required'),
+  stok: yup.number().typeError('Please input number').required('Stok is required'),
+  harga: yup.number().typeError('Please input number').required('Harga is required'),
+});
 
 function Barang() {
   const [showModal, setShowModal] = useState(false);
@@ -38,10 +37,11 @@ function Barang() {
     handleSubmit,
     formState: { errors },
     reset,
+    watch,
   } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
-      id: '',
+      id: 0,
       name: '',
       stok: '',
       harga: '',
@@ -119,16 +119,25 @@ function Barang() {
     );
   };
 
+  useEffect(() => {
+    console.log(errors);
+  }, [errors]);
+
   const onSubmit = async (data: any) => {
     setLoading(true);
     try {
       console.log(data);
-      if (data.id) {
+      if (data.id !== 0) {
         await onPatch(data);
       } else {
         await onPost(data);
       }
-      reset();
+      reset({
+        id: 0,
+        name: '',
+        stok: '',
+        harga: '',
+      });
       setShowModal(false);
       fetchBarang();
     } catch (err: any) {
@@ -139,14 +148,19 @@ function Barang() {
   };
   return (
     <AppLayout headerTitle="Barang">
-      <View style={tw`flex-1 px-4 py-3 relative`}>
+      <CatetinScrollView style={tw`flex-1 px-4 py-3 relative`}>
         {showModal && (
           <CatetinModal
             modalVisible={showModal}
             setModalVisible={setShowModal}
             onClose={() => {
+              reset({
+                id: 0,
+                name: '',
+                stok: '',
+                harga: '',
+              });
               setShowModal(false);
-              reset();
             }}
             onSave={handleSubmit(onSubmit)}
             loadingSave={loading}
@@ -249,11 +263,10 @@ function Barang() {
 
         <PlusButton
           onPress={() => {
-            reset();
             setShowModal(!showModal);
           }}
         />
-      </View>
+      </CatetinScrollView>
     </AppLayout>
   );
 }
