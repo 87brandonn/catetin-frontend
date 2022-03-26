@@ -4,6 +4,7 @@ import { Avatar, Button } from 'react-native-elements';
 import tw from 'twrnc';
 import { axiosCatetin } from '../../api';
 import { useAppSelector } from '../../hooks';
+import AppLayout from '../../layouts/AppLayout';
 import { RootState } from '../../store';
 
 interface Profile {
@@ -37,7 +38,7 @@ function ProfileScreen() {
   }, [fetchProfile]);
 
   return (
-    <View style={tw`flex-1 flex bg-white py-4`}>
+    <AppLayout>
       <View style={tw`items-center mb-4`}>
         <Avatar
           size={96}
@@ -58,9 +59,9 @@ function ProfileScreen() {
         ></TextInput>
       </View>
       <View style={tw`items-center px-4 mb-4`}>
-        <Button title="Update"></Button>
+        <Button title="Update" buttonStyle={tw`rounded-[24px] px-4 bg-blue-400`}></Button>
       </View>
-    </View>
+    </AppLayout>
   );
 }
 

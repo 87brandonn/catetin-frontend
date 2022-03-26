@@ -6,7 +6,7 @@ import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { KeyboardAvoidingView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Button } from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import tw from 'twrnc';
@@ -72,7 +72,7 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
       dispatch(setAccessToken(token));
       checkProfile(token);
     } catch (err: any) {
-      console.log(err);
+      console.log(err.response);
       setErrorLogin(err.response?.data?.message || 'Failed to register');
     } finally {
       setLoadingLogin(false);
@@ -134,86 +134,88 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
   }, [response, getUserInfo]);
   return (
     <SafeAreaView style={tw`px-2 flex-1 justify-center`}>
-      <View style={tw`mb-3`}>
+      <KeyboardAvoidingView behavior="padding">
         <View style={tw`mb-3`}>
-          <Controller
-            control={control}
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                placeholder="Enter your username"
-                style={tw`border border-gray-300 px-4 py-3 rounded`}
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
-                autoCapitalize="none"
-              />
-            )}
-            name="username"
-          />
-          {errors.username && <Text style={tw`text-red-500 mt-1`}>{errors.username.message}</Text>}
-        </View>
-
-        <View>
-          <Controller
-            control={control}
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                placeholder="Enter your password"
-                style={tw`border border-gray-300 px-4 py-3 rounded`}
-                onBlur={onBlur}
-                onChangeText={onChange}
-                secureTextEntry
-                value={value}
-                autoCapitalize="none"
-              />
-            )}
-            name="password"
-          />
-          {errors.password && <Text style={tw`text-red-500 mt-1`}>{errors.password.message}</Text>}
-        </View>
-        <View style={tw`flex flex-row items-center mt-2`}>
-          <Text style={tw`text-gray-400 mr-1`}>Don&apos;t have an account?</Text>
-          <TouchableOpacity
-            onPress={() => {
-              navigate('Register');
-            }}
-          >
-            <Text style={tw`text-blue-400`}>Register</Text>
-          </TouchableOpacity>
-        </View>
-
-        {!!errorLogin && (
-          <View>
-            <Text style={tw`text-red-500 mt-2`}>{errorLogin}</Text>
+          <View style={tw`mb-3`}>
+            <Controller
+              control={control}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                  placeholder="Enter your username"
+                  style={tw`border border-gray-300 px-4 py-3 rounded`}
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                  autoCapitalize="none"
+                />
+              )}
+              name="username"
+            />
+            {errors.username && <Text style={tw`text-red-500 mt-1`}>{errors.username.message}</Text>}
           </View>
-        )}
-      </View>
 
-      <Button
-        loading={loadingLogin}
-        title="Login"
-        buttonStyle={tw`bg-blue-500 rounded-[8px] mb-4`}
-        onPress={handleSubmit(onSubmit)}
-      />
+          <View>
+            <Controller
+              control={control}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                  placeholder="Enter your password"
+                  style={tw`border border-gray-300 px-4 py-3 rounded`}
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  secureTextEntry
+                  value={value}
+                  autoCapitalize="none"
+                />
+              )}
+              name="password"
+            />
+            {errors.password && <Text style={tw`text-red-500 mt-1`}>{errors.password.message}</Text>}
+          </View>
+          <View style={tw`flex flex-row items-center mt-2`}>
+            <Text style={tw`text-gray-400 mr-1`}>Don&apos;t have an account?</Text>
+            <TouchableOpacity
+              onPress={() => {
+                navigate('Register');
+              }}
+            >
+              <Text style={tw`text-blue-400`}>Register</Text>
+            </TouchableOpacity>
+          </View>
 
-      <Button
-        disabled={!request}
-        title="Login with Gmail"
-        buttonStyle={tw`bg-blue-500 rounded-[8px] mb-4`}
-        onPress={() =>
-          promptAsync({
-            showInRecents: true,
-          })
-        }
-      />
-      <Button
-        disabled={!requestFb}
-        title="Login with Facebook"
-        buttonStyle={tw`bg-blue-500 rounded-[8px]`}
-        onPress={() => {
-          promptAsyncFb();
-        }}
-      />
+          {!!errorLogin && (
+            <View>
+              <Text style={tw`text-red-500 mt-2`}>{errorLogin}</Text>
+            </View>
+          )}
+        </View>
+
+        <Button
+          loading={loadingLogin}
+          title="Login"
+          buttonStyle={tw`bg-blue-500 rounded-[8px] mb-4`}
+          onPress={handleSubmit(onSubmit)}
+        />
+
+        <Button
+          disabled={!request}
+          title="Login with Gmail"
+          buttonStyle={tw`bg-blue-500 rounded-[8px] mb-4`}
+          onPress={() =>
+            promptAsync({
+              showInRecents: true,
+            })
+          }
+        />
+        <Button
+          disabled={!requestFb}
+          title="Login with Facebook"
+          buttonStyle={tw`bg-blue-500 rounded-[8px]`}
+          onPress={() => {
+            promptAsyncFb();
+          }}
+        />
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

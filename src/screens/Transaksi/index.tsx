@@ -1,18 +1,19 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Picker } from '@react-native-picker/picker';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Text, TextInput, View } from 'react-native';
-import Multiselect from 'react-native-multiple-select';
+import { Text, View } from 'react-native';
 import tw from 'twrnc';
 import * as yup from 'yup';
 import { axiosCatetin } from '../../api';
 import PlusButton from '../../components/atoms/PlusButton';
+import CatetinInput from '../../components/molecules/Input';
 import CatetinModal from '../../components/molecules/Modal';
+import CatetinSelect from '../../components/molecules/Select';
 import { useAppSelector } from '../../hooks';
 import AppLayout from '../../layouts/AppLayout';
 import { RootState } from '../../store';
+import { ICatetinBarang } from '../../types/barang';
 
 interface ICatetinTransaksi {
   barang_id: number;
@@ -30,7 +31,7 @@ const schema = yup.object().shape({
   tipe: yup.mixed().required('Tipe transaksi is required'),
   tanggal: yup.date().required('Tanggal transaksi is required'),
   barang: yup.mixed().when('tipe', {
-    is: (value: any) => value === 3 || value === 4,
+    is: (tipe: any) => tipe?.value === 3 || tipe?.value === 4,
     then: (rule) => rule.required('Barang is required'),
   }),
   deskripsi: yup.string(),
@@ -38,6 +39,7 @@ const schema = yup.object().shape({
 
 function Transaksi() {
   const [showModal, setShowModal] = useState(false);
+  const [showModalContent, setShowModalContent] = useState(false);
   const {
     control,
     handleSubmit,
@@ -51,7 +53,7 @@ function Transaksi() {
       name: '',
       tipe: null,
       tanggal: new Date(),
-      barang: undefined,
+      barang: null,
       deskripsi: '',
     },
   });
@@ -61,6 +63,9 @@ function Transaksi() {
   const [loading, setLoading] = useState(false);
   const [barang, setBarang] = useState<ICatetinTransaksi[]>([]);
   const [loadingFetch, setLoadingFetch] = useState(true);
+
+  const [showOptions, setShowOptions] = useState(false);
+  const [showOptionsBarang, setShowOptionsBarang] = useState(false);
 
   const fetchBarang = useCallback(async () => {
     setLoadingFetch(true);
@@ -72,7 +77,6 @@ function Transaksi() {
           Authorization: `Bearer ${accessToken}`,
         },
       });
-      console.log(barang);
       setBarang(barang);
       setLoadingFetch(false);
     } catch (err) {
@@ -103,18 +107,135 @@ function Transaksi() {
     },
   ];
 
-  const multiSelectRef = useRef<any>();
+  const [showDateModalContent, setShowDateModalContent] = useState(false);
+  const [showTipeTransaksiContent, setShowTipeTransaksiContent] = useState(false);
+  const [showBarangContent, setShowBarangContent] = useState(false);
 
-  const pickerRef = useRef<any>();
+  const [loadingTransaksi, setLoadingTransaksi] = useState(true);
+
+  const [barangAmount, setBarangAmount] = useState<Record<string, number>>({});
+
+  const fetchTransaksi = useCallback(async () => {
+    setLoadingTransaksi(true);
+    try {
+      const { data } = await axiosCatetin.get('/get/transaksi', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      console.log(data, 'transaksi');
+      setLoadingTransaksi(false);
+    } catch (err) {
+      console.log(err);
+    }
+  }, [accessToken]);
+
+  useEffect(() => {
+    fetchTransaksi();
+  }, [fetchTransaksi]);
 
   useEffect(() => {
     console.log(errors);
   }, [errors]);
 
-  const onSubmit = async (data: any) => {
+  const [total, setTotal] = useState(0);
+
+  useEffect(() => {
+    let newTotal = 0;
+    watch('barang')?.forEach((barang: ICatetinBarang) => {
+      newTotal += barangAmount[barang.barang_id] * barang.harga;
+    });
+    setTotal(newTotal);
+  }, [barangAmount, watch('barang')]);
+
+  const onSubmit = async (data) => {
     setLoading(true);
-    console.log(data);
-    setLoading(false);
+    let total = 0;
+    data.barang?.forEach((barang: ICatetinBarang) => {
+      total += barangAmount[barang.barang_id] * barang.harga;
+    });
+    const finalData = {
+      title: data.name,
+      barang: data.barang?.map(({ barang_id }) => ({ barang_id, amount: barangAmount[barang_id] || 1 })) || [],
+      tipe_transaksi: data.tipe.value,
+      tanggal: new Date(data.tanggal).getTime(),
+      notes: data.deskripsi,
+      total,
+    };
+    console.log(finalData);
+    try {
+      await axiosCatetin.post('/insert/transaksi', finalData, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      setLoading(false);
+      setBarangAmount({});
+      onCloseModal();
+      fetchTransaksi();
+    } catch (err) {
+      setLoading(false);
+      console.error(err.response?.data?.message || 'Failed to post');
+    }
+  };
+
+  const modalTitle = showModalContent
+    ? 'Tambah Transaksi'
+    : showDateModalContent
+    ? 'Date and Time'
+    : showTipeTransaksiContent
+    ? 'Tipe Transaksi'
+    : showBarangContent
+    ? 'Barang'
+    : undefined;
+
+  const onSaveModal = () => {
+    if (showModalContent) {
+      handleSubmit(onSubmit)();
+    } else if (showDateModalContent) {
+      setShowModalContent(true);
+      setShowDateModalContent(false);
+    } else if (showTipeTransaksiContent) {
+      setShowModalContent(true);
+      setShowTipeTransaksiContent(false);
+    } else if (showBarangContent) {
+      setShowModalContent(true);
+      setShowBarangContent(false);
+    }
+  };
+  const onCloseModal = () => {
+    if (showModalContent) {
+      reset({
+        id: 0,
+        name: '',
+        tipe: null,
+        tanggal: new Date(),
+        barang: null,
+        deskripsi: '',
+      });
+      setShowModal(false);
+      setShowModalContent(false);
+    } else if (showDateModalContent) {
+      setShowModalContent(true);
+      setShowDateModalContent(false);
+    } else if (showTipeTransaksiContent) {
+      setShowModalContent(true);
+      setShowTipeTransaksiContent(false);
+    } else if (showBarangContent) {
+      setShowModalContent(true);
+      setShowBarangContent(false);
+    }
+  };
+
+  const onSelectBarangOption = (option) => {
+    setShowOptionsBarang(!showOptionsBarang);
+    let cloneBarang: ICatetinBarang[] = [...(watch('barang') || [])];
+    if (cloneBarang.some((barang) => barang.barang_id === option.barang_id)) {
+      cloneBarang = cloneBarang.filter((barang) => barang.barang_id !== option.barang_id);
+    } else {
+      cloneBarang.push(option);
+    }
+    return cloneBarang;
   };
   return (
     <AppLayout headerTitle="Transaksi">
@@ -124,159 +245,177 @@ function Transaksi() {
             modalVisible={showModal}
             setModalVisible={setShowModal}
             onClose={() => {
-              reset({
-                id: 0,
-                name: '',
-                tipe: null,
-                tanggal: new Date(),
-                barang: undefined,
-                deskripsi: '',
-              });
-              setShowModal(false);
+              onCloseModal();
             }}
-            onSave={handleSubmit(onSubmit)}
+            onSave={() => {
+              onSaveModal();
+            }}
+            showSave={showModalContent}
             loadingSave={loading}
+            title={modalTitle}
           >
-            <View style={tw`px-3 py-4`}>
-              <View style={tw`mb-[20px]`}>
-                <Text style={tw`text-center text-2xl font-bold`}>Tambah Transaksi</Text>
-              </View>
-              <View style={tw`mb-4`}>
-                <Text style={tw`mb-1`}>Nama Transaksi</Text>
-                <Controller
-                  control={control}
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <TextInput
-                      placeholder="Nama transaksi"
-                      style={tw`border border-gray-300 px-4 py-3 rounded`}
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      value={value}
-                      autoCapitalize="none"
-                    />
-                  )}
-                  name="name"
-                />
-                {errors.name && <Text style={tw`text-red-500 mt-1`}>{errors.name.message}</Text>}
-              </View>
-              <View style={tw`mb-4`}>
-                <View style={tw`mb-2`}>
-                  <Text>Waktu transaksi</Text>
-                </View>
-                <View>
-                  <Controller
-                    control={control}
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <DateTimePicker mode="datetime" value={value} onChange={(event: any, date) => onChange(date)} />
-                    )}
-                    name="tanggal"
-                  />
-
-                  {errors.tanggal && <Text style={tw`text-red-500 mt-1`}>{errors.tanggal.message}</Text>}
-                </View>
-              </View>
-              <View style={tw`mb-4`}>
-                <Text style={tw`mb-1`}>Tipe transaksi</Text>
-                <TextInput
-                  placeholder="Tipe transaksi"
-                  style={tw`border border-gray-300 px-4 py-3 rounded`}
-                  value={optionsTransaksi.find((option) => option.value === watch('tipe'))?.label}
-                  autoCapitalize="none"
-                  editable={false}
-                  selectTextOnFocus={false}
-                />
-                {errors.tipe && <Text style={tw`text-red-500 mt-1`}>{errors.tipe.message}</Text>}
-
-                <View>
-                  <Controller
-                    control={control}
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <Picker
-                        ref={pickerRef}
-                        selectedValue={value}
-                        mode="dropdown"
-                        onValueChange={(itemValue, itemIndex) => {
-                          onChange(itemValue);
-                        }}
-                      >
-                        {optionsTransaksi.map((option) => (
-                          <Picker.Item label={option.label} value={option.value} key={option.value} />
-                        ))}
-                      </Picker>
-                    )}
-                    name="tipe"
-                  />
-                </View>
-              </View>
-              <View style={tw`mb-4`}>
-                {(watch('tipe') === 3 || watch('tipe') === 4) && (
-                  <View>
+            <View style={tw`px-3 py-4 flex-1`}>
+              {showModalContent && (
+                <>
+                  <View style={tw`mb-4`}>
                     <Controller
                       control={control}
                       render={({ field: { onChange, onBlur, value } }) => (
-                        <Multiselect
-                          items={barang}
-                          uniqueKey="barang_id"
-                          ref={multiSelectRef}
-                          onSelectedItemsChange={onChange}
-                          selectedItems={value}
-                          selectText="Pilih barang"
-                          searchInputPlaceholderText="Cari Barang..."
-                          tagRemoveIconColor="#CCC"
-                          styleRowList={tw`px-2 py-3`}
-                          styleListContainer={tw`rounded-xl bg-gray-100`}
-                          tagBorderColor="#CCC"
-                          selectedItemTextColor="#CCC"
-                          selectedItemIconColor="#CCC"
-                          tagTextColor="#CCC"
-                          itemTextColor="#000"
-                          displayKey="nama_barang"
-                          searchInputStyle={tw`py-3`}
-                          submitButtonColor="#CCC"
-                          submitButtonText="Submit"
+                        <CatetinInput
+                          placeholder="Nama Transaksi"
+                          onChangeText={onChange}
+                          value={value}
+                          autoCapitalize="none"
                         />
                       )}
-                      name="barang"
+                      name="name"
                     />
-                    {errors.barang && <Text style={tw`text-red-500 mt-1`}>{errors.barang.message}</Text>}
+                    {errors.name && <Text style={tw`text-red-400 text-3 mt-1`}>{errors.name.message}</Text>}
                   </View>
-                )}
-              </View>
+                  <View style={tw`mb-4`}>
+                    <CatetinInput
+                      placeholder="Tanggal Transaksi"
+                      autoCapitalize="none"
+                      onTouchStart={() => {
+                        setShowModalContent(false);
+                        setShowDateModalContent(true);
+                      }}
+                      value={watch('tanggal')?.toISOString().split('T')[0]}
+                    />
+                  </View>
+                  <View style={tw`mb-4`}>
+                    <CatetinInput
+                      placeholder="Tipe Transaksi"
+                      autoCapitalize="none"
+                      onTouchStart={() => {
+                        setShowModalContent(false);
+                        setShowTipeTransaksiContent(true);
+                      }}
+                      value={watch('tipe')?.label}
+                    />
 
-              <View style={tw`mb-2`}>
+                    {errors.tipe && <Text style={tw`text-red-500 mt-1`}>{errors.tipe.message}</Text>}
+                  </View>
+                  {(watch('tipe')?.value === 3 || watch('tipe')?.value === 4) && (
+                    <View style={tw`mb-4`}>
+                      <CatetinInput
+                        placeholder="Barang"
+                        autoCapitalize="none"
+                        onTouchStart={() => {
+                          setShowModalContent(false);
+                          setShowBarangContent(true);
+                        }}
+                        value={watch('barang')
+                          ?.map((barang) => barang.nama_barang)
+                          .join(', ')}
+                      />
+                      {errors.barang && <Text style={tw`text-red-500 mt-1`}>{errors.barang.message}</Text>}
+                    </View>
+                  )}
+                  <View style={tw`mb-2`}>
+                    <Controller
+                      control={control}
+                      render={({ field: { onChange, onBlur, value } }) => (
+                        <CatetinInput
+                          placeholder="Deskripsi"
+                          onBlur={onBlur}
+                          onChangeText={(value) => {
+                            onChange(value);
+                          }}
+                          value={value}
+                          autoCapitalize="none"
+                        />
+                      )}
+                      name="deskripsi"
+                    />
+                    {errors.deskripsi && <Text style={tw`text-red-500 mt-1`}>{errors.deskripsi.message}</Text>}
+                  </View>
+                  <View style={tw`mt-5 flex flex-row justify-between items-center px-3`}>
+                    <View>
+                      <Text style={tw`text-lg`}>Total</Text>
+                    </View>
+                    <View>
+                      <Text style={tw`text-lg`}>{total}</Text>
+                    </View>
+                  </View>
+                </>
+              )}
+
+              {showDateModalContent && (
                 <Controller
                   control={control}
                   render={({ field: { onChange, onBlur, value } }) => (
-                    <TextInput
-                      placeholder="Deskripsi"
-                      style={tw`border border-gray-300 px-4 py-3 rounded`}
-                      onBlur={onBlur}
-                      onChangeText={(value) => {
-                        onChange(value);
-                      }}
+                    <DateTimePicker
+                      display="spinner"
+                      mode="datetime"
                       value={value}
-                      autoCapitalize="none"
+                      onChange={(event: any, date) => onChange(date)}
                     />
                   )}
-                  name="deskripsi"
+                  name="tanggal"
                 />
-                {errors.deskripsi && <Text style={tw`text-red-500 mt-1`}>{errors.deskripsi.message}</Text>}
-              </View>
-              <View style={tw`mt-5 flex flex-row justify-between items-center px-3`}>
-                <View>
-                  <Text style={tw`text-xl`}>Total</Text>
-                </View>
-                <View>
-                  <Text style={tw`text-lg`}>250000</Text>
-                </View>
-              </View>
+              )}
+              {showTipeTransaksiContent && (
+                <>
+                  <Controller
+                    control={control}
+                    render={({ field: { onChange, onBlur, value } }) => (
+                      <CatetinSelect
+                        onCollapse={() => {
+                          setShowOptions(!showOptions);
+                        }}
+                        showOptions={showOptions}
+                        onSelectOption={(option) => {
+                          setShowOptions(!showOptions);
+                          onChange(option);
+                        }}
+                        options={optionsTransaksi}
+                        selected={value}
+                      ></CatetinSelect>
+                    )}
+                    name="tipe"
+                  />
+                </>
+              )}
+              {showBarangContent && (
+                <Controller
+                  control={control}
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <CatetinSelect
+                      onCollapse={() => {
+                        setShowOptionsBarang(!showOptionsBarang);
+                      }}
+                      showOptions={showOptionsBarang}
+                      onSelectOption={(option) => {
+                        const filteredBarang = onSelectBarangOption(option);
+                        onChange(filteredBarang);
+                      }}
+                      options={barang}
+                      selected={value}
+                      labelKey="nama_barang"
+                      valueKey="barang_id"
+                      placeholder="Barang"
+                      multiple
+                      count
+                      onChangeAmount={(value, id) => {
+                        setBarangAmount((prevBarangAmt) => ({
+                          ...prevBarangAmt,
+                          [id]: parseInt(value, 10),
+                        }));
+                      }}
+                      amountData={barangAmount}
+                    ></CatetinSelect>
+                  )}
+                  name="barang"
+                />
+              )}
             </View>
           </CatetinModal>
         )}
-
         <PlusButton
           onPress={() => {
-            setShowModal(!showModal);
+            setShowModal(true);
+            setShowModalContent(true);
           }}
         />
       </View>

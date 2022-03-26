@@ -9,17 +9,15 @@ interface IAppLayout {
   children: React.ReactNode;
   header: boolean;
   bottom: boolean;
-  headerTitle? : string;
+  headerTitle?: string;
 }
 
 function AppLayout({ children, header = true, bottom = true, headerTitle = '' }: IAppLayout) {
   return (
     <SafeAreaView style={tw`bg-white flex-1`} edges={['right', 'left', 'top']}>
-      <View style={tw`flex-1 flex justify-between`}>
-        {header && <Header title={headerTitle} />}
-        <View style={tw`flex-grow-1`}>{children}</View>
-        {bottom && <Bottom />}
-      </View>
+      {/* {header && <Header title={headerTitle} />} */}
+      <View style={tw`flex-grow-1`}>{children}</View>
+      {bottom && <Bottom />}
     </SafeAreaView>
   );
 }

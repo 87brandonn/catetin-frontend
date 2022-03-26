@@ -8,7 +8,7 @@ function Header({ title = '' }: { title?: string }) {
   const { navigate } = useNavigation();
 
   return (
-    <View style={tw`bg-gray-100 py-4 px-2 flex flex-row justify-between items-center`}>
+    <View style={tw`bg-gray-100 pt-4 pb-4 px-2 flex flex-row justify-between items-center`}>
       <View>
         <Text style={tw`text-2xl font-bold`}>{title}</Text>
       </View>

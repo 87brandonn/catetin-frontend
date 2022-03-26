@@ -12,16 +12,7 @@ import { useAppSelector } from '../../hooks';
 import AppLayout from '../../layouts/AppLayout';
 import CatetinScrollView from '../../layouts/ScrollView';
 import { RootState } from '../../store';
-
-interface ICatetinBarang {
-  barang_id: number;
-  created_at: Date;
-  harga: number;
-  nama_barang: string;
-  stok: number;
-  updated_at: Date;
-  user_id: number;
-}
+import { ICatetinBarang } from '../../types/barang';
 
 const schema = yup.object().shape({
   id: yup.number(),
@@ -148,7 +139,7 @@ function Barang() {
   };
   return (
     <AppLayout headerTitle="Barang">
-      <CatetinScrollView style={tw`flex-1 px-4 py-3 relative`}>
+      <CatetinScrollView style={tw`flex-1`}>
         {showModal && (
           <CatetinModal
             modalVisible={showModal}
@@ -164,18 +155,16 @@ function Barang() {
             }}
             onSave={handleSubmit(onSubmit)}
             loadingSave={loading}
+            title="Tambah Barang"
           >
             <View style={tw`px-3 py-4`}>
-              <View style={tw`mb-[20px]`}>
-                <Text style={tw`text-center text-2xl font-bold`}>Tambah Barang</Text>
-              </View>
               <View style={tw`mb-2`}>
                 <Controller
                   control={control}
                   render={({ field: { onChange, onBlur, value } }) => (
                     <TextInput
-                      placeholder="Masukkan nama barang"
-                      style={tw`border border-gray-300 px-4 py-3 rounded`}
+                      placeholder="Nama Barang"
+                      style={tw`border-b border-gray-100 px-4 py-3 rounded`}
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value}
@@ -191,8 +180,8 @@ function Barang() {
                   control={control}
                   render={({ field: { onChange, onBlur, value } }) => (
                     <TextInput
-                      placeholder="Masukkan jumlah stok"
-                      style={tw`border border-gray-300 px-4 py-3 rounded`}
+                      placeholder="Jumlah Stok"
+                      style={tw`border-b border-gray-100 px-4 py-3 rounded`}
                       onBlur={onBlur}
                       onChangeText={(value) => {
                         onChange(value.replace(/[^0-9]/g, ''));
@@ -211,8 +200,8 @@ function Barang() {
                   control={control}
                   render={({ field: { onChange, onBlur, value } }) => (
                     <TextInput
-                      placeholder="Masukkan harga"
-                      style={tw`border border-gray-300 px-4 py-3 rounded`}
+                      placeholder="Harga"
+                      style={tw`border-b border-gray-100 px-4 py-3 rounded`}
                       onBlur={onBlur}
                       onChangeText={(value) => {
                         onChange(value.replace(/[^0-9]/g, ''));
@@ -232,41 +221,43 @@ function Barang() {
         {loadingFetch ? (
           <View></View>
         ) : (
-          barang.map((singleBarang: ICatetinBarang) => (
-            <View
-              style={tw`px-4 py-2 rounded-lg shadow-lg bg-white flex flex-row justify-between mb-3`}
-              key={singleBarang.barang_id}
-            >
-              <View>
+          <View style={tw`px-4 py-3`}>
+            {barang.map((singleBarang: ICatetinBarang) => (
+              <View
+                style={tw`px-4 py-2 rounded-lg shadow bg-white flex flex-row justify-between mb-3`}
+                key={singleBarang.barang_id}
+              >
                 <View>
-                  <Text style={tw`text-lg font-bold`}>{singleBarang.nama_barang}</Text>
+                  <View>
+                    <Text style={tw`text-lg font-bold`}>{singleBarang.nama_barang}</Text>
+                  </View>
+                  <View>
+                    <Text style={tw`text-gray-500`}>{singleBarang.stok}</Text>
+                  </View>
+                  <View>
+                    <Text style={tw`text-gray-500`}>{singleBarang.harga}</Text>
+                  </View>
                 </View>
-                <View>
-                  <Text style={tw`text-gray-500`}>{singleBarang.stok}</Text>
-                </View>
-                <View>
-                  <Text style={tw`text-gray-500`}>{singleBarang.harga}</Text>
+                <View style={tw`self-center`}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      handleEdit(singleBarang);
+                    }}
+                  >
+                    <Icon name="edit" type="feather" iconStyle={tw`text-gray-300`} />
+                  </TouchableOpacity>
                 </View>
               </View>
-              <View style={tw`self-center`}>
-                <TouchableOpacity
-                  onPress={() => {
-                    handleEdit(singleBarang);
-                  }}
-                >
-                  <Icon name="edit" type="feather" iconStyle={tw`text-gray-300`} />
-                </TouchableOpacity>
-              </View>
-            </View>
-          ))
+            ))}
+          </View>
         )}
-
-        <PlusButton
-          onPress={() => {
-            setShowModal(!showModal);
-          }}
-        />
       </CatetinScrollView>
+
+      <PlusButton
+        onPress={() => {
+          setShowModal(!showModal);
+        }}
+      />
     </AppLayout>
   );
 }
