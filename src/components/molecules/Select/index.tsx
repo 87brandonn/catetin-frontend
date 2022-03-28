@@ -6,13 +6,12 @@ import CatetinScrollView from '../../../layouts/ScrollView';
 import CatetinInput from '../Input';
 
 interface ICatetinSelect {
-  onCollapse: () => void;
   showOptions: boolean;
   options?: Record<string, any>[];
   valueKey?: string;
   labelKey?: string;
-  selected?: Record<string, any> | Record<string, any>[] | null;
-  onSelectOption?: (option: Record<string, any>) => void;
+  selected?: any | any[] | null;
+  onSelectOption?: (option: any) => void;
   placeholder?: string;
   multiple?: boolean;
   count?: boolean;
@@ -30,7 +29,7 @@ function CatetinSelect({
   onChangeAmount = () => ({}),
   amountData,
 }: ICatetinSelect) {
-  const isSelected = (option) => {
+  const isSelected = (option: typeof selected) => {
     if (!multiple) {
       return selected?.[valueKey] === option[valueKey];
     }
@@ -58,7 +57,7 @@ function CatetinSelect({
                     onChangeText={(value) => {
                       onChangeAmount(value, option[valueKey]);
                     }}
-                    value={amountData?.[option[valueKey]]?.toString() || ''}
+                    value={amountData?.[option[valueKey]] ? amountData?.[option[valueKey]].toString() : ''}
                     autoCapitalize="none"
                     keyboardType="numeric"
                     style={tw`border-0 border-b p-0 pb-2`}
@@ -71,6 +70,7 @@ function CatetinSelect({
                 name="check"
                 type="feather"
                 iconStyle={tw`text-blue-300 ${!isSelected(option) ? 'opacity-0' : ''}`}
+                tvParallaxProperties
               />
             </View>
           </TouchableOpacity>

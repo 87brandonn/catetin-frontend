@@ -7,8 +7,8 @@ import Header from '../../components/molecules/Header';
 
 interface IAppLayout {
   children: React.ReactNode;
-  header: boolean;
-  bottom: boolean;
+  header?: boolean;
+  bottom?: boolean;
   headerTitle?: string;
 }
 

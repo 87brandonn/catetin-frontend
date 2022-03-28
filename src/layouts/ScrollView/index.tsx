@@ -1,10 +1,7 @@
 import React from 'react';
-import { ScrollView } from 'react-native';
+import { ScrollView, ScrollViewProps } from 'react-native';
 
-interface ICatetinScrollView {
-  children: React.ReactNode;
-}
-function CatetinScrollView({ children, ...rest }: ICatetinScrollView) {
+function CatetinScrollView({ children, ...rest }: ScrollViewProps) {
   return (
     <ScrollView showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} {...rest}>
       {children}

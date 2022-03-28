@@ -1,3 +1,4 @@
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
@@ -23,59 +24,61 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootNavigation() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
-        <Stack.Screen
-          name="Login"
-          component={Login}
-          options={{
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="Register"
-          component={Register}
-          options={{
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="Home"
-          component={HomeScreen}
-          options={{
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="Profile"
-          component={ProfileScreen}
-          options={{
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="TokoLanding"
-          component={TokoLanding}
-          options={{
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="Barang"
-          component={Barang}
-          options={{
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="Transaksi"
-          component={Transaksi}
-          options={{
-            headerShown: false,
-          }}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <BottomSheetModalProvider>
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName="Login">
+          <Stack.Screen
+            name="Login"
+            component={Login}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="Register"
+            component={Register}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="Home"
+            component={HomeScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="Profile"
+            component={ProfileScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="TokoLanding"
+            component={TokoLanding}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="Barang"
+            component={Barang}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="Transaksi"
+            component={Transaksi}
+            options={{
+              headerShown: false,
+            }}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </BottomSheetModalProvider>
   );
 }
 
