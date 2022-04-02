@@ -1,18 +1,15 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import React, { useState } from 'react';
-import { Text, TextInput } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Text, TextInput, AsyncStorage } from 'react-native';
 import { Button } from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import tw from 'twrnc';
 import { axiosCatetin } from '../../api';
-import { useAppSelector } from '../../hooks';
 import { RootStackParamList } from '../../navigation';
-import { RootState } from '../../store';
 
 function TokoLanding({ navigation: { navigate } }: NativeStackScreenProps<RootStackParamList, 'TokoLanding'>) {
   const [tokoName, setTokoName] = useState('');
   const [loadingSubmit, setLoadingSubmit] = useState(false);
-  const { accessToken } = useAppSelector((state: RootState) => state.auth);
 
   const onSubmit = async () => {
     setLoadingSubmit(true);
@@ -24,7 +21,7 @@ function TokoLanding({ navigation: { navigate } }: NativeStackScreenProps<RootSt
         },
         {
           headers: {
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
           },
         },
       );

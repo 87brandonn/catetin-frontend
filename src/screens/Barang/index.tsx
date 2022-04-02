@@ -1,18 +1,24 @@
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { yupResolver } from '@hookform/resolvers/yup';
-import React, { useCallback, useEffect, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { Button, Icon } from 'react-native-elements';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { ActivityIndicator, AsyncStorage, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Icon } from 'react-native-elements';
 import tw from 'twrnc';
 import * as yup from 'yup';
 import { axiosCatetin } from '../../api';
-import PlusButton from '../../components/atoms/PlusButton';
-import CatetinModal from '../../components/molecules/Modal';
-import { useAppSelector } from '../../hooks';
 import AppLayout from '../../layouts/AppLayout';
 import CatetinScrollView from '../../layouts/ScrollView';
-import { RootState } from '../../store';
 import { ICatetinBarang } from '../../types/barang';
+import { titleCase } from '../../utils';
+import CreateModal from './BarangBottomSheet';
+
+export interface IFormSchema {
+  id: number;
+  name: string;
+  stok: number;
+  harga: number;
+}
 
 const schema = yup.object().shape({
   id: yup.number(),
@@ -22,37 +28,37 @@ const schema = yup.object().shape({
 });
 
 function Barang() {
-  const [showModal, setShowModal] = useState(false);
   const {
     control,
     handleSubmit,
     formState: { errors },
     reset,
     watch,
-  } = useForm({
+  } = useForm<IFormSchema>({
     resolver: yupResolver(schema),
     defaultValues: {
       id: 0,
       name: '',
-      stok: '',
-      harga: '',
+      stok: 0,
+      harga: 0,
     },
   });
-
-  const { accessToken } = useAppSelector((state: RootState) => state.auth);
 
   const [loading, setLoading] = useState(false);
   const [barang, setBarang] = useState<ICatetinBarang[]>([]);
   const [loadingFetch, setLoadingFetch] = useState(true);
+
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const bottomSheetRefFilter = useRef<BottomSheetModal>(null);
 
   const fetchBarang = useCallback(async () => {
     setLoadingFetch(true);
     try {
       const {
         data: { barang },
-      } = await axiosCatetin.get('/get/barang', {
+      } = await axiosCatetin.get('/barang', {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
         },
       });
       setBarang(barang);
@@ -60,26 +66,25 @@ function Barang() {
     } catch (err) {
       console.log(err);
     }
-  }, [accessToken]);
+  }, []);
 
   useEffect(() => {
     fetchBarang();
   }, [fetchBarang]);
 
   const handleEdit = (barang: any) => {
-    console.log(barang);
     reset({
       name: barang.nama_barang,
       stok: barang.stok,
       harga: barang.harga,
       id: barang.barang_id,
     });
-    setShowModal(true);
+    bottomSheetRef.current?.present();
   };
 
   const onPost = async (data: any) => {
     await axiosCatetin.post(
-      '/insert/barang',
+      '/barang',
       {
         nama_barang: data.name,
         stok: data.stok,
@@ -87,15 +92,15 @@ function Barang() {
       },
       {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
         },
       },
     );
   };
 
   const onPatch = async (data: any) => {
-    await axiosCatetin.post(
-      '/update/barang',
+    await axiosCatetin.put(
+      '/barang',
       {
         barang_id: data.id,
         nama_barang: data.name,
@@ -104,7 +109,7 @@ function Barang() {
       },
       {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
         },
       },
     );
@@ -113,6 +118,8 @@ function Barang() {
   useEffect(() => {
     console.log(errors);
   }, [errors]);
+
+  const snapPoints = useMemo(() => ['50%', '75%'], []);
 
   const onSubmit = async (data: any) => {
     setLoading(true);
@@ -126,11 +133,11 @@ function Barang() {
       reset({
         id: 0,
         name: '',
-        stok: '',
-        harga: '',
+        stok: 0,
+        harga: 0,
       });
-      setShowModal(false);
       fetchBarang();
+      bottomSheetRef?.current?.close();
     } catch (err: any) {
       console.log(err.response?.data?.message);
     } finally {
@@ -139,92 +146,82 @@ function Barang() {
   };
   return (
     <AppLayout headerTitle="Barang">
-      <CatetinScrollView style={tw`flex-1`}>
-        {showModal && (
-          <CatetinModal
-            modalVisible={showModal}
-            setModalVisible={setShowModal}
-            onClose={() => {
+      <BottomSheetModal
+        ref={bottomSheetRef}
+        index={1}
+        snapPoints={snapPoints}
+        backgroundStyle={tw`bg-white shadow-lg`}
+        enablePanDownToClose
+      >
+        <CreateModal
+          control={control}
+          errors={errors}
+          watch={watch}
+          loading={loading}
+          onSave={() => handleSubmit(onSubmit)()}
+          title="Create Barang"
+        />
+      </BottomSheetModal>
+      <BottomSheetModal
+        ref={bottomSheetRefFilter}
+        index={1}
+        snapPoints={snapPoints}
+        backgroundStyle={tw`bg-white shadow-lg`}
+        enablePanDownToClose
+      >
+        <View style={tw`flex-1 px-3`}>
+          <Text style={tw`text-xl text-center font-bold mb-3`}>Sort</Text>
+          {Object.keys(barang?.[0] || {}).map((field) => (
+            <TouchableOpacity key={field}>
+              <View style={tw`flex flex-row justify-between px-4`}>
+                <View style={tw`py-3 mb-2 rounded-[12px]`}>
+                  <Text>{titleCase(field)}</Text>
+                </View>
+                <View>
+                  <Icon name="sort-desc" type="font-awesome" iconStyle={tw`text-gray-200`} tvParallaxProperties="" />
+                </View>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </BottomSheetModal>
+      <View style={tw`pb-2 px-3 flex flex-row justify-between items-center`}>
+        <View style={tw`flex-grow-1 mr-3`}>
+          <TextInput style={tw`bg-gray-100 px-3 py-2 rounded-[12px]`} placeholder="Search" />
+        </View>
+        <View style={tw`mr-3`}>
+          <TouchableOpacity
+            onPress={() => {
               reset({
                 id: 0,
                 name: '',
-                stok: '',
-                harga: '',
+                stok: 0,
+                harga: 0,
               });
-              setShowModal(false);
+              bottomSheetRef.current?.present();
             }}
-            onSave={handleSubmit(onSubmit)}
-            loadingSave={loading}
-            title="Tambah Barang"
           >
-            <View style={tw`px-3 py-4`}>
-              <View style={tw`mb-2`}>
-                <Controller
-                  control={control}
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <TextInput
-                      placeholder="Nama Barang"
-                      style={tw`border-b border-gray-100 px-4 py-3 rounded`}
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      value={value}
-                      autoCapitalize="none"
-                    />
-                  )}
-                  name="name"
-                />
-                {errors.name && <Text style={tw`text-red-500 mt-1`}>{errors.name.message}</Text>}
-              </View>
-              <View style={tw`mb-2`}>
-                <Controller
-                  control={control}
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <TextInput
-                      placeholder="Jumlah Stok"
-                      style={tw`border-b border-gray-100 px-4 py-3 rounded`}
-                      onBlur={onBlur}
-                      onChangeText={(value) => {
-                        onChange(value.replace(/[^0-9]/g, ''));
-                      }}
-                      value={value.toString()}
-                      keyboardType="numeric"
-                      autoCapitalize="none"
-                    />
-                  )}
-                  name="stok"
-                />
-                {errors.stok && <Text style={tw`text-red-500 mt-1`}>{errors.stok.message}</Text>}
-              </View>
-              <View style={tw`mb-2`}>
-                <Controller
-                  control={control}
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <TextInput
-                      placeholder="Harga"
-                      style={tw`border-b border-gray-100 px-4 py-3 rounded`}
-                      onBlur={onBlur}
-                      onChangeText={(value) => {
-                        onChange(value.replace(/[^0-9]/g, ''));
-                      }}
-                      value={value.toString()}
-                      autoCapitalize="none"
-                    />
-                  )}
-                  name="harga"
-                />
-                {errors.harga && <Text style={tw`text-red-500 mt-1`}>{errors.harga.message}</Text>}
-              </View>
-            </View>
-          </CatetinModal>
-        )}
-
-        {loadingFetch ? (
-          <View></View>
-        ) : (
-          <View style={tw`px-4 py-3`}>
-            {barang.map((singleBarang: ICatetinBarang) => (
+            <Icon name="plus" type="ant-design" tvParallaxProperties="" />
+          </TouchableOpacity>
+        </View>
+        <View>
+          <TouchableOpacity
+            onPress={() => {
+              bottomSheetRefFilter.current?.present();
+            }}
+          >
+            <Icon name="sort" type="material-icon" tvParallaxProperties="" />
+          </TouchableOpacity>
+        </View>
+      </View>
+      <CatetinScrollView style={tw`flex-1`}>
+        <View style={tw`px-4 py-5`}>
+          {loadingFetch ? (
+            <ActivityIndicator />
+          ) : (
+            barang.map((singleBarang: ICatetinBarang) => (
               <View
-                style={tw`px-4 py-2 rounded-lg shadow bg-white flex flex-row justify-between mb-3`}
+                style={tw`shadow-lg bg-white rounded-[12px] px-3 py-2 mb-2 flex flex-row justify-between`}
                 key={singleBarang.barang_id}
               >
                 <View>
@@ -244,20 +241,14 @@ function Barang() {
                       handleEdit(singleBarang);
                     }}
                   >
-                    <Icon name="edit" type="feather" iconStyle={tw`text-gray-300`} />
+                    <Icon name="edit" type="feather" iconStyle={tw`text-gray-300`} tvParallaxProperties="" />
                   </TouchableOpacity>
                 </View>
               </View>
-            ))}
-          </View>
-        )}
+            ))
+          )}
+        </View>
       </CatetinScrollView>
-
-      <PlusButton
-        onPress={() => {
-          setShowModal(!showModal);
-        }}
-      />
     </AppLayout>
   );
 }

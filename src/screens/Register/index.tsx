@@ -5,7 +5,7 @@ import * as Facebook from 'expo-auth-session/providers/facebook';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { AsyncStorage, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Button } from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import tw from 'twrnc';
@@ -13,7 +13,6 @@ import * as yup from 'yup';
 import { axiosCatetin } from '../../api';
 import { useAppDispatch } from '../../hooks';
 import { RootStackParamList } from '../../navigation';
-import { setAccessToken } from '../../store/features/counter/authSlice';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -56,7 +55,7 @@ function Register({ navigation: { navigate } }: NativeStackScreenProps<RootStack
         password,
       });
       setErrorRegister('');
-      dispatch(setAccessToken(token));
+      AsyncStorage.setItem('accessToken', token);
       navigate('Home');
     } catch (err: any) {
       setErrorRegister(err.response?.data?.message || 'Failed to register');

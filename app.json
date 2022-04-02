@@ -16,14 +16,14 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier" : "com.brandonpardede.catetinapp"
+      "bundleIdentifier": "com.brandonpardede.catetinapp"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
       },
-      "package" : "com.brandonpardede.catetinapp"
+      "package": "com.brandonpardede.catetinapp"
     },
     "androidStatusBar": {
       "backgroundColor": "#C2185B",
@@ -32,6 +32,14 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "scheme" : "com.brandonpardede.catetinapp"
+    "scheme": "com.brandonpardede.catetinapp",
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you share them with your friends."
+        }
+      ]
+    ]
   }
 }

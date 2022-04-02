@@ -1,20 +1,21 @@
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator, StackNavigationOptions, TransitionPresets } from '@react-navigation/stack';
+import { createStackNavigator, StackNavigationOptions } from '@react-navigation/stack';
+import moment from 'moment';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Text, View } from 'react-native';
+import { ActivityIndicator, AsyncStorage, Text, TouchableOpacity, View } from 'react-native';
+import { Icon } from 'react-native-elements';
+import { TextInput } from 'react-native-gesture-handler';
 import tw from 'twrnc';
 import * as yup from 'yup';
 import { axiosCatetin } from '../../api';
-import PlusButton from '../../components/atoms/PlusButton';
-import CatetinBottomSheet from '../../components/molecules/BottomSheet';
-import { useAppSelector } from '../../hooks';
 import AppLayout from '../../layouts/AppLayout';
-import { RootState } from '../../store';
+import CatetinScrollView from '../../layouts/ScrollView';
 import { ICatetinBarang } from '../../types/barang';
 import { ICatetinTransaksi } from '../../types/transaksi';
+import { screenOptions, titleCase } from '../../utils';
 import BarangScreen from './TransactionBarang';
 import CreateModal from './TransactionBottomSheet';
 import TransactionBottomSheetWrapper from './TransactionBottomSheetWrapper';
@@ -29,7 +30,7 @@ export interface ICatetinTipeTransaksi {
 export interface IFormSchema {
   id: number;
   name: string;
-  tipe: ICatetinTipeTransaksi | null;
+  tipe: ICatetinTipeTransaksi | null | undefined;
   tanggal: Date;
   barang: null | ICatetinBarang[];
   deskripsi: string;
@@ -53,6 +54,7 @@ function Transaksi() {
     formState: { errors },
     watch,
     setValue,
+    reset,
   } = useForm<IFormSchema>({
     resolver: yupResolver(schema),
     defaultValues: {
@@ -65,23 +67,7 @@ function Transaksi() {
     },
   });
 
-  const screenOptions = useMemo<StackNavigationOptions>(
-    () => ({
-      ...TransitionPresets.SlideFromRightIOS,
-
-      headerShown: false,
-      safeAreaInsets: { top: 0 },
-      cardStyle: {
-        backgroundColor: 'white',
-        overflow: 'visible',
-      },
-      headerMode: 'screen',
-    }),
-    [],
-  );
   const screenAOptions = useMemo(() => ({ headerLeft: () => null }), []);
-
-  const { accessToken } = useAppSelector((state: RootState) => state.auth);
 
   const [loading, setLoading] = useState(false);
   const [barang, setBarang] = useState<ICatetinBarang[] | null>(null);
@@ -90,27 +76,24 @@ function Transaksi() {
   const [showOptions, setShowOptions] = useState(false);
   const [showOptionsBarang, setShowOptionsBarang] = useState(false);
 
-  const fetchBarang = useCallback(
-    async (isMounted = true) => {
-      setLoadingFetch(true);
-      try {
-        const {
-          data: { barang },
-        } = await axiosCatetin.get('/get/barang', {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-        if (isMounted) {
-          setBarang(barang);
-          setLoadingFetch(false);
-        }
-      } catch (err) {
-        console.log(err);
+  const fetchBarang = useCallback(async (isMounted = true) => {
+    setLoadingFetch(true);
+    try {
+      const {
+        data: { barang },
+      } = await axiosCatetin.get('/barang', {
+        headers: {
+          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+        },
+      });
+      if (isMounted) {
+        setBarang(barang);
+        setLoadingFetch(false);
       }
-    },
-    [accessToken],
-  );
+    } catch (err) {
+      console.log(err);
+    }
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -145,25 +128,23 @@ function Transaksi() {
 
   const [transaksi, setTransaksi] = useState<ICatetinTransaksi[] | null>(null);
 
-  const fetchTransaksi = useCallback(
-    async (isMounted = true) => {
-      setLoadingTransaksi(true);
-      try {
-        const { data } = await axiosCatetin.get('/get/transaksi', {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-        if (isMounted) {
-          setTransaksi(data);
-          setLoadingTransaksi(false);
-        }
-      } catch (err) {
-        console.log(err);
+  const fetchTransaksi = useCallback(async (isMounted = true) => {
+    setLoadingTransaksi(true);
+    try {
+      const { data } = await axiosCatetin.get('/transaksi', {
+        headers: {
+          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+        },
+      });
+      console.log(data);
+      if (isMounted) {
+        setTransaksi(data);
+        setLoadingTransaksi(false);
       }
-    },
-    [accessToken],
-  );
+    } catch (err) {
+      console.log(err);
+    }
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -178,7 +159,8 @@ function Transaksi() {
   }, [errors]);
 
   const [total, setTotal] = useState(0);
-  const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const bottomSheetRefFilter = useRef<BottomSheetModal>(null);
 
   useEffect(() => {
     let newTotal = 0;
@@ -198,19 +180,19 @@ function Transaksi() {
       title: data.name,
       barang: data.barang?.map(({ barang_id }) => ({ barang_id, amount: barangAmount[barang_id] || 1 })) || [],
       tipe_transaksi: data.tipe?.value,
-      tanggal: new Date(data.tanggal).getTime(),
+      tanggal: moment(data.tanggal).format('YYYY-MM-DD HH:mm:ss'),
       notes: data.deskripsi,
       total,
     };
     try {
-      await axiosCatetin.post('/insert/transaksi', finalData, {
+      await axiosCatetin.post('/transaksi', finalData, {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
         },
       });
       setLoading(false);
       setBarangAmount({});
-      bottomSheetModalRef?.current?.close();
+      bottomSheetRef?.current?.close();
       fetchTransaksi();
     } catch (err: any) {
       setLoading(false);
@@ -228,12 +210,33 @@ function Transaksi() {
     }
     return cloneBarang;
   };
+  const snapPoints = useMemo(() => ['50%', '75%'], []);
+
+  const handleEdit = (transaksi: ICatetinTransaksi) => {
+    console.log(transaksi);
+    setValue('id', transaksi.transaksi_id);
+    setValue('name', transaksi.title);
+    setValue(
+      'tipe',
+      optionsTransaksi.find((option) => option.value === transaksi.tipe_transaksi),
+    );
+    setValue('tanggal', moment(transaksi.tanggal).toDate());
+    setValue('deskripsi', transaksi.notes);
+    setValue('barang', null);
+    bottomSheetRef.current?.present();
+  };
 
   return (
     <AppLayout headerTitle="Transaksi">
-      <CatetinBottomSheet bottomSheetRef={bottomSheetModalRef}>
+      <BottomSheetModal
+        ref={bottomSheetRef}
+        index={1}
+        snapPoints={snapPoints}
+        backgroundStyle={tw`bg-white shadow-lg`}
+        enablePanDownToClose
+      >
         <NavigationContainer independent={true}>
-          <Stack.Navigator screenOptions={screenOptions}>
+          <Stack.Navigator screenOptions={screenOptions as StackNavigationOptions}>
             <Stack.Screen name="Transaction Default" options={screenAOptions}>
               {(props) => (
                 <TransactionBottomSheetWrapper title="Create Transaksi">
@@ -294,21 +297,78 @@ function Transaksi() {
             </Stack.Screen>
           </Stack.Navigator>
         </NavigationContainer>
-      </CatetinBottomSheet>
-      <View style={tw`flex-1 px-3 pt-4`}>
-        {transaksi?.map((eachTransaksi) => (
-          <View style={tw`shadow bg-white rounded px-3 py-2 mb-4`} key={eachTransaksi.transaksi_id}>
-            <Text style={tw`font-bold text-lg`}>{eachTransaksi.title}</Text>
-            <Text style={tw``}>{new Date(parseInt(eachTransaksi.tanggal, 10)).toISOString()}</Text>
-          </View>
-        ))}
+      </BottomSheetModal>
+      <BottomSheetModal
+        ref={bottomSheetRefFilter}
+        index={1}
+        snapPoints={snapPoints}
+        backgroundStyle={tw`bg-white shadow-lg`}
+        enablePanDownToClose
+      >
+        <View style={tw`flex-1 px-3`}>
+          <Text style={tw`text-xl text-center font-bold mb-3`}>Sort</Text>
+          {Object.keys(transaksi?.[0] || {}).map((field) => (
+            <TouchableOpacity key={field}>
+              <View style={tw`flex flex-row justify-between px-4`}>
+                <View style={tw`py-3 mb-2 rounded-[12px]`}>
+                  <Text>{titleCase(field)}</Text>
+                </View>
+                <View>
+                  <Icon name="sort-desc" type="font-awesome" iconStyle={tw`text-gray-200`} tvParallaxProperties="" />
+                </View>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </BottomSheetModal>
+      <View style={tw`pb-2 px-3 flex flex-row justify-between items-center`}>
+        <View style={tw`flex-grow-1 mr-3`}>
+          <TextInput style={tw`bg-gray-100 px-3 py-2 rounded-[12px]`} placeholder="Search" />
+        </View>
+        <View style={tw`mr-3`}>
+          <TouchableOpacity
+            onPress={() => {
+              reset({ id: 0, name: '', tipe: null, tanggal: new Date(), barang: null, deskripsi: '' });
+              bottomSheetRef.current?.present();
+            }}
+          >
+            <Icon name="plus" type="ant-design" tvParallaxProperties="" />
+          </TouchableOpacity>
+        </View>
+        <View>
+          <TouchableOpacity
+            onPress={() => {
+              bottomSheetRefFilter.current?.present();
+            }}
+          >
+            <Icon name="sort" type="material-icon" tvParallaxProperties="" />
+          </TouchableOpacity>
+        </View>
       </View>
-
-      <PlusButton
-        onPress={() => {
-          bottomSheetModalRef.current?.present();
-        }}
-      />
+      <CatetinScrollView style={tw`flex-1 px-3`}>
+        <View style={tw`flex-1 py-5`}>
+          {loadingTransaksi ? (
+            <ActivityIndicator />
+          ) : (
+            transaksi?.map((eachTransaksi) => (
+              <TouchableOpacity
+                style={tw`shadow-lg bg-white rounded-[12px] px-3 py-2 mb-2 flex flex-row justify-between`}
+                key={eachTransaksi.transaksi_id}
+                onPress={() => handleEdit(eachTransaksi)}
+              >
+                <View>
+                  <Text style={tw`font-bold text-xl`}>{eachTransaksi.title}</Text>
+                  <Text style={tw`font-500 text-lg`}>IDR {eachTransaksi.nominal_transaksi?.toLocaleString()}</Text>
+                  <Text style={tw``}>Notes : {eachTransaksi.notes}</Text>
+                </View>
+                <View>
+                  <Text style={tw`text-3`}>{moment(parseInt(eachTransaksi.tanggal, 10)).format('DD/MM/YYYY')}</Text>
+                </View>
+              </TouchableOpacity>
+            ))
+          )}
+        </View>
+      </CatetinScrollView>
     </AppLayout>
   );
 }

@@ -1,8 +1,7 @@
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import React, { useEffect } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { Icon } from 'react-native-elements';
-import { useRoute } from '@react-navigation/native';
 import tw from 'twrnc';
 
 function Bottom() {
@@ -36,7 +35,7 @@ function Bottom() {
     console.log(route.name);
   }, [route]);
   return (
-    <View style={tw`bg-white flex flex-row pt-3 pb-[36px] shadow-lg`}>
+    <View style={{ ...tw`bg-white shadow flex flex-row pt-3 pb-[48px] border-t border-slate-100` }}>
       {bottomNavs.map((nav, index) => (
         <View style={tw`flex-1 items-center`} key={index}>
           <TouchableOpacity
@@ -44,7 +43,11 @@ function Bottom() {
               navigate(nav.name);
             }}
           >
-            <Icon name={nav.icon} type={nav.type} iconStyle={tw`${nav.name === route.name ? 'text-blue-500' : ''}`} />
+            <Icon
+              name={nav.icon}
+              type={nav.type}
+              iconStyle={tw`${nav.name === route.name ? 'text-blue-500' : 'text-gray-800'}`}
+            />
           </TouchableOpacity>
         </View>
       ))}

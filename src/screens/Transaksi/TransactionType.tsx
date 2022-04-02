@@ -1,8 +1,7 @@
 import React from 'react';
-import { Control, Controller } from 'react-hook-form';
 import { View } from 'react-native';
 import tw from 'twrnc';
-import { ICatetinTipeTransaksi, IFormSchema } from '.';
+import { ICatetinTipeTransaksi } from '.';
 import CatetinSelect from '../../components/molecules/Select';
 
 function TransactionTypeScreen({
@@ -11,7 +10,7 @@ function TransactionTypeScreen({
   show,
   onChange,
 }: {
-  selected: ICatetinTipeTransaksi | null;
+  selected: ICatetinTipeTransaksi | null | undefined;
   options: ICatetinTipeTransaksi[];
   show: boolean;
   onChange: (opt: ICatetinTipeTransaksi) => void;

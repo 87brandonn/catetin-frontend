@@ -9,7 +9,7 @@ function CatetinInput(props: TextInputProps) {
       {...props}
       style={{
         ...tw`px-4 py-3 rounded`,
-        ...tw`border border-blue-500 ${isFocused ? 'border-blue-500' : 'border-gray-100'}`,
+        ...tw`border-b border-blue-500 ${isFocused ? 'border-blue-500' : 'border-gray-100'}`,
       }}
       onBlur={() => setIsFocused(false)}
       onFocus={() => {

@@ -71,7 +71,7 @@ function CreateModal({ control, errors, watch, loading, onSave, total }: ICreate
           />
         </TouchableOpacity>
 
-        {errors.tipe && <Text style={tw`text-red-500 mt-1`}>{errors.tipe?.message as any}</Text>}
+        {errors.tipe && <Text style={tw`text-red-500 text-3 mt-1`}>{errors.tipe?.message as any}</Text>}
       </View>
       {(watch('tipe')?.value === 3 || watch('tipe')?.value === 4) && (
         <View style={tw`mb-4`}>
@@ -90,7 +90,7 @@ function CreateModal({ control, errors, watch, loading, onSave, total }: ICreate
             />
           </TouchableOpacity>
 
-          {errors.barang && <Text style={tw`text-red-500 mt-1`}>{errors.barang.message}</Text>}
+          {errors.barang && <Text style={tw`text-red-500 text-3 mt-1`}>{errors.barang.message}</Text>}
         </View>
       )}
       <View style={tw`mb-2`}>
@@ -109,7 +109,7 @@ function CreateModal({ control, errors, watch, loading, onSave, total }: ICreate
           )}
           name="deskripsi"
         />
-        {errors.deskripsi && <Text style={tw`text-red-500 mt-1`}>{errors.deskripsi.message}</Text>}
+        {errors.deskripsi && <Text style={tw`text-red-500 text-3 mt-1`}>{errors.deskripsi.message}</Text>}
       </View>
       {(watch('tipe')?.value === 3 || watch('tipe')?.value === 4) && (
         <View style={tw`my-4 flex flex-row justify-between items-center px-3`}>

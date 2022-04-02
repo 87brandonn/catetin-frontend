@@ -14,7 +14,7 @@ function CatetinBottomSheet({ children, bottomSheetRef }: ICatetinBottomSheet) {
   return (
     <BottomSheetModal
       ref={bottomSheetRef}
-      index={1}
+      index={-1}
       snapPoints={snapPoints}
       backgroundStyle={tw`bg-white shadow-lg`}
       enablePanDownToClose
