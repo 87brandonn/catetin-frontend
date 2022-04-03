@@ -25,25 +25,42 @@ export interface ICreateModalTransaksi {
   };
   watch: UseFormWatch<IFormSchema>;
   loading: boolean;
+  loadingDelete: boolean;
   onSave: () => void;
+  showDelete: boolean;
+  onDelete: () => void;
   total: number;
 }
 
-function CreateModal({ control, errors, watch, loading, onSave, total }: ICreateModalTransaksi) {
+function CreateModal({
+  control,
+  errors,
+  watch,
+  loading,
+  onSave,
+  onDelete,
+  showDelete = false,
+  total,
+  loadingDelete,
+}: ICreateModalTransaksi) {
   const { navigate } = useNavigation();
+  const editingMode = watch('transaksi_id') !== 0;
+  const barangFiltered = watch('barang')?.filter((barang) => barang.active === true);
   return (
     <View style={tw`flex-1`}>
       <View style={tw`mb-4`}>
+        <Text style={tw`mb-1 text-base`}>Nama Transaksi</Text>
         <Controller
           control={control}
           render={({ field: { onChange, onBlur, value } }) => (
-            <CatetinInput placeholder="Nama Transaksi" onChangeText={onChange} value={value} autoCapitalize="none" />
+            <CatetinInput placeholder="Nama Transaksi" onChangeText={onChange} value={value} />
           )}
           name="name"
         />
         {errors.name && <Text style={tw`text-red-400 text-3 mt-1`}>{errors.name.message}</Text>}
       </View>
       <View style={tw`mb-4`}>
+        <Text style={tw`mb-1 text-base`}>Tanggal Transaksi</Text>
         <TouchableOpacity
           onPress={() => {
             requestAnimationFrame(() => navigate('Transaction Date'));
@@ -51,23 +68,24 @@ function CreateModal({ control, errors, watch, loading, onSave, total }: ICreate
         >
           <CatetinInput
             placeholder="Tanggal Transaksi"
-            autoCapitalize="none"
             pointerEvents="none"
             value={watch('tanggal')?.toISOString().split('T')[0]}
           />
         </TouchableOpacity>
       </View>
       <View style={tw`mb-4`}>
+        <Text style={tw`mb-1 text-base`}>Tipe Transaksi</Text>
         <TouchableOpacity
           onPress={() => {
             requestAnimationFrame(() => navigate('Transaction Type'));
           }}
+          disabled={editingMode}
         >
           <CatetinInput
             pointerEvents="none"
             placeholder="Tipe Transaksi"
-            autoCapitalize="none"
             value={watch('tipe')?.label}
+            style={tw`${editingMode ? 'text-gray-300' : ''}`}
           />
         </TouchableOpacity>
 
@@ -75,6 +93,7 @@ function CreateModal({ control, errors, watch, loading, onSave, total }: ICreate
       </View>
       {(watch('tipe')?.value === 3 || watch('tipe')?.value === 4) && (
         <View style={tw`mb-4`}>
+          <Text style={tw`mb-1 text-base`}>Barang</Text>
           <TouchableOpacity
             onPress={() => {
               requestAnimationFrame(() => navigate('Transaction Barang'));
@@ -82,18 +101,16 @@ function CreateModal({ control, errors, watch, loading, onSave, total }: ICreate
           >
             <CatetinInput
               placeholder="Barang"
-              autoCapitalize="none"
               pointerEvents="none"
-              value={watch('barang')
-                ?.map((barang) => barang.nama_barang)
-                .join(', ')}
+              value={barangFiltered?.map((barang) => barang.nama_barang).join(', ')}
             />
           </TouchableOpacity>
 
           {errors.barang && <Text style={tw`text-red-500 text-3 mt-1`}>{errors.barang.message}</Text>}
         </View>
       )}
-      <View style={tw`mb-2`}>
+      <View style={tw`mb-4`}>
+        <Text style={tw`mb-1 text-base`}>Deskripsi Transaksi</Text>
         <Controller
           control={control}
           render={({ field: { onChange, onBlur, value } }) => (
@@ -104,7 +121,6 @@ function CreateModal({ control, errors, watch, loading, onSave, total }: ICreate
                 onChange(value);
               }}
               value={value}
-              autoCapitalize="none"
             />
           )}
           name="deskripsi"
@@ -112,7 +128,7 @@ function CreateModal({ control, errors, watch, loading, onSave, total }: ICreate
         {errors.deskripsi && <Text style={tw`text-red-500 text-3 mt-1`}>{errors.deskripsi.message}</Text>}
       </View>
       {(watch('tipe')?.value === 3 || watch('tipe')?.value === 4) && (
-        <View style={tw`my-4 flex flex-row justify-between items-center px-3`}>
+        <View style={tw`flex flex-row justify-between items-center px-3 mb-4`}>
           <View>
             <Text style={tw`text-lg`}>Total</Text>
           </View>
@@ -124,13 +140,24 @@ function CreateModal({ control, errors, watch, loading, onSave, total }: ICreate
       <View>
         <Button
           title="Save"
-          buttonStyle={tw`bg-blue-500`}
+          buttonStyle={tw`bg-blue-500 mb-4`}
           titleStyle={tw`font-bold`}
           onPress={() => {
             onSave();
           }}
           loading={loading}
         />
+        {showDelete && (
+          <Button
+            title="Delete"
+            buttonStyle={tw`bg-red-500`}
+            titleStyle={tw`font-bold`}
+            onPress={() => {
+              onDelete();
+            }}
+            loading={loadingDelete}
+          />
+        )}
       </View>
     </View>
   );

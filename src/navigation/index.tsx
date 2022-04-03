@@ -1,4 +1,4 @@
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import { PortalProvider } from '@gorhom/portal';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
@@ -24,7 +24,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootNavigation() {
   return (
-    <BottomSheetModalProvider>
+    <PortalProvider>
       <NavigationContainer>
         <Stack.Navigator initialRouteName="Login">
           <Stack.Screen
@@ -78,7 +78,7 @@ export default function RootNavigation() {
           />
         </Stack.Navigator>
       </NavigationContainer>
-    </BottomSheetModalProvider>
+    </PortalProvider>
   );
 }
 

@@ -1,24 +1,67 @@
 import React from 'react';
-import { View, TouchableOpacity, Text, ScrollView } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { Icon } from 'react-native-elements';
 import tw from 'twrnc';
 import CatetinScrollView from '../../../layouts/ScrollView';
 import CatetinInput from '../Input';
 
-interface ICatetinSelect {
-  showOptions: boolean;
-  options?: Record<string, any>[];
-  valueKey?: string;
-  labelKey?: string;
-  selected?: any | any[] | null;
-  onSelectOption?: (option: any) => void;
-  placeholder?: string;
-  multiple?: boolean;
-  count?: boolean;
-  onChangeAmount?: (count: string, id: string) => void;
-  amountData?: Record<string, number>;
-}
-function CatetinSelect({
+type ICatetinSelect<T> =
+  | {
+      multiple?: false;
+      selected: T | null;
+      options: T[];
+      valueKey: string;
+      labelKey: string;
+      onSelectOption?: (option: T) => void;
+      placeholder?: string;
+      count?: false;
+      onChangeAmount?: (count: string, option: T) => void;
+    }
+  | {
+      multiple?: true;
+      selected: T[] | null;
+      options: T[];
+      valueKey: string;
+      labelKey: string;
+      onSelectOption?: (option: T) => void;
+      placeholder?: string;
+      count?: false;
+      onChangeAmount?: (count: string, option: T) => void;
+    }
+  | {
+      multiple?: false;
+      selected:
+        | (T & {
+            amount: number | string;
+            active: boolean;
+          })[]
+        | null;
+      options: T[];
+      valueKey: string;
+      labelKey: string;
+      onSelectOption?: (option: T) => void;
+      placeholder?: string;
+      count?: true;
+      onChangeAmount?: (count: string, option: T) => void;
+    }
+  | {
+      multiple?: true;
+      selected:
+        | (T & {
+            amount: number | string;
+            active: boolean;
+          })[]
+        | null;
+      options: T[];
+      valueKey: string;
+      labelKey: string;
+      onSelectOption?: (option: T) => void;
+      placeholder?: string;
+      count?: true;
+      onChangeAmount?: (count: string, option: T) => void;
+    };
+
+function CatetinSelect<T>({
   options = [],
   valueKey = 'value',
   labelKey = 'label',
@@ -27,13 +70,20 @@ function CatetinSelect({
   multiple = false,
   count = false,
   onChangeAmount = () => ({}),
-  amountData,
-}: ICatetinSelect) {
-  const isSelected = (option: typeof selected) => {
+}: ICatetinSelect<T>) {
+  const isSelected = (option: T) => {
     if (!multiple) {
-      return selected?.[valueKey] === option[valueKey];
+      return (selected as T)?.[valueKey] === option[valueKey];
     }
-    return selected?.some((each: any) => each[valueKey] === option[valueKey]);
+    return (selected as T[])?.find((data) => data[valueKey] === option[valueKey])?.active;
+  };
+
+  const getValue = (option: T) => {
+    const amount = (selected as T[])?.find((data) => data[valueKey] === option[valueKey])?.amount;
+    if (amount === 0) {
+      return '';
+    }
+    return amount?.toString() || '';
   };
   return (
     <CatetinScrollView style={tw`bg-white`}>
@@ -55,9 +105,9 @@ function CatetinSelect({
                   <CatetinInput
                     placeholder="Amount"
                     onChangeText={(value) => {
-                      onChangeAmount(value, option[valueKey]);
+                      onChangeAmount(value, option);
                     }}
-                    value={amountData?.[option[valueKey]] ? amountData?.[option[valueKey]].toString() : ''}
+                    value={getValue(option)}
                     autoCapitalize="none"
                     keyboardType="numeric"
                     style={tw`border-0 border-b p-0 pb-2`}

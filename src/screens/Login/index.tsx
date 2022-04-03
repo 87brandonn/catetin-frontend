@@ -7,22 +7,20 @@ import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
+  ActivityIndicator,
+  AsyncStorage,
   KeyboardAvoidingView,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  AsyncStorage,
-  ActivityIndicator,
 } from 'react-native';
 import { Button } from 'react-native-elements';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import tw from 'twrnc';
 import * as yup from 'yup';
 import { axiosCatetin } from '../../api';
-import { useAppDispatch } from '../../hooks';
 import { RootStackParamList } from '../../navigation';
-import { setAccessToken } from '../../store/features/counter/authSlice';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -57,8 +55,6 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
     },
   });
 
-  const dispatch = useAppDispatch();
-
   const [loadingLogin, setLoadingLogin] = useState(false);
   const [errorLogin, setErrorLogin] = useState('');
 
@@ -80,7 +76,7 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
       await AsyncStorage.setItem('accessToken', token);
       checkProfile(token);
     } catch (err: any) {
-      console.log(err.response);
+      console.log(err);
       setErrorLogin(err.response?.data?.message || 'Failed to register');
     } finally {
       setLoadingLogin(false);

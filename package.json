@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@gorhom/bottom-sheet": "^4",
+    "@gorhom/portal": "^1.0.12",
     "@hookform/resolvers": "^2.8.8",
     "@react-native-community/datetimepicker": "4.0.0",
     "@react-native-picker/picker": "2.2.1",
@@ -47,6 +48,7 @@
     "react-native-elements": "^3.4.2",
     "react-native-gesture-handler": "^2.3.2",
     "react-native-image-crop-picker": "^0.37.3",
+    "react-native-image-viewing": "^0.2.1",
     "react-native-multiple-select": "^0.5.7",
     "react-native-reanimated": "^2.5.0",
     "react-native-safe-area-context": "3.3.2",

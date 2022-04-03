@@ -1,6 +1,6 @@
 import { useNavigation, useRoute } from '@react-navigation/native';
 import React, { useEffect } from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View, Text } from 'react-native';
 import { Icon } from 'react-native-elements';
 import tw from 'twrnc';
 
@@ -12,22 +12,22 @@ function Bottom() {
     {
       name: 'Home',
       icon: 'home',
-      type: 'antdesign',
+      type: 'font-awesome-5',
     },
     {
       name: 'Transaksi',
       icon: 'history',
-      type: undefined,
+      type: 'font-awesome-5',
     },
     {
       name: 'Barang',
       icon: 'box',
-      type: 'feather',
+      type: 'font-awesome-5',
     },
     {
       name: 'Profile',
-      icon: 'user',
-      type: 'simple-line-icon',
+      icon: 'user-circle',
+      type: 'font-awesome-5',
     },
   ];
 
@@ -35,20 +35,23 @@ function Bottom() {
     console.log(route.name);
   }, [route]);
   return (
-    <View style={{ ...tw`bg-white shadow flex flex-row pt-3 pb-[48px] border-t border-slate-100` }}>
+    <View style={{ ...tw`bg-neutral-50 flex flex-row pt-3 pb-[40px] border-t border-slate-100` }}>
       {bottomNavs.map((nav, index) => (
         <View style={tw`flex-1 items-center`} key={index}>
           <TouchableOpacity
             onPress={() => {
               navigate(nav.name);
             }}
+            style={tw`mb-1`}
           >
             <Icon
               name={nav.icon}
               type={nav.type}
-              iconStyle={tw`${nav.name === route.name ? 'text-blue-500' : 'text-gray-800'}`}
+              size={18}
+              iconStyle={tw`${nav.name === route.name ? 'text-blue-500' : 'text-black'}`}
             />
           </TouchableOpacity>
+          <Text style={tw`${nav.name === route.name ? 'text-blue-500' : 'text-gray-500'} text-3`}>{nav.name}</Text>
         </View>
       ))}
     </View>
