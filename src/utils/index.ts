@@ -1,7 +1,7 @@
 import { TransitionPresets } from '@react-navigation/stack';
 import { Platform } from 'react-native';
 import ImagePicker from 'react-native-image-crop-picker';
-import { Profile } from '../types/profil';
+import { Profile, ProfileJoinUser } from '../types/profil';
 
 export const screenOptions = {
   ...TransitionPresets.SlideFromRightIOS,
@@ -17,12 +17,12 @@ export const screenOptions = {
 export const titleCase = (s: string) =>
   s.replace(/^_*(.)|_+(.)/g, (s, c, d) => (c ? c.toUpperCase() : ' ' + d.toUpperCase()));
 
-export const getAvatarTitle = (profile: Profile | null) => {
-  if (profile?.profile_picture) {
+export const getAvatarTitle = (profile: ProfileJoinUser | null) => {
+  if (profile?.Profile?.profilePicture) {
     return undefined;
   }
-  if (profile?.display_name) {
-    return profile?.display_name?.match(/\b(\w)/g)?.join('');
+  if (profile?.Profile?.displayName) {
+    return profile?.Profile.displayName?.match(/\b(\w)/g)?.join('');
   }
   return profile?.username?.match(/\b(\w)/g)?.join('');
 };

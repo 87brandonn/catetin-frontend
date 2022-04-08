@@ -6,22 +6,25 @@ import { Avatar } from 'react-native-elements';
 import tw from 'twrnc';
 import { axiosCatetin } from '../../../api';
 import { RootStackParamList } from '../../../navigation';
-import { Profile } from '../../../types/profil';
+import { ProfileJoinUser } from '../../../types/profil';
 import { getAvatarTitle } from '../../../utils';
 
 function Header({ title = '' }: { title?: string }) {
   const { navigate } = useNavigation<StackNavigationProp<RootStackParamList, 'Home'>>();
   const [loading, setLoading] = useState(true);
-  const [profileData, setProfileData] = useState<Profile | null>(null);
+  const [profileData, setProfileData] = useState<ProfileJoinUser | null>(null);
 
   const fetchProfile = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await axiosCatetin.get('/auth/profile', {
+      const {
+        data: { data },
+      } = await axiosCatetin.get('/auth/profile', {
         headers: {
           Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
         },
       });
+      console.log(data);
       setProfileData(data);
     } catch (err) {
       console.log(err);
@@ -49,7 +52,7 @@ function Header({ title = '' }: { title?: string }) {
             size={36}
             rounded
             source={{
-              uri: profileData?.profile_picture || undefined,
+              uri: profileData?.Profile?.profilePicture || undefined,
             }}
             containerStyle={tw`bg-gray-300`}
             titleStyle={tw`text-gray-200`}

@@ -1,16 +1,17 @@
 import { ICatetinTransaksi, ICatetinTransaksiDetail } from './transaksi';
 
 export interface ICatetinBarang {
-  barang_id: number;
-  created_at: Date;
-  harga: number;
-  nama_barang: string;
-  stok: number;
-  updated_at: Date;
-  user_id: number;
-  barang_picture: string;
+  UserId: number;
+  createdAt: Date;
+  deleted: boolean;
+  id: number;
+  name: string;
+  picture: string;
+  price: number;
+  stock: number;
+  updatedAt: Date;
 }
 
 export type ICatetinBarangWithTransaksi = ICatetinBarang & {
-  transaksi_data: (ICatetinTransaksiDetail & ICatetinTransaksi)[];
+  Transactions: (ICatetinTransaksiDetail & ICatetinTransaksi)[];
 };

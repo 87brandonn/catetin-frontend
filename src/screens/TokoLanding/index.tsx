@@ -14,10 +14,10 @@ function TokoLanding({ navigation: { navigate } }: NativeStackScreenProps<RootSt
   const onSubmit = async () => {
     setLoadingSubmit(true);
     try {
-      await axiosCatetin.post(
-        '/update/profile',
+      await axiosCatetin.put(
+        '/auth/profile',
         {
-          nama_toko: tokoName,
+          storeName: tokoName,
         },
         {
           headers: {

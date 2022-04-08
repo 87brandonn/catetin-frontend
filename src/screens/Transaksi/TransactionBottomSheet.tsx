@@ -1,14 +1,15 @@
 import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
 import React from 'react';
 import { Control, Controller, FieldError, UseFormWatch } from 'react-hook-form';
-import { View, TouchableOpacity, Text } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { Button } from 'react-native-elements';
 import tw from 'twrnc';
-import { IFormSchema } from '.';
 import CatetinInput from '../../components/molecules/Input';
+import { TransactionCreateFormSchema, TransactionCreateRootStackParamList } from './TransactionCreateBottomSheet';
 
 export interface ICreateModalTransaksi {
-  control: Control<IFormSchema, any>;
+  control: Control<TransactionCreateFormSchema, any>;
   errors: {
     id?: FieldError | undefined;
     name?: FieldError | undefined;
@@ -22,14 +23,14 @@ export interface ICreateModalTransaksi {
     tanggal?: FieldError | undefined;
     barang?: FieldError | undefined;
     deskripsi?: FieldError | undefined;
+    total?: FieldError | undefined;
   };
-  watch: UseFormWatch<IFormSchema>;
+  watch: UseFormWatch<TransactionCreateFormSchema>;
   loading: boolean;
   loadingDelete: boolean;
   onSave: () => void;
   showDelete: boolean;
   onDelete: () => void;
-  total: number;
 }
 
 function CreateModal({
@@ -40,19 +41,17 @@ function CreateModal({
   onSave,
   onDelete,
   showDelete = false,
-  total,
   loadingDelete,
 }: ICreateModalTransaksi) {
-  const { navigate } = useNavigation();
+  const { navigate } = useNavigation<StackNavigationProp<TransactionCreateRootStackParamList, 'Transaction Default'>>();
   const editingMode = watch('transaksi_id') !== 0;
-  const barangFiltered = watch('barang')?.filter((barang) => barang.active === true);
   return (
     <View style={tw`flex-1`}>
       <View style={tw`mb-4`}>
         <Text style={tw`mb-1 text-base`}>Nama Transaksi</Text>
         <Controller
           control={control}
-          render={({ field: { onChange, onBlur, value } }) => (
+          render={({ field: { onChange, value } }) => (
             <CatetinInput placeholder="Nama Transaksi" onChangeText={onChange} value={value} />
           )}
           name="name"
@@ -89,26 +88,28 @@ function CreateModal({
           />
         </TouchableOpacity>
 
-        {errors.tipe && <Text style={tw`text-red-500 text-3 mt-1`}>{errors.tipe?.message as any}</Text>}
+        {errors.tipe && <Text style={tw`text-red-500 text-3 mt-1`}>{(errors.tipe as any)?.message as any}</Text>}
       </View>
-      {(watch('tipe')?.value === 3 || watch('tipe')?.value === 4) && (
+      {(watch('tipe')?.value === 1 || watch('tipe')?.value === 2) && (
         <View style={tw`mb-4`}>
-          <Text style={tw`mb-1 text-base`}>Barang</Text>
-          <TouchableOpacity
-            onPress={() => {
-              requestAnimationFrame(() => navigate('Transaction Barang'));
-            }}
-          >
-            <CatetinInput
-              placeholder="Barang"
-              pointerEvents="none"
-              value={barangFiltered?.map((barang) => barang.nama_barang).join(', ')}
-            />
-          </TouchableOpacity>
+          <Text style={tw`mb-1 text-base`}>Nominal Transaksi</Text>
 
-          {errors.barang && <Text style={tw`text-red-500 text-3 mt-1`}>{errors.barang.message}</Text>}
+          <Controller
+            control={control}
+            render={({ field: { onChange, value } }) => (
+              <CatetinInput
+                placeholder="Nominal Transaksi"
+                keyboardType="numeric"
+                value={value?.toString() || ''}
+                onChangeText={onChange}
+              />
+            )}
+            name="total"
+          />
+          {errors.total && <Text style={tw`text-red-500 text-3 mt-1`}>{errors.total?.message as any}</Text>}
         </View>
       )}
+
       <View style={tw`mb-4`}>
         <Text style={tw`mb-1 text-base`}>Deskripsi Transaksi</Text>
         <Controller
@@ -127,16 +128,7 @@ function CreateModal({
         />
         {errors.deskripsi && <Text style={tw`text-red-500 text-3 mt-1`}>{errors.deskripsi.message}</Text>}
       </View>
-      {(watch('tipe')?.value === 3 || watch('tipe')?.value === 4) && (
-        <View style={tw`flex flex-row justify-between items-center px-3 mb-4`}>
-          <View>
-            <Text style={tw`text-lg`}>Total</Text>
-          </View>
-          <View>
-            <Text style={tw`text-lg`}>IDR {total.toLocaleString()}</Text>
-          </View>
-        </View>
-      )}
+
       <View>
         <Button
           title="Save"

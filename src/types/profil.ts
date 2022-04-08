@@ -1,6 +1,23 @@
 export interface Profile {
-  nama_toko: string | null;
-  username: string;
-  display_name: string | null;
-  profile_picture: string | null;
+  UserId: number;
+  createdAt: string;
+  displayName: string | null;
+  id: number;
+  profilePicture: string | null;
+  storeName: string | null;
+  updatedAt: string;
 }
+
+export interface User {
+  createdAt: string;
+  email: string;
+  id: number;
+  password: string;
+  provider: string;
+  updatedAt: string;
+  username: string;
+}
+
+export type ProfileJoinUser = User & {
+  Profile: Profile;
+};

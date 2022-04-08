@@ -1,6 +1,6 @@
 import BottomSheet from '@gorhom/bottom-sheet';
 import { Portal } from '@gorhom/portal';
-
+import Toast from 'react-native-toast-message';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import moment from 'moment';
@@ -24,7 +24,7 @@ import CatetinInput from '../../components/molecules/Input';
 import CatetinSelect from '../../components/molecules/Select';
 import AppLayout from '../../layouts/AppLayout';
 import { RootStackParamList } from '../../navigation';
-import { Profile } from '../../types/profil';
+import { Profile, ProfileJoinUser } from '../../types/profil';
 import { getAvatarTitle } from '../../utils';
 
 export interface IFormSchema {
@@ -40,7 +40,7 @@ const schema = yup.object().shape({
 });
 function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<RootStackParamList, 'Profile'>) {
   const [loading, setLoading] = useState(true);
-  const [profileData, setProfileData] = useState<Profile | null>(null);
+  const [profileData, setProfileData] = useState<ProfileJoinUser | null>(null);
   const [loadingUpdate, setLoadingUpdate] = useState(false);
 
   const options = [
@@ -89,7 +89,9 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
   const fetchProfile = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await axiosCatetin.get('/auth/profile', {
+      const {
+        data: { data },
+      } = await axiosCatetin.get('/auth/profile', {
         headers: {
           Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
         },
@@ -106,10 +108,19 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
   const handleSaveChanges = async () => {
     setLoadingUpdate(true);
     try {
-      await axiosCatetin.put('/auth/profile', profileData, {
-        headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+      await axiosCatetin.put(
+        '/auth/profile',
+        { ...profileData?.Profile },
+        {
+          headers: {
+            Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+          },
         },
+      );
+      Toast.show({
+        type: 'customToast',
+        text2: 'Succesfully update profile!',
+        position: 'bottom',
       });
     } catch (err) {
       console.error(err);
@@ -142,7 +153,6 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
   };
 
   const onSubmit = (data: IFormSchema) => {
-    console.log(data);
     reset({
       new_password: '',
       current_password: '',
@@ -180,8 +190,11 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
         (data) =>
           ({
             ...data,
-            profile_picture: url,
-          } as Profile),
+            Profile: {
+              ...data?.Profile,
+              profilePicture: url,
+            },
+          } as ProfileJoinUser),
       );
     } catch (err: any) {
       // ignore error
@@ -302,7 +315,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
                 size={96}
                 rounded
                 source={{
-                  uri: profileData?.profile_picture || undefined,
+                  uri: profileData?.Profile.profilePicture || undefined,
                 }}
                 containerStyle={tw`bg-gray-300`}
                 titleStyle={tw`text-gray-200`}
@@ -320,14 +333,17 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
             <View style={tw`mb-4`}>
               <CatetinInput
                 style={tw`text-3xl text-center border-0`}
-                value={profileData?.display_name || ''}
+                value={profileData?.Profile.displayName || ''}
                 onChangeText={(value) => {
                   setProfileData(
                     (data) =>
                       ({
                         ...data,
-                        display_name: value,
-                      } as Profile),
+                        Profile: {
+                          ...data?.Profile,
+                          displayName: value,
+                        },
+                      } as ProfileJoinUser),
                   );
                 }}
                 placeholder={'Display Name'}
@@ -337,20 +353,26 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
               <Text style={tw`mb-1 text-base`}>Username</Text>
               <Text style={tw`font-bold text-lg`}>{profileData?.username}</Text>
             </View>
-
+            <View style={tw`mb-4`}>
+              <Text style={tw`mb-1 text-base`}>Email</Text>
+              <Text style={tw`font-bold text-lg`}>{profileData?.email}</Text>
+            </View>
             <View style={tw`mb-4`}>
               <Text style={tw`mb-1 text-base`}>Nama Toko</Text>
               <CatetinInput
                 placeholder="Nama Toko"
                 style={tw`border border-slate-200`}
-                value={profileData?.nama_toko || ''}
+                value={profileData?.Profile.storeName || ''}
                 onChangeText={(value) => {
                   setProfileData(
                     (data) =>
                       ({
                         ...data,
-                        nama_toko: value,
-                      } as Profile),
+                        Profile: {
+                          ...data?.Profile,
+                          storeName: value,
+                        },
+                      } as ProfileJoinUser),
                   );
                 }}
               ></CatetinInput>
@@ -369,13 +391,13 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
                   style={tw`border border-slate-200 mb-1`}
                   value={scheduleLaporan?.label}
                   onChangeText={(value) => {
-                    setProfileData(
-                      (data) =>
-                        ({
-                          ...data,
-                          nama_toko: value,
-                        } as Profile),
-                    );
+                    // setProfileData(
+                    //   (data) =>
+                    //     ({
+                    //       ...data,
+                    //       nama_toko: value,
+                    //     } as ProfileJoinUser),
+                    // );
                   }}
                 ></CatetinInput>
               </TouchableOpacity>
@@ -387,7 +409,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
           </View>
 
           <View style={tw`mb-4`}>
-            <View style={tw`mb-4`}>
+            <View style={tw`mb-3`}>
               <Button
                 title="Save Changes"
                 buttonStyle={tw`bg-blue-500`}
@@ -398,7 +420,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
                 loading={loadingUpdate}
               />
             </View>
-            <View style={tw`mb-4`}>
+            <View style={tw`mb-3`}>
               <Button
                 title="Change Password"
                 buttonStyle={tw`bg-blue-500`}
