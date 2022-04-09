@@ -37,22 +37,21 @@ function Bottom() {
   return (
     <View style={{ ...tw`bg-neutral-50 flex flex-row pt-3 pb-[40px] border-t border-slate-100` }}>
       {bottomNavs.map((nav, index) => (
-        <View style={tw`flex-1 items-center`} key={index}>
-          <TouchableOpacity
-            onPress={() => {
-              navigate(nav.name);
-            }}
-            style={tw`mb-1`}
-          >
-            <Icon
-              name={nav.icon}
-              type={nav.type}
-              size={18}
-              iconStyle={tw`${nav.name === route.name ? 'text-blue-500' : 'text-black'}`}
-            />
-          </TouchableOpacity>
+        <TouchableOpacity
+          style={tw`flex-1 items-center`}
+          key={index}
+          onPress={() => {
+            navigate(nav.name);
+          }}
+        >
+          <Icon
+            name={nav.icon}
+            type={nav.type}
+            size={18}
+            iconStyle={tw`${nav.name === route.name ? 'text-blue-500' : 'text-black'} mb-1`}
+          />
           <Text style={tw`${nav.name === route.name ? 'text-blue-500' : 'text-gray-500'} text-3`}>{nav.name}</Text>
-        </View>
+        </TouchableOpacity>
       ))}
     </View>
   );

@@ -13,5 +13,9 @@ export interface ICatetinBarang {
 }
 
 export type ICatetinBarangWithTransaksi = ICatetinBarang & {
-  Transactions: (ICatetinTransaksiDetail & ICatetinTransaksi)[];
+  Transactions: ({ ItemTransaction: ICatetinTransaksiDetail } & ICatetinTransaksi)[];
+};
+
+export type ICatetinBarangWithTransaksiDetail = ICatetinBarang & {
+  ItemTransaction: ICatetinTransaksiDetail;
 };

@@ -21,6 +21,7 @@ export interface IFormSchema {
   id: number;
   name: string;
   harga: number | string;
+  stok: number | string;
   barang_picture: string | null;
 }
 
@@ -83,6 +84,7 @@ function Barang() {
   }, [fetchBarang]);
 
   const [loadDetail, setLoadDetail] = useState(true);
+  const [loadingDelete, setLoadingDelete] = useState(false);
   const [barangTransaksi, setBarangTransaksi] = useState<ICatetinBarangWithTransaksi | null>(null);
 
   const handleEdit = (barang: ICatetinBarang) => {
@@ -182,6 +184,31 @@ function Barang() {
       setLoading(false);
     }
   };
+  const handleDelete = async () => {
+    setLoadingDelete(true);
+    try {
+      await axiosCatetin.delete(`/barang/${watch('id')}`, {
+        headers: {
+          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+        },
+      });
+      bottomSheetRef?.current?.close();
+      Toast.show({
+        type: 'customToast',
+        text2: 'Berhasil menghapus barang',
+        position: 'bottom',
+      });
+      fetchBarang();
+    } catch (err: any) {
+      Toast.show({
+        type: 'customToast',
+        text2: err.response?.data?.message,
+        position: 'bottom',
+      });
+    } finally {
+      setLoadingDelete(false);
+    }
+  };
   return (
     <AppLayout headerTitle="Barang">
       <Portal>
@@ -198,7 +225,9 @@ function Barang() {
             watch={watch}
             loading={loading}
             onSave={() => handleSubmit(onSubmit)()}
+            onDelete={() => handleDelete()}
             title="Create Barang"
+            loadingDelete={loadingDelete}
           />
         </BottomSheet>
       </Portal>

@@ -18,6 +18,9 @@ import { ICatetinTransaksi } from '../../types/transaksi';
 import { screenOptions } from '../../utils';
 import CreateModal from './TransactionBottomSheet';
 import TransactionBottomSheetWrapper from './TransactionBottomSheetWrapper';
+import { setSelectedTransaction } from '../../store/features/transactionSlice';
+import { useAppDispatch } from '../../hooks';
+import { optionsTransaksi } from '../../static/optionsTransaksi';
 
 export interface ICatetinTipeTransaksi {
   label: string;
@@ -49,25 +52,6 @@ const schema = yup.object().shape({
   deskripsi: yup.string(),
   total: yup.number().required('Total is required'),
 });
-
-const optionsTransaksi = [
-  {
-    label: 'Pengeluaran',
-    value: 1,
-  },
-  {
-    label: 'Pemasukan',
-    value: 2,
-  },
-  {
-    label: 'Penjualan',
-    value: 3,
-  },
-  {
-    label: 'Pembelian barang',
-    value: 4,
-  },
-];
 
 interface ITransactionDetailBottomSheet {
   bottomSheetRef: React.RefObject<BottomSheetMethods>;
@@ -106,6 +90,8 @@ function TransactionCreateBottomSheet({
     },
   });
 
+  const dispatch = useAppDispatch();
+
   useEffect(() => {
     if (data) {
       setValue('name', data.title);
@@ -118,14 +104,7 @@ function TransactionCreateBottomSheet({
       );
       setValue('transaksi_id', data.id);
     } else {
-      reset({
-        name: '',
-        tanggal: new Date(),
-        deskripsi: '',
-        total: 0,
-        tipe: null,
-        transaksi_id: 0,
-      });
+      reset({ transaksi_id: 0, name: '', tipe: null, tanggal: new Date(), deskripsi: '', total: 0 });
     }
   }, [data, reset, setValue]);
 
@@ -152,7 +131,9 @@ function TransactionCreateBottomSheet({
         dataTransaksi = insertedData;
       } else {
         const {
-          data: { data: updatedData },
+          data: {
+            data: [updatedData],
+          },
         } = await axiosCatetin.put('/transaksi', finalData, {
           headers: {
             Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
@@ -161,11 +142,20 @@ function TransactionCreateBottomSheet({
         dataTransaksi = updatedData;
       }
       bottomSheetRef.current?.close();
+      reset({
+        name: '',
+        tanggal: new Date(),
+        deskripsi: '',
+        total: 0,
+        tipe: null,
+        transaksi_id: 0,
+      });
       Toast.show({
         type: 'customToast',
         text2: `Sukses ${data.transaksi_id === 0 ? 'menambah' : 'memperbarui'} transaksi`,
         position: 'bottom',
       });
+      dispatch(setSelectedTransaction(null));
       onFinishSubmit(dataTransaksi);
     } catch (err: any) {
       Toast.show({

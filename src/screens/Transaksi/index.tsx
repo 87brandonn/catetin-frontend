@@ -1,14 +1,15 @@
 import BottomSheet from '@gorhom/bottom-sheet';
 import moment from 'moment';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, AsyncStorage, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, AsyncStorage, FlatList, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
+import { Avatar } from 'react-native-elements';
 import tw from 'twrnc';
 import { axiosCatetin } from '../../api';
-import { useAppDispatch } from '../../hooks';
+import { useAppDispatch, useAppSelector } from '../../hooks';
 import AppLayout from '../../layouts/AppLayout';
-import CatetinScrollView from '../../layouts/ScrollView';
-import { setSelectedTransaction } from '../../store/features/transactionSlice';
-import { ICatetinTransaksi } from '../../types/transaksi';
+import { RootState } from '../../store';
+import { setEditedTransaction, setSelectedTransaction } from '../../store/features/transactionSlice';
+import { ICatetinTransaksi, ICatetinTransaksiWithDetail } from '../../types/transaksi';
 import TransactionAction from './TransactionAction';
 import TransactionCreateBottomSheet from './TransactionCreateBottomSheet';
 import TransactionDetailBottomSheet from './TransactionDetailBottomSheet';
@@ -18,13 +19,17 @@ function Transaksi() {
   const dispatch = useAppDispatch();
   const [loadingTransaksi, setLoadingTransaksi] = useState(true);
 
-  const [transaksi, setTransaksi] = useState<ICatetinTransaksi[] | null>(null);
-  const [editedTransaksi, setEditedTransaksi] = useState<ICatetinTransaksi | null>(null);
-  const [dataDetail, setDataDetail] = useState<ICatetinTransaksi | null>(null);
-  const [loadingDetail, setLoadingDetail] = useState(false);
+  const { editedTransaction } = useAppSelector((state: RootState) => state.transaction);
 
-  const fetchTransaksi = useCallback(async (isMounted = true) => {
-    setLoadingTransaksi(true);
+  const [transaksi, setTransaksi] = useState<ICatetinTransaksiWithDetail[] | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchTransaksi = useCallback(async (isMounted = true, refreshing = false) => {
+    if (refreshing) {
+      setRefreshing(true);
+    } else {
+      setLoadingTransaksi(true);
+    }
     try {
       const {
         data: { data },
@@ -35,30 +40,16 @@ function Transaksi() {
       });
       if (isMounted) {
         setTransaksi(data);
-        setLoadingTransaksi(false);
+        if (refreshing) {
+          setRefreshing(false);
+        } else {
+          setLoadingTransaksi(false);
+        }
       }
     } catch (err) {
       console.log(err);
     }
   }, []);
-
-  const fetchTransaksiDetail = async (id: number) => {
-    setLoadingDetail(true);
-    try {
-      const {
-        data: { data },
-      } = await axiosCatetin.get(`/transaksi/${id}`, {
-        headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
-        },
-      });
-      setDataDetail(data);
-    } catch (err) {
-      console.log(err);
-    } finally {
-      setLoadingDetail(false);
-    }
-  };
 
   useEffect(() => {
     let isMounted = true;
@@ -72,21 +63,49 @@ function Transaksi() {
   const bottomSheetRefFilter = useRef<BottomSheet>(null);
   const bottomSheetRefDetail = useRef<BottomSheet>(null);
 
-  const handleEdit = (transaksi: ICatetinTransaksi) => {
-    setEditedTransaksi({
-      id: transaksi.id,
-      title: transaksi.title,
-      type: transaksi.type,
-      transaction_date: transaksi.transaction_date,
-      notes: transaksi.notes,
-      nominal: transaksi.nominal,
-      createdAt: transaksi.createdAt,
-      updatedAt: transaksi.updatedAt,
-      UserId: transaksi.UserId,
-      deleted: transaksi.deleted,
-    });
-    bottomSheetRef.current?.expand();
-  };
+  useEffect(() => {
+    if (editedTransaction) {
+      bottomSheetRefDetail.current?.close();
+      bottomSheetRef.current?.expand();
+    }
+  }, [editedTransaction]);
+
+  const renderList = ({ item }: { item: ICatetinTransaksiWithDetail }) => (
+    <TouchableOpacity
+      style={tw`shadow-lg bg-white rounded-[12px] px-3 py-2 mb-2 flex flex-row justify-between`}
+      key={item.id}
+      onPress={() => {
+        bottomSheetRefDetail.current?.close();
+        dispatch(setSelectedTransaction(item.id));
+        bottomSheetRefDetail.current?.expand();
+      }}
+    >
+      <View>
+        <Text style={tw`font-bold text-xl`}>{item.title}</Text>
+        <Text style={tw`font-500 text-lg`}>IDR {item.nominal?.toLocaleString()}</Text>
+        {(item.notes && <Text style={tw`text-slate-500 text-sm`}>{item.notes}</Text>) || null}
+        {item.Items.length > 0 && (
+          <View style={tw`flex flex-row mt-1 mb-2`}>
+            {item.Items.map((item, index) => (
+              <Avatar
+                size={64}
+                // rounded
+                source={{
+                  uri: item.picture || undefined,
+                }}
+                avatarStyle={tw`rounded-[12px]`}
+                containerStyle={tw`mr-3`}
+                key={index}
+              ></Avatar>
+            ))}
+          </View>
+        )}
+        <View>
+          <Text style={tw`text-3`}>{moment(item.transaction_date).format('dddd, DD MMMM YYYY')}</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
     <AppLayout headerTitle="Transaksi">
@@ -95,10 +114,12 @@ function Transaksi() {
         onFinishDelete={() => {
           fetchTransaksi();
         }}
-        data={editedTransaksi}
+        data={editedTransaction}
         onFinishSubmit={(data: ICatetinTransaksi) => {
+          console.log(data);
           fetchTransaksi();
           if (data.type === '3' || data.type === '4') {
+            dispatch(setSelectedTransaction(data.id));
             bottomSheetRefDetail.current?.expand();
           }
         }}
@@ -107,41 +128,28 @@ function Transaksi() {
       <TransactionSortBottomSheet bottomSheetRefFilter={bottomSheetRefFilter} />
       <TransactionAction
         onClickPlus={() => {
-          setEditedTransaksi(null);
+          dispatch(setEditedTransaction(null));
           bottomSheetRef.current?.expand();
         }}
         onClickFilter={() => {
           bottomSheetRefFilter.current?.expand();
         }}
       />
-      <CatetinScrollView style={tw`flex-1 px-3`}>
-        <View style={tw`flex-1 py-5`}>
-          {loadingTransaksi ? (
-            <ActivityIndicator />
-          ) : (
-            transaksi?.map((eachTransaksi) => (
-              <TouchableOpacity
-                style={tw`shadow-lg bg-white rounded-[12px] px-3 py-2 mb-2 flex flex-row justify-between`}
-                key={eachTransaksi.id}
-                onPress={() => {
-                  dispatch(setSelectedTransaction(eachTransaksi.id));
-                  bottomSheetRefDetail.current?.expand();
-                  // handleEdit(eachTransaksi);
-                }}
-              >
-                <View>
-                  <Text style={tw`font-bold text-xl`}>{eachTransaksi.title}</Text>
-                  <Text style={tw`font-500 text-lg`}>IDR {eachTransaksi.nominal?.toLocaleString()}</Text>
-                  <Text style={tw``}>Notes : {eachTransaksi.notes}</Text>
-                </View>
-                <View>
-                  <Text style={tw`text-3`}>{moment(eachTransaksi.transaction_date).format('DD/MM/YYYY')}</Text>
-                </View>
-              </TouchableOpacity>
-            ))
-          )}
-        </View>
-      </CatetinScrollView>
+      <View style={tw`flex-1`}>
+        {loadingTransaksi ? (
+          <ActivityIndicator />
+        ) : (
+          <FlatList
+            data={transaksi}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={renderList}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchTransaksi(true, true)} />}
+            contentContainerStyle={tw`bg-white px-3 pt-5 pb-[40px]`}
+            showsHorizontalScrollIndicator={false}
+            showsVerticalScrollIndicator={false}
+          ></FlatList>
+        )}
+      </View>
     </AppLayout>
   );
 }

@@ -96,8 +96,8 @@ export default function RootNavigation() {
             />
           </Stack.Navigator>
         </NavigationContainer>
-        <Toast config={toastConfig} />
       </PortalProvider>
+      <Toast config={toastConfig} />
     </>
   );
 }

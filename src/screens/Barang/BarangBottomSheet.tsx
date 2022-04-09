@@ -1,5 +1,5 @@
 import React from 'react';
-import { Control, Controller, FieldError, UseFormWatch } from 'react-hook-form';
+import { Control, Controller, FieldError, UseFormWatch, useWatch } from 'react-hook-form';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Avatar, Button } from 'react-native-elements';
 import tw from 'twrnc';
@@ -25,11 +25,13 @@ export interface ICreateModalBarang {
   };
   watch: UseFormWatch<IFormSchema>;
   loading: boolean;
+  loadingDelete: boolean;
   onSave: () => void;
+  onDelete: () => void;
   title: string;
 }
 
-function CreateModal({ control, errors, watch, loading, onSave, title }: ICreateModalBarang) {
+function CreateModal({ control, errors, loading, onSave, title, onDelete, loadingDelete, watch }: ICreateModalBarang) {
   return (
     <View style={tw`flex-1 px-3`}>
       <View style={tw`mb-4`}>
@@ -96,7 +98,7 @@ function CreateModal({ control, errors, watch, loading, onSave, title }: ICreate
       <View>
         <Button
           title="Save"
-          buttonStyle={tw`bg-blue-500`}
+          buttonStyle={tw`bg-blue-500 mb-3`}
           titleStyle={tw`font-bold`}
           onPress={() => {
             onSave();
@@ -104,6 +106,19 @@ function CreateModal({ control, errors, watch, loading, onSave, title }: ICreate
           loading={loading}
         />
       </View>
+      {watch('id') !== 0 && (
+        <View>
+          <Button
+            title="Delete"
+            buttonStyle={tw`bg-red-500`}
+            titleStyle={tw`font-bold`}
+            onPress={() => {
+              onDelete();
+            }}
+            loading={loadingDelete}
+          />
+        </View>
+      )}
     </View>
   );
 }

@@ -17,6 +17,7 @@ export interface ICatetinTransaksiDetail {
   createdAt: Date;
   updatedAt: Date;
   ItemId: number;
+  total : number;
   TransactionId: number;
 }
 export type ICatetinTransaksiWithDetail = ICatetinTransaksi & {

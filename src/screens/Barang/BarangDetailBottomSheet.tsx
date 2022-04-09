@@ -74,10 +74,14 @@ function BarangDetailBottomSheet({ bottomSheetRefDetail, data, loading }: IBaran
                       {data?.Transactions.map((transaksi) => (
                         <Fragment key={transaksi.id}>
                           <View style={tw`bg-white shadow-lg px-4 py-2 rounded-[12px] mb-4`}>
-                            <Text style={tw`text-base`}>{transaksi.title}</Text>
+                            <Text style={tw`text-lg font-bold`}>{transaksi.title}</Text>
+                            <Text style={tw`text-base`}>Jumlah: {transaksi.ItemTransaction.amount}</Text>
+                            <Text style={tw`text-base`}>
+                              Total: IDR {transaksi.ItemTransaction.total.toLocaleString()}
+                            </Text>
                             <Text style={tw`text-base`}>Notes: {transaksi.notes || '-'}</Text>
-                            <Text style={tw`text-base`}>IDR {transaksi.nominal.toLocaleString()}</Text>
-                            <Text style={tw`text-3`}>{moment(transaksi.transaction_date).fromNow()}</Text>
+                            {/* <Text style={tw`text-base`}>IDR {transaksi.nominal.toLocaleString()}</Text> */}
+                            <Text style={tw`text-3 text-gray-400 mt-2`}>{moment(transaksi.transaction_date).fromNow()}</Text>
                           </View>
                         </Fragment>
                       ))}

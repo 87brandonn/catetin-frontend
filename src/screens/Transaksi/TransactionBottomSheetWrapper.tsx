@@ -1,7 +1,8 @@
+import { BottomSheetFlatList, BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import React from 'react';
-import { TouchableOpacity, View, Text } from 'react-native';
+import { TouchableOpacity, View, Text, KeyboardAvoidingView } from 'react-native';
 import { Icon } from 'react-native-elements';
 import tw from 'twrnc';
 import CatetinScrollView from '../../layouts/ScrollView';
@@ -20,7 +21,11 @@ function TransactionBottomSheetWrapper({
 }) {
   const { navigate } = useNavigation<StackNavigationProp<RootStackParamList, 'Transaksi'>>();
   return (
-    <CatetinScrollView style={tw`flex-1 px-4`}>
+    <BottomSheetScrollView
+      style={tw`flex-1 px-4`}
+      showsHorizontalScrollIndicator={false}
+      showsVerticalScrollIndicator={false}
+    >
       <View style={tw`relative`}>
         {showBack && (
           <View style={tw`absolute left-0 z-10`}>
@@ -35,7 +40,7 @@ function TransactionBottomSheetWrapper({
         <View />
       </View>
       <View style={tw`flex-1 pt-4 mb-[48px]`}>{children}</View>
-    </CatetinScrollView>
+    </BottomSheetScrollView>
   );
 }
 
