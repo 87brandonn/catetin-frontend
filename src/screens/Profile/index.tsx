@@ -1,22 +1,15 @@
 import BottomSheet from '@gorhom/bottom-sheet';
 import { Portal } from '@gorhom/portal';
-import Toast from 'react-native-toast-message';
 import { yupResolver } from '@hookform/resolvers/yup';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import moment from 'moment';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import {
-  ActivityIndicator,
-  AsyncStorage,
-  KeyboardAvoidingView,
-  Platform,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Text, TouchableOpacity, View } from 'react-native';
 import { Avatar, Button } from 'react-native-elements';
 import ImagePicker from 'react-native-image-crop-picker';
+import Toast from 'react-native-toast-message';
 import tw from 'twrnc';
 import * as yup from 'yup';
 import { axiosCatetin } from '../../api';
@@ -24,7 +17,7 @@ import CatetinInput from '../../components/molecules/Input';
 import CatetinSelect from '../../components/molecules/Select';
 import AppLayout from '../../layouts/AppLayout';
 import { RootStackParamList } from '../../navigation';
-import { Profile, ProfileJoinUser } from '../../types/profil';
+import { ProfileJoinUser } from '../../types/profil';
 import { getAvatarTitle } from '../../utils';
 
 export interface IFormSchema {

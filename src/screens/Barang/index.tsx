@@ -3,7 +3,8 @@ import { Portal } from '@gorhom/portal';
 import { yupResolver } from '@hookform/resolvers/yup';
 import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { ActivityIndicator, AsyncStorage, Text, TouchableOpacity, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ActivityIndicator, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
 import { Avatar, Icon } from 'react-native-elements';
 import tw from 'twrnc';
 import Toast from 'react-native-toast-message';
@@ -20,8 +21,8 @@ import BarangFilterBottomSheet from './BarangFilterBottomSheet';
 export interface IFormSchema {
   id: number;
   name: string;
-  harga: number | string;
-  stok: number | string;
+  harga: number;
+  stok: number;
   barang_picture: string | null;
 }
 
@@ -29,6 +30,7 @@ const schema = yup.object().shape({
   id: yup.number(),
   name: yup.string().required('Nama barang is required'),
   harga: yup.number().typeError('Please input number').required('Harga is required'),
+  stok: yup.number().required('Stok is required'),
   barang_picture: yup.mixed(),
 });
 
@@ -44,8 +46,9 @@ function Barang() {
     resolver: yupResolver(schema),
     defaultValues: {
       id: 0,
+      stok: 0,
       name: '',
-      harga: '',
+      harga: 0,
       barang_picture: null,
     },
   });
@@ -53,15 +56,18 @@ function Barang() {
   const [loading, setLoading] = useState(false);
   const [barang, setBarang] = useState<ICatetinBarang[]>([]);
   const [loadingFetch, setLoadingFetch] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const bottomSheetRef = useRef<BottomSheet>(null);
   const bottomSheetRefFilter = useRef<BottomSheet>(null);
   const bottomSheetRefDetail = useRef<BottomSheet>(null);
 
-  const [preview, setPreview] = useState<ICatetinBarang | null>(null);
-
-  const fetchBarang = useCallback(async (params = {}) => {
-    setLoadingFetch(true);
+  const fetchBarang = useCallback(async (params = {}, isRefreshing = false) => {
+    if (isRefreshing) {
+      setRefreshing(true);
+    } else {
+      setLoadingFetch(true);
+    }
     try {
       const {
         data: { data },
@@ -73,9 +79,14 @@ function Barang() {
       });
       console.log(data);
       setBarang(data);
-      setLoadingFetch(false);
     } catch (err) {
       console.log(err);
+    } finally {
+      if (isRefreshing) {
+        setRefreshing(false);
+      } else {
+        setLoadingFetch(false);
+      }
     }
   }, []);
 
@@ -92,6 +103,7 @@ function Barang() {
     setValue('harga', barang.price);
     setValue('id', barang.id);
     setValue('barang_picture', barang.picture);
+    setValue('stok', barang.stock);
     bottomSheetRef.current?.expand();
   };
 
@@ -102,6 +114,7 @@ function Barang() {
         name: data.name,
         price: data.harga,
         picture: data.barang_picture,
+        stock: data.stok,
       },
       {
         headers: {
@@ -119,6 +132,7 @@ function Barang() {
         name: data.name,
         price: data.harga,
         picture: data.barang_picture,
+        stock: data.stok,
       },
       {
         headers: {
@@ -164,7 +178,8 @@ function Barang() {
       reset({
         id: 0,
         name: '',
-        harga: '',
+        harga: 0,
+        stok: 0,
         barang_picture: null,
       });
       Toast.show({
@@ -238,7 +253,6 @@ function Barang() {
         }}
         onApplySort={(query) => {
           bottomSheetRefFilter.current?.close();
-          console.log(query);
           fetchBarang(query);
         }}
         bottomSheetRefFilter={bottomSheetRefFilter}
@@ -253,7 +267,8 @@ function Barang() {
           reset({
             id: 0,
             name: '',
-            harga: '',
+            harga: 0,
+            stok: 0,
             barang_picture: null,
           });
           bottomSheetRef.current?.expand();
@@ -263,7 +278,10 @@ function Barang() {
         }}
       />
 
-      <CatetinScrollView style={tw`flex-1`}>
+      <CatetinScrollView
+        style={tw`flex-1`}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchBarang(undefined, true)} />}
+      >
         <View style={tw`px-4 py-5`}>
           {loadingFetch ? (
             <ActivityIndicator />

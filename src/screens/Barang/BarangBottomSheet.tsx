@@ -1,6 +1,7 @@
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import React from 'react';
-import { Control, Controller, FieldError, UseFormWatch, useWatch } from 'react-hook-form';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Control, Controller, FieldError, UseFormWatch } from 'react-hook-form';
+import { Text, View } from 'react-native';
 import { Avatar, Button } from 'react-native-elements';
 import tw from 'twrnc';
 import { IFormSchema } from '.';
@@ -19,9 +20,9 @@ export interface ICreateModalBarang {
           value?: FieldError | undefined;
         }
       | undefined;
-    tanggal?: FieldError | undefined;
     barang?: FieldError | undefined;
-    deskripsi?: FieldError | undefined;
+    stok?: FieldError | undefined;
+    harga?: FieldError | undefined;
   };
   watch: UseFormWatch<IFormSchema>;
   loading: boolean;
@@ -33,7 +34,11 @@ export interface ICreateModalBarang {
 
 function CreateModal({ control, errors, loading, onSave, title, onDelete, loadingDelete, watch }: ICreateModalBarang) {
   return (
-    <View style={tw`flex-1 px-3`}>
+    <BottomSheetScrollView
+      showsHorizontalScrollIndicator={false}
+      showsVerticalScrollIndicator={false}
+      style={tw`flex-1 px-3`}
+    >
       <View style={tw`mb-4`}>
         <Text style={tw`font-bold text-lg text-center`}>{title}</Text>
       </View>
@@ -43,9 +48,9 @@ function CreateModal({ control, errors, loading, onSave, title, onDelete, loadin
           control={control}
           render={({ field: { onChange, onBlur, value } }) => (
             <CatetinInput
+              bottomSheet={true}
               placeholder="Nama Barang"
               style={tw`border-b border-gray-100 px-4 py-3 rounded`}
-              onBlur={onBlur}
               onChangeText={onChange}
               value={value}
             />
@@ -55,18 +60,40 @@ function CreateModal({ control, errors, loading, onSave, title, onDelete, loadin
         {errors.name && <Text style={tw`text-red-500 mt-1`}>{errors.name.message}</Text>}
       </View>
       <View style={tw`mb-4`}>
+        <Text style={tw`mb-1 text-base`}>Stok</Text>
+        <Controller
+          control={control}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <CatetinInput
+              bottomSheet={true}
+              placeholder="Stok"
+              style={tw`border-b border-gray-100 px-4 py-3 rounded`}
+              onChangeText={(value) => {
+                onChange(parseInt(value || '0', 10));
+              }}
+              keyboardType="numeric"
+              value={(value !== 0 && value.toString()) || ''}
+              disabled={watch('id') !== 0}
+            />
+          )}
+          name="stok"
+        />
+        {errors.stok && <Text style={tw`text-red-500 mt-1`}>{errors.stok.message}</Text>}
+      </View>
+      <View style={tw`mb-4`}>
         <Text style={tw`mb-1 text-base`}>Harga Barang</Text>
         <Controller
           control={control}
           render={({ field: { onChange, onBlur, value } }) => (
             <CatetinInput
+              bottomSheet={true}
               placeholder="Harga"
               style={tw`border-b border-gray-100 px-4 py-3 rounded`}
-              onBlur={onBlur}
               onChangeText={(value) => {
-                onChange(value.replace(/[^0-9]/g, ''));
+                onChange(parseInt(value || '0', 10));
               }}
-              value={value.toString()}
+              keyboardType="numeric"
+              value={(value !== 0 && value.toString()) || ''}
             />
           )}
           name="harga"
@@ -95,31 +122,33 @@ function CreateModal({ control, errors, loading, onSave, title, onDelete, loadin
           name="barang_picture"
         />
       </View>
-      <View>
-        <Button
-          title="Save"
-          buttonStyle={tw`bg-blue-500 mb-3`}
-          titleStyle={tw`font-bold`}
-          onPress={() => {
-            onSave();
-          }}
-          loading={loading}
-        />
-      </View>
-      {watch('id') !== 0 && (
+      <View style={tw`pb-[48px]`}>
         <View>
           <Button
-            title="Delete"
-            buttonStyle={tw`bg-red-500`}
+            title="Save"
+            buttonStyle={tw`bg-blue-500 mb-3`}
             titleStyle={tw`font-bold`}
             onPress={() => {
-              onDelete();
+              onSave();
             }}
-            loading={loadingDelete}
+            loading={loading}
           />
         </View>
-      )}
-    </View>
+        {watch('id') !== 0 && (
+          <View>
+            <Button
+              title="Delete"
+              buttonStyle={tw`bg-red-500`}
+              titleStyle={tw`font-bold`}
+              onPress={() => {
+                onDelete();
+              }}
+              loading={loadingDelete}
+            />
+          </View>
+        )}
+      </View>
+    </BottomSheetScrollView>
   );
 }
 

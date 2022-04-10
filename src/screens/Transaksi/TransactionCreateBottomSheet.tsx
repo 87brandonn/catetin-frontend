@@ -8,8 +8,9 @@ import Toast from 'react-native-toast-message';
 import { createStackNavigator, StackNavigationOptions } from '@react-navigation/stack';
 import moment from 'moment';
 import React, { useEffect, useMemo, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useForm } from 'react-hook-form';
-import { AsyncStorage, View } from 'react-native';
+import { View } from 'react-native';
 import tw from 'twrnc';
 import * as yup from 'yup';
 import { axiosCatetin } from '../../api';
@@ -19,8 +20,9 @@ import { screenOptions } from '../../utils';
 import CreateModal from './TransactionBottomSheet';
 import TransactionBottomSheetWrapper from './TransactionBottomSheetWrapper';
 import { setSelectedTransaction } from '../../store/features/transactionSlice';
-import { useAppDispatch } from '../../hooks';
+import { useAppDispatch, useAppSelector } from '../../hooks';
 import { optionsTransaksi } from '../../static/optionsTransaksi';
+import { RootState } from '../../store';
 
 export interface ICatetinTipeTransaksi {
   label: string;
@@ -57,19 +59,19 @@ interface ITransactionDetailBottomSheet {
   bottomSheetRef: React.RefObject<BottomSheetMethods>;
   onFinishSubmit: (data: ICatetinTransaksi) => void;
   onFinishDelete: () => void;
-  data: ICatetinTransaksi | null;
 }
 
 function TransactionCreateBottomSheet({
   bottomSheetRef,
   onFinishDelete,
   onFinishSubmit,
-  data,
 }: ITransactionDetailBottomSheet) {
   const snapPoints = useMemo(() => ['90%'], []);
   const [loadingDelete, setLoadingDelete] = useState(false);
 
   const [loading, setLoading] = useState(false);
+
+  const { editedTransaction } = useAppSelector((state: RootState) => state.transaction);
 
   const {
     control,
@@ -93,20 +95,20 @@ function TransactionCreateBottomSheet({
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    if (data) {
-      setValue('name', data.title);
-      setValue('tanggal', moment(data.transaction_date).toDate());
-      setValue('deskripsi', data.notes);
-      setValue('total', data.nominal);
+    if (editedTransaction) {
+      setValue('name', editedTransaction.title);
+      setValue('tanggal', moment(editedTransaction.transaction_date).toDate());
+      setValue('deskripsi', editedTransaction.notes);
+      setValue('total', editedTransaction.nominal);
       setValue(
         'tipe',
-        optionsTransaksi.find((opt) => opt.value === parseInt(data.type, 10)),
+        optionsTransaksi.find((opt) => opt.value === parseInt(editedTransaction.type, 10)),
       );
-      setValue('transaksi_id', data.id);
+      setValue('transaksi_id', editedTransaction.id);
     } else {
       reset({ transaksi_id: 0, name: '', tipe: null, tanggal: new Date(), deskripsi: '', total: 0 });
     }
-  }, [data, reset, setValue]);
+  }, [editedTransaction, reset, setValue]);
 
   const onSubmit = async (data: TransactionCreateFormSchema) => {
     setLoading(true);

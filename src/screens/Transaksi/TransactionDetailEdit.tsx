@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { TextInput, View, Text, AsyncStorage, ActivityIndicator } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { TextInput, View, Text, ActivityIndicator } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import tw from 'twrnc';
 import { Avatar } from 'react-native-elements';
@@ -143,7 +144,7 @@ function TransactionDetailEdit(props: { route: RouteProp<ParamListBase, 'Transac
               value={(eachBarang.amount !== 0 && eachBarang?.amount?.toString()) || ''}
               keyboardType="numeric"
               onChangeText={(value) => {
-                console.log(props.route.params.type)
+                console.log(props.route.params.type);
                 if (parseInt(value || '0', 10) > eachBarang.stock && props.route.params?.type === '3') {
                   setErrorAdd((prevState) => ({
                     ...prevState,

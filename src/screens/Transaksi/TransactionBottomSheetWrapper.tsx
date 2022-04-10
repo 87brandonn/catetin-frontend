@@ -1,11 +1,10 @@
-import { BottomSheetFlatList, BottomSheetScrollView, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import React from 'react';
-import { TouchableOpacity, View, Text, KeyboardAvoidingView } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { Icon } from 'react-native-elements';
 import tw from 'twrnc';
-import CatetinScrollView from '../../layouts/ScrollView';
 import { RootStackParamList } from '../../navigation';
 
 function TransactionBottomSheetWrapper({

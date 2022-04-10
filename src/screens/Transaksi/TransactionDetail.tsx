@@ -1,7 +1,9 @@
 import { ParamListBase, RouteProp } from '@react-navigation/native';
 import moment from 'moment';
+import 'moment/min/locales';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, AsyncStorage, RefreshControl, Text, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ActivityIndicator, RefreshControl, Text, View } from 'react-native';
 import { Avatar, Button } from 'react-native-elements';
 import tw from 'twrnc';
 import { axiosCatetin } from '../../api';
@@ -74,7 +76,11 @@ function TransactionDetail(props: { route: RouteProp<ParamListBase, 'Transaction
           <Text style={tw`text-base text-lg`}>Nama:</Text>
           <Text style={tw`text-base`}>{dataDetail?.title}</Text>
           <Text style={tw`text-base text-lg`}>Tanggal:</Text>
-          <Text style={tw`text-base`}>{moment(dataDetail?.transaction_date).toISOString()}</Text>
+          <Text style={tw`text-base`}>
+            {moment(dataDetail?.transaction_date).locale('id').format('dddd, DD MMMM YYYY')}
+          </Text>
+          <Text style={tw`text-base text-lg`}>Waktu:</Text>
+          <Text style={tw`text-base`}>{moment(dataDetail?.transaction_date).format('HH:mm')}</Text>
           <Text style={tw`text-base text-lg `}>Tipe:</Text>
           <Text style={tw`text-base`}>
             {optionsTransaksi.find((opt) => opt.value === parseInt(dataDetail?.type || '0', 10))?.label}
@@ -130,7 +136,11 @@ function TransactionDetail(props: { route: RouteProp<ParamListBase, 'Transaction
                       buttonStyle={tw`bg-blue-500`}
                       titleStyle={tw`font-bold`}
                       onPress={() => {
-                        props.navigation.navigate('Transaction Edit Quantity', { data: item });
+                        props.navigation.navigate('Transaction Edit Quantity', {
+                          data: item,
+                          id: selectedTransaction,
+                          type: dataDetail.type,
+                        });
                       }}
                       disabled={item.deleted}
                     ></Button>

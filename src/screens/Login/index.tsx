@@ -6,7 +6,8 @@ import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { ActivityIndicator, AsyncStorage, KeyboardAvoidingView, Text, TouchableOpacity, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ActivityIndicator, KeyboardAvoidingView, Text, TouchableOpacity, View } from 'react-native';
 import { Button } from 'react-native-elements';
 import tw from 'twrnc';
 import * as yup from 'yup';
@@ -80,6 +81,7 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
 
   const checkProfile = useCallback(
     async (token: string | null, onSubmit = true) => {
+      console.log(token);
       if (onSubmit) {
         setLoadingLogin(true);
       } else {
@@ -178,7 +180,6 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
                   render={({ field: { onChange, onBlur, value } }) => (
                     <CatetinInput
                       placeholder="Enter username or email"
-                      onBlur={onBlur}
                       onChangeText={onChange}
                       value={value}
                       autoCapitalize="none"
@@ -195,7 +196,6 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
                   render={({ field: { onChange, onBlur, value } }) => (
                     <CatetinInput
                       placeholder="Enter password"
-                      onBlur={onBlur}
                       onChangeText={onChange}
                       secureTextEntry
                       value={value}

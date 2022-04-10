@@ -1,6 +1,7 @@
 import { ParamListBase, RouteProp } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
-import { AsyncStorage, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { View, Text } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { Avatar, Button } from 'react-native-elements';
 import tw from 'twrnc';
@@ -19,9 +20,19 @@ function TransactionEditQuantity(props: {
 
   const { selectedTransaction } = useAppSelector((state: RootState) => state.transaction);
   const [itemData, setItemData] = useState<ICatetinBarangWithTransaksiDetail | null>(null);
+  const [originalItemData, setOriginalItemData] = useState<ICatetinBarangWithTransaksiDetail | null>(null);
+
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    if (selectedTransaction !== props.route.params?.id) {
+      props.navigation.navigate('Transaction Detail');
+    }
+  }, [props.navigation, props.route.params?.id, selectedTransaction]);
 
   useEffect(() => {
     setItemData(props.route.params?.data);
+    setOriginalItemData(props.route.params?.data);
   }, [props.route.params?.data]);
 
   const handleEditBarang = async () => {
@@ -68,14 +79,22 @@ function TransactionEditQuantity(props: {
             uri: itemData?.picture || undefined,
           }}
           avatarStyle={tw`rounded-[8px]`}
-          containerStyle={tw`bg-gray-300 rounded-[12px] mb-1`}
+          containerStyle={tw`bg-gray-300 rounded-[12px] mb-4`}
           key={itemData?.picture}
         ></Avatar>
       </View>
-      <View style={tw`my-4`}>
+      <View style={tw`mb-4`}>
         <CatetinInput
           value={(itemData?.ItemTransaction.amount !== 0 && itemData?.ItemTransaction.amount.toString()) || ''}
           onChangeText={(text) => {
+            if (
+              originalItemData?.stock + originalItemData?.ItemTransaction.amount - parseInt(text || '0', 10) < 0 &&
+              props.route.params.type === '3'
+            ) {
+              setError(true);
+            } else {
+              setError(false);
+            }
             setItemData(
               (prevState) =>
                 ({
@@ -90,8 +109,14 @@ function TransactionEditQuantity(props: {
           keyboardType="numeric"
           style={tw`border-0 border-b`}
           placeholder="Jumlah"
+          bottomSheet={true}
         ></CatetinInput>
       </View>
+      {error && (
+        <View style={tw`mb-4`}>
+          <Text style={tw`text-red-500`}>Jumlah barang pada transaksi ini melebihi stok yang tersedia</Text>
+        </View>
+      )}
       <View>
         <Button
           title="Save"
@@ -100,6 +125,7 @@ function TransactionEditQuantity(props: {
           onPress={() => {
             handleEditBarang();
           }}
+          disabled={error || itemData?.ItemTransaction.amount === 0}
           loading={loadingSave}
         />
       </View>

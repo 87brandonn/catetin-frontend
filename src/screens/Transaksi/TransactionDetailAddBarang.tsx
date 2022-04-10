@@ -2,19 +2,19 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { ParamListBase, RouteProp } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
-import { KeyboardAvoidingView, Platform, View, Text, AsyncStorage } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform, Text, View } from 'react-native';
 import { Avatar, Button } from 'react-native-elements';
-import Toast from 'react-native-toast-message';
-import * as yup from 'yup';
 import ImagePicker from 'react-native-image-crop-picker';
+import Toast from 'react-native-toast-message';
 import tw from 'twrnc';
+import * as yup from 'yup';
+import { axiosCatetin } from '../../api';
 import CatetinInput from '../../components/molecules/Input';
 import { useAppSelector } from '../../hooks';
 import { RootState } from '../../store';
 import { IFormSchema } from '../Barang';
 import TransactionBottomSheetWrapper from './TransactionBottomSheetWrapper';
-import { axiosCatetin } from '../../api';
 
 const schema = yup.object().shape({
   id: yup.number(),
@@ -28,15 +28,11 @@ function TransactionDetailAddBarang(props: {
   route: RouteProp<ParamListBase, 'Transaction Detail Add Barang'>;
   navigation: any;
 }) {
-  const [loadingFetch, setLoadingFetch] = useState(true);
-
   const {
     control,
     handleSubmit,
     formState: { errors },
     reset,
-    watch,
-    setValue,
   } = useForm<IFormSchema>({
     resolver: yupResolver(schema),
     defaultValues: {
@@ -169,7 +165,6 @@ function TransactionDetailAddBarang(props: {
           render={({ field: { onChange, onBlur, value } }) => (
             <CatetinInput
               placeholder="Nama Barang"
-              onBlur={onBlur}
               onChangeText={onChange}
               value={value}
               bottomSheet
@@ -186,7 +181,6 @@ function TransactionDetailAddBarang(props: {
           render={({ field: { onChange, onBlur, value } }) => (
             <CatetinInput
               placeholder="Stok"
-              onBlur={onBlur}
               onChangeText={(value) => onChange(parseInt(value || '0', 10))}
               value={(value !== 0 && value.toString()) || ''}
               keyboardType="numeric"
@@ -204,7 +198,6 @@ function TransactionDetailAddBarang(props: {
           render={({ field: { onChange, onBlur, value } }) => (
             <CatetinInput
               placeholder="Harga"
-              onBlur={onBlur}
               onChangeText={(value) => onChange(parseInt(value || '0', 10))}
               value={(value !== 0 && value.toString()) || ''}
               keyboardType="numeric"

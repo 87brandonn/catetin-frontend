@@ -7,35 +7,39 @@ function CatetinInput({
   style,
   bottomSheet = false,
   isError = false,
+  disabled = false,
   ...rest
-}: TextInputProps & { bottomSheet?: boolean; isError?: boolean }) {
+}: TextInputProps & { bottomSheet?: boolean; isError?: boolean; disabled?: boolean }) {
   const [isFocused, setIsFocused] = useState(false);
   return !bottomSheet ? (
     <TextInput
-      {...rest}
       style={{
         ...tw`px-4 py-3 rounded-[5px]`,
         ...tw`border ${isFocused ? 'border-blue-500' : isError ? 'border-red-400' : 'border-slate-100'}`,
+        ...tw`${disabled ? 'opacity-50' : 'opacity-100'}`,
         ...(style as TextStyle),
       }}
       onBlur={() => setIsFocused(false)}
       onFocus={() => {
         setIsFocused(true);
       }}
+      pointerEvents={disabled ? 'none' : undefined}
+      {...rest}
     />
   ) : (
     <BottomSheetTextInput
-      {...rest}
       style={{
         ...tw`px-4 py-3 rounded-[5px]`,
-        ...tw`border ${isFocused ? 'border-blue-500' : isError ? 'border-red-400' : 'border-slate-100'}
-        }`,
+        ...tw`border ${isFocused ? 'border-blue-500' : isError ? 'border-red-400' : 'border-slate-100'}`,
+        ...tw`${disabled ? 'opacity-50' : 'opacity-100'}`,
         ...(style as TextStyle),
       }}
       onBlur={() => setIsFocused(false)}
       onFocus={() => {
         setIsFocused(true);
       }}
+      pointerEvents={disabled ? 'none' : undefined}
+      {...rest}
     />
   );
 }

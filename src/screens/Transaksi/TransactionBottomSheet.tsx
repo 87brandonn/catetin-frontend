@@ -117,7 +117,6 @@ function CreateModal({
           render={({ field: { onChange, onBlur, value } }) => (
             <CatetinInput
               placeholder="Deskripsi"
-              onBlur={onBlur}
               onChangeText={(value: string) => {
                 onChange(value);
               }}

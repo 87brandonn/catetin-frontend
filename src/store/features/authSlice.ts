@@ -1,11 +1,12 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { ProfileJoinUser } from '../../types/profil';
 
 interface AuthState {
-  accessToken: string | null;
+  user: ProfileJoinUser | null;
 }
 
 const initialState: AuthState = {
-  accessToken: null,
+  user: null,
 };
 
 export const authSlice = createSlice({
@@ -13,7 +14,7 @@ export const authSlice = createSlice({
   initialState,
   reducers: {
     setAccessToken: (state: AuthState, action: PayloadAction<any>) => {
-      state.accessToken = action.payload;
+      state.user = action.payload;
     },
   },
 });
