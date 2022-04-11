@@ -27,10 +27,20 @@ type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const toastConfig: ToastConfig = {
-  customToast: ({ text1, props, text2 }) => (
+  customToast: ({ text2 }) => (
     <View style={tw`bg-zinc-700 flex-1 flex-row items-center w-[90%] rounded-lg px-4 py-3`}>
       <View>
         <Icon name="alert-circle" type="feather" tvParallaxProperties="" iconStyle={tw`text-zinc-600`}></Icon>
+      </View>
+      <View>
+        <Text style={tw`text-white ml-3`}>{text2}</Text>
+      </View>
+    </View>
+  ),
+  customErrorToast: ({ text2 }) => (
+    <View style={tw`bg-red-500 flex-1 flex-row items-center w-[90%] rounded-lg px-4 py-3`}>
+      <View>
+        <Icon name="alert-circle" type="feather" tvParallaxProperties="" iconStyle={tw`text-white`}></Icon>
       </View>
       <View>
         <Text style={tw`text-white ml-3`}>{text2}</Text>

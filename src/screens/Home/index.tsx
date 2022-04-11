@@ -1,26 +1,31 @@
+import BottomSheet from '@gorhom/bottom-sheet';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { NavigationContainer } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { createStackNavigator } from '@react-navigation/stack';
 import moment from 'moment';
-import React, { useCallback, useEffect, useState } from 'react';
-import { Dimensions, RefreshControl, Text, View } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Dimensions, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
+import ActionSheet from 'react-native-actionsheet';
 import { LineChart } from 'react-native-chart-kit';
+import { Avatar, Badge, Button, Icon } from 'react-native-elements';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import Toast from 'react-native-toast-message';
-import { Avatar, Badge, Icon } from 'react-native-elements';
 import tw from 'twrnc';
 import { axiosCatetin } from '../../api';
-import { useAppSelector } from '../../hooks';
+import CatetinBottomSheet from '../../components/molecules/BottomSheet';
+import CatetinBottomSheetWrapper from '../../components/molecules/BottomSheet/BottomSheetWrapper';
+import CatetinInput from '../../components/molecules/Input';
+import CatetinToast from '../../components/molecules/Toast';
 import AppLayout from '../../layouts/AppLayout';
 import CatetinScrollView from '../../layouts/ScrollView';
 import { RootStackParamList } from '../../navigation';
-import { RootState } from '../../store';
 import { ICatetinBarang } from '../../types/barang';
 import { ICatetinTransaksiWithDetail } from '../../types/transaksi';
 import { abbrNum } from '../../utils';
 
 function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootStackParamList, 'Home'>) {
-  const { editedTransaction } = useAppSelector((state: RootState) => state.transaction);
-
   const [refreshing, setRefreshing] = useState(false);
   const [loadingTotalIncome, setLoadingTotalIncome] = useState(true);
   const [loadingTotalOutcome, setLoadingTotalOutcome] = useState(true);
@@ -61,10 +66,13 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     profit: boolean;
     value: number;
   } | null>(null);
-
-  useEffect(() => {
-    console.log('test');
-  }, []);
+  const [dateParams, setDateParams] = useState<{
+    start_date: string | undefined;
+    end_date: string | undefined;
+  }>({
+    start_date: undefined,
+    end_date: undefined,
+  });
 
   const fetchGraphData = useCallback(async () => {
     try {
@@ -73,7 +81,8 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
         data: { data },
       } = await axiosCatetin.get('/transaksi/summary', {
         params: {
-          date: true,
+          graph: true,
+          ...dateParams,
         },
         headers: {
           Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
@@ -89,7 +98,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     } finally {
       setLoadingGraph(false);
     }
-  }, []);
+  }, [dateParams]);
 
   const fetchMaxOutcome = useCallback(async () => {
     try {
@@ -99,6 +108,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
       } = await axiosCatetin.get('/transaksi/summary', {
         params: {
           max_outcome: true,
+          ...dateParams,
         },
         headers: {
           Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
@@ -114,7 +124,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     } finally {
       setLoadingMaxOutcome(false);
     }
-  }, []);
+  }, [dateParams]);
 
   const fetchMaxIncome = useCallback(async () => {
     try {
@@ -124,6 +134,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
       } = await axiosCatetin.get('/transaksi/summary', {
         params: {
           max_income: true,
+          ...dateParams,
         },
         headers: {
           Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
@@ -139,7 +150,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     } finally {
       setLoadingMaxIncome(false);
     }
-  }, []);
+  }, [dateParams]);
 
   const fetchFrequentItem = useCallback(async () => {
     try {
@@ -149,11 +160,13 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
       } = await axiosCatetin.get('/transaksi/summary', {
         params: {
           frequent_item: true,
+          ...dateParams,
         },
         headers: {
           Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
         },
       });
+      console.log(data);
       setFrequentItem(data);
     } catch (err) {
       Toast.show({
@@ -164,7 +177,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     } finally {
       setLoadingFrequentItem(false);
     }
-  }, []);
+  }, [dateParams]);
 
   const fetchBestItem = useCallback(async () => {
     try {
@@ -174,11 +187,13 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
       } = await axiosCatetin.get('/transaksi/summary', {
         params: {
           best_item: true,
+          ...dateParams,
         },
         headers: {
           Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
         },
       });
+      console.log(data);
       setBestItem(data);
     } catch (err) {
       Toast.show({
@@ -189,7 +204,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     } finally {
       setLoadingBestItem(false);
     }
-  }, []);
+  }, [dateParams]);
 
   const fetchImpression = useCallback(async () => {
     try {
@@ -199,6 +214,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
       } = await axiosCatetin.get('/transaksi/summary', {
         params: {
           impression: true,
+          ...dateParams,
         },
         headers: {
           Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
@@ -214,7 +230,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     } finally {
       setLoadingImpression(false);
     }
-  }, []);
+  }, [dateParams]);
 
   const fetchTotalOutcome = useCallback(async () => {
     try {
@@ -224,6 +240,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
       } = await axiosCatetin.get('/transaksi/summary', {
         params: {
           total_outcome: true,
+          ...dateParams,
         },
         headers: {
           Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
@@ -239,7 +256,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     } finally {
       setLoadingTotalOutcome(false);
     }
-  }, []);
+  }, [dateParams]);
 
   const fetchTotalIncome = useCallback(async () => {
     try {
@@ -249,6 +266,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
       } = await axiosCatetin.get('/transaksi/summary', {
         params: {
           total_income: true,
+          ...dateParams,
         },
         headers: {
           Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
@@ -264,7 +282,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     } finally {
       setLoadingTotalIncome(false);
     }
-  }, []);
+  }, [dateParams]);
 
   useEffect(() => {
     fetchGraphData();
@@ -309,8 +327,280 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     fetchTotalOutcome();
   };
 
+  const bottomSheetRef = useRef<BottomSheet>(null);
+
+  const periodeOptions = [
+    {
+      label: 'Semua Waktu',
+      value: 'all',
+    },
+    {
+      label: 'Kemarin',
+      value: 'yesterday',
+    },
+    {
+      label: '1 Minggu Lalu',
+      value: 'last_week',
+    },
+    {
+      label: '1 Bulan Lalu',
+      value: 'last_month',
+    },
+    {
+      label: '1 Tahun Lalu',
+      value: 'last_year',
+    },
+    {
+      label: 'Custom',
+      value: 'custom',
+    },
+  ];
+
+  const [activePeriode, setActivePeriode] = useState('all');
+  const Stack = createStackNavigator();
+  const [customDate, setCustomDate] = useState<{ from: Date; until: Date }>({ from: new Date(), until: new Date() });
+  const [customPeriod, setCustomPeriod] = useState<{ value: number; date: string }>({ value: 1, date: 'days' });
+
+  const customPeriodeOptions = [
+    {
+      label: 'Hari',
+      value: 'days',
+    },
+    {
+      label: 'Bulan',
+      value: 'months',
+    },
+    {
+      label: 'Tahun',
+      value: 'years',
+    },
+  ];
+
+  const actionSheetRef = useRef<ActionSheet>(null);
+  const [activeSubPeriod, setActiveSubPeriod] = useState('tanggal');
+
+  const handleApplyPeriod = () => {
+    if (activePeriode === 'custom') {
+      if (activeSubPeriod === 'periode' && !customPeriod.value) {
+        CatetinToast('error', 'Custom Periode harus diisi');
+        return;
+      }
+    }
+    let finalObj: {
+      start_date: string | undefined;
+      end_date: string | undefined;
+    } = {
+      start_date: undefined,
+      end_date: undefined,
+    };
+    if (activePeriode !== 'custom') {
+      if (activePeriode === 'all') {
+        finalObj = {
+          start_date: undefined,
+          end_date: undefined,
+        };
+      } else {
+        finalObj = {
+          start_date: moment()
+            .subtract(
+              1,
+              activePeriode === 'yesterday'
+                ? 'days'
+                : activePeriode === 'last_week'
+                ? 'weeks'
+                : activePeriode === 'last_month'
+                ? 'months'
+                : activePeriode === 'last_year'
+                ? 'years'
+                : undefined,
+            )
+            .toISOString(),
+          end_date: moment().toISOString(),
+        };
+      }
+    } else {
+      if (activeSubPeriod === 'tanggal') {
+        finalObj = {
+          start_date: moment(customDate.from).toISOString(),
+          end_date: moment(customDate.until).toISOString(),
+        };
+      } else if (activeSubPeriod === 'periode') {
+        finalObj = {
+          start_date: moment()
+            .subtract(customPeriod.value as any, customPeriod.date as any)
+            .toISOString(),
+          end_date: moment().toISOString(),
+        };
+      }
+    }
+    console.log(finalObj);
+    setDateParams(finalObj);
+    bottomSheetRef.current?.close();
+  };
+
   return (
     <AppLayout headerTitle="Home">
+      <CatetinBottomSheet bottomSheetRef={bottomSheetRef} title="Periode">
+        <NavigationContainer independent={true}>
+          <Stack.Navigator>
+            <Stack.Screen name="Periode" options={{ header: () => null }}>
+              {(props) => (
+                <CatetinBottomSheetWrapper {...props} title="Periode">
+                  {periodeOptions.map((periode) => (
+                    <TouchableOpacity
+                      style={tw`mb-3 ${
+                        activePeriode === periode.value ? 'bg-blue-500' : ''
+                      } shadow rounded-lg px-3 py-2`}
+                      key={periode.label}
+                      onPress={() => {
+                        setActivePeriode(periode.value);
+                      }}
+                    >
+                      <Text style={tw`text-lg ${activePeriode === periode.value ? 'text-white' : 'text-black'}`}>
+                        {periode.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                  {activePeriode === 'custom' && (
+                    <View style={tw`px-5 mb-5`}>
+                      <TouchableOpacity
+                        style={tw` px-3 py-2 ${
+                          activeSubPeriod === 'tanggal' ? 'bg-zinc-200' : ''
+                        } shadow rounded-lg mb-3 flex flex-row justify-between items-center`}
+                        onPress={() => {
+                          props.navigation.navigate('Tanggal');
+                          setActiveSubPeriod('tanggal');
+                        }}
+                      >
+                        <View>
+                          <Text style={tw`text-base font-500`}>Tanggal</Text>
+                          <Text style={tw`text-[12px] text-gray-500`}>
+                            {moment(customDate.from).format('DD MMMM YYYY')} s/d{' '}
+                            {moment(customDate.until).format('DD MMMM YYYY')}
+                          </Text>
+                        </View>
+                        <Icon name="chevron-right" tvParallaxProperties="" />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={tw` px-3 py-2 ${
+                          activeSubPeriod === 'periode' ? 'bg-zinc-200' : ''
+                        } rounded-lg flex flex-row justify-between items-center`}
+                        onPress={() => {
+                          setActiveSubPeriod('periode');
+                          props.navigation.navigate('Periode Custom');
+                        }}
+                      >
+                        <View>
+                          <Text style={tw`text-base font-500`}>Periode</Text>
+                          <Text style={tw`text-[12px] text-gray-500`}>
+                            {customPeriod.value}{' '}
+                            {customPeriodeOptions.find((opt) => opt.value === customPeriod.date)?.label.toLowerCase()}{' '}
+                            lalu
+                          </Text>
+                        </View>
+                        <Icon name="chevron-right" tvParallaxProperties="" />
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                  <Button
+                    title="Simpan"
+                    buttonStyle={tw`bg-blue-500`}
+                    titleStyle={tw`font-bold`}
+                    onPress={() => {
+                      handleApplyPeriod();
+                    }}
+                  />
+                </CatetinBottomSheetWrapper>
+              )}
+            </Stack.Screen>
+            <Stack.Screen name="Tanggal" options={{ header: () => null }}>
+              {(props) => (
+                <CatetinBottomSheetWrapper {...props} title="Custom Tanggal" showBack to="Periode">
+                  <Text style={tw`text-lg font-500`}>Dari</Text>
+                  <DateTimePicker
+                    value={customDate.from}
+                    onChange={(event: any, date: Date | undefined) =>
+                      setCustomDate((prevState) => ({
+                        ...prevState,
+                        from: date as Date,
+                      }))
+                    }
+                    mode="date"
+                    display="spinner"
+                  />
+                  <Text style={tw`text-lg font-500`}>Sampai</Text>
+                  <DateTimePicker
+                    value={customDate.until}
+                    onChange={(event: any, date: Date | undefined) =>
+                      setCustomDate((prevState) => ({
+                        ...prevState,
+                        until: date as Date,
+                      }))
+                    }
+                    mode="date"
+                    display="spinner"
+                  />
+                </CatetinBottomSheetWrapper>
+              )}
+            </Stack.Screen>
+            <Stack.Screen name="Periode Custom" options={{ header: () => null }}>
+              {(props) => (
+                <CatetinBottomSheetWrapper {...props} title="Custom Periode" showBack to="Periode">
+                  <View style={tw`flex`}>
+                    <View style={tw`flex-1 mb-3`}>
+                      <CatetinInput
+                        placeholder="Nominal"
+                        value={(customPeriod.value !== 0 && customPeriod.value.toString()) || ''}
+                        onChangeText={(value) => {
+                          setCustomPeriod((prevState) => ({
+                            ...prevState,
+                            value: parseInt(value || '0', 10),
+                          }));
+                        }}
+                        keyboardType="numeric"
+                      />
+                    </View>
+                    <TouchableOpacity
+                      style={tw`flex-1 mb-3`}
+                      onPress={() => {
+                        actionSheetRef.current?.show();
+                      }}
+                    >
+                      <CatetinInput
+                        placeholder="Bulan"
+                        value={customPeriodeOptions.find((opt) => opt.value === customPeriod.date)?.label}
+                        pointerEvents="none"
+                      />
+                    </TouchableOpacity>
+                    <View style={tw`flex-1`}>
+                      <CatetinInput value="Lalu" pointerEvents="none" />
+                    </View>
+                    <ActionSheet
+                      ref={actionSheetRef}
+                      title={'Pilih Periode'}
+                      options={[...customPeriodeOptions.map((opt) => opt.label), 'Cancel']}
+                      cancelButtonIndex={3}
+                      onPress={(index) => {
+                        if (index !== 3) {
+                          setCustomPeriod((prevState) => ({
+                            ...prevState,
+                            date: customPeriodeOptions[index].value,
+                          }));
+                        }
+                      }}
+                    />
+                    <Text style={tw`mt-3 mb-3 text-gray-500`}>
+                      Ringkasan transaksi untuk {customPeriod.value}{' '}
+                      {customPeriodeOptions.find((opt) => opt.value === customPeriod.date)?.label.toLowerCase()}{' '}
+                      terakhir akan diterapkan.
+                    </Text>
+                  </View>
+                </CatetinBottomSheetWrapper>
+              )}
+            </Stack.Screen>
+          </Stack.Navigator>
+        </NavigationContainer>
+      </CatetinBottomSheet>
       <CatetinScrollView
         style={tw`flex-1 pt-4`}
         refreshControl={
@@ -324,19 +614,20 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
       >
         <View style={tw`px-3`}>
           <Text style={tw`text-3xl`}>Hi, Brandon</Text>
-          <Text style={tw`text-base`}>Ringkasan laporan keuangan kamu</Text>
-          <Text style={tw`text-base mb-4`}>
-            Periode:
-            <Text
-              style={tw`text-base text-blue-500`}
+          <Text style={tw`text-base mb-1`}>Ringkasan laporan keuangan kamu</Text>
+          <View style={tw`flex-row items-center mb-3`}>
+            <Text style={tw`text-base mb-1`}>Periode:</Text>
+            <TouchableOpacity
+              style={tw`ml-1 bg-blue-500 px-3 py-2 shadow rounded-lg`}
               onPress={() => {
-                console.log('pressed');
+                bottomSheetRef.current?.expand();
               }}
             >
-              {' '}
-              Harian{' '}
-            </Text>
-          </Text>
+              <Text style={tw`text-white font-bold`}>
+                {periodeOptions.find((opt) => opt.value === activePeriode)?.label}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={tw`mb-3`}>
@@ -344,6 +635,11 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
             <SkeletonPlaceholder>
               <View style={tw`h-[200px] w-full rounded-[12px] `}></View>
             </SkeletonPlaceholder>
+          ) : !graphData ? (
+            <View style={tw`px-3 py-2 bg-red-500 shadow rounded-lg flex flex-row mx-3 items-center`}>
+              <Icon name="alert-circle" type="feather" tvParallaxProperties="" iconStyle={tw`text-white mr-2`} />
+              <Text style={tw`text-white`}>Tidak ada data transaksi pada periode ini.</Text>
+            </View>
           ) : (
             <LineChart
               data={{
@@ -436,12 +732,14 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
                 <View style={tw`h-[70px] w-full rounded-[12px] mb-3 `}></View>
                 <View style={tw`h-[70px] w-full rounded-[12px] mb-3 `}></View>
               </SkeletonPlaceholder>
+            ) : !bestItem ? (
+              <View style={tw`px-3 py-2 bg-red-500 shadow rounded-lg flex flex-row items-center mb-3`}>
+                <Icon name="alert-circle" type="feather" tvParallaxProperties="" iconStyle={tw`text-white mr-2`} />
+                <Text style={tw`text-white`}>Tidak ada data transaksi pada periode ini.</Text>
+              </View>
             ) : (
               bestItem?.map((item, index) => (
-                <View
-                  style={tw`px-3 py-2 mb-2 flex flex-row shadow-lg bg-white rounded-[12px]`}
-                  key={item.id}
-                >
+                <View style={tw`px-3 py-2 mb-2 flex flex-row shadow-lg bg-white rounded-[12px]`} key={item.id}>
                   <Text style={tw`self-center text-xl font-bold text-blue-500 mr-3`}>{index + 1}</Text>
                   <View style={tw`self-center mr-3`}>
                     <Avatar
@@ -481,12 +779,14 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
                 <View style={tw`h-[70px] w-full rounded-[12px] mb-3 `}></View>
                 <View style={tw`h-[70px] w-full rounded-[12px] mb-3 `}></View>
               </SkeletonPlaceholder>
+            ) : !frequentItem ? (
+              <View style={tw`px-3 py-2 bg-red-500 shadow rounded-lg flex flex-row items-center mb-3`}>
+                <Icon name="alert-circle" type="feather" tvParallaxProperties="" iconStyle={tw`text-white mr-2`} />
+                <Text style={tw`text-white`}>Tidak ada data transaksi pada periode ini.</Text>
+              </View>
             ) : (
               frequentItem?.map((item, index) => (
-                <View
-                  style={tw`px-3 py-2 mb-2 flex flex-row shadow-lg bg-white rounded-[12px]`}
-                  key={item.id}
-                >
+                <View style={tw`px-3 py-2 mb-2 flex flex-row shadow-lg bg-white rounded-[12px]`} key={item.id}>
                   <Text style={tw`self-center text-xl font-bold text-blue-500 mr-3`}>{index + 1}</Text>
                   <View style={tw`self-center mr-3`}>
                     <Avatar
@@ -526,12 +826,15 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
                 <View style={tw`h-[100px] w-full rounded-[12px] mb-3 `}></View>
                 <View style={tw`h-[100px] w-full rounded-[12px] mb-3 `}></View>
               </SkeletonPlaceholder>
+            ) : maxOutcome?.length === 0 ? (
+              <View style={tw`px-3 py-2 bg-red-500 shadow rounded-lg flex flex-row items-center mb-3`}>
+                <Icon name="alert-circle" type="feather" tvParallaxProperties="" iconStyle={tw`text-white mr-2`} />
+                <Text style={tw`text-white`}>Tidak ada data transaksi pada periode ini.</Text>
+              </View>
             ) : (
-              maxOutcome?.map((transaksi) => (
-                <View
-                  style={tw`shadow-lg bg-white rounded-[12px] px-3 py-2 mb-2 flex flex-row justify-between`}
-                  key={transaksi.id}
-                >
+              maxOutcome?.map((transaksi, index) => (
+                <View style={tw`shadow-lg bg-white rounded-[12px] px-3 py-2 mb-2 flex flex-row`} key={transaksi.id}>
+                  <Text style={tw`self-center text-xl font-bold text-blue-500 mr-3`}>{index + 1}</Text>
                   <View>
                     <Text style={tw`font-bold text-xl`}>{transaksi?.title}</Text>
                     <Text style={tw`font-500 text-lg`}>IDR {transaksi?.nominal?.toLocaleString()}</Text>
@@ -564,6 +867,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
                 </View>
               ))
             )}
+            <Text style={tw`text-sm text-slate-500`}>Note: Transaksi dengan nominal pengeluaran terbesar</Text>
           </View>
           <View style={tw`mb-4`}>
             <Text style={tw`text-xl mb-1`}>Pemasukan Terbesar</Text>
@@ -573,12 +877,15 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
                 <View style={tw`h-[100px] w-full rounded-[12px] mb-3 `}></View>
                 <View style={tw`h-[100px] w-full rounded-[12px] mb-3 `}></View>
               </SkeletonPlaceholder>
+            ) : maxIncome?.length === 0 ? (
+              <View style={tw`px-3 py-2 bg-red-500 shadow rounded-lg flex flex-row items-center mb-3`}>
+                <Icon name="alert-circle" type="feather" tvParallaxProperties="" iconStyle={tw`text-white mr-2`} />
+                <Text style={tw`text-white`}>Tidak ada data transaksi pada periode ini.</Text>
+              </View>
             ) : (
-              maxIncome?.map((transaksi) => (
-                <View
-                  style={tw`shadow-lg bg-white rounded-[12px] px-3 py-2 mb-2 flex flex-row justify-between`}
-                  key={transaksi.id}
-                >
+              maxIncome?.map((transaksi, index) => (
+                <View style={tw`shadow-lg bg-white rounded-[12px] px-3 py-2 mb-2 flex flex-row`} key={transaksi.id}>
+                  <Text style={tw`self-center text-xl font-bold text-blue-500 mr-3`}>{index + 1}</Text>
                   <View>
                     <Text style={tw`font-bold text-xl`}>{transaksi?.title}</Text>
                     <Text style={tw`font-500 text-lg`}>IDR {transaksi?.nominal?.toLocaleString()}</Text>
@@ -611,10 +918,11 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
                 </View>
               ))
             )}
+            <Text style={tw`text-sm text-slate-500`}>Note: Transaksi dengan nominal pemasukan terbesar</Text>
           </View>
         </View>
 
-        <View style={tw`mb-[120px]`}></View>
+        <View style={tw`mb-[48px]`}></View>
       </CatetinScrollView>
     </AppLayout>
   );

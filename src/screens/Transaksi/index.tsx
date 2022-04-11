@@ -67,7 +67,6 @@ function Transaksi() {
   const bottomSheetRefDetail = useRef<BottomSheet>(null);
 
   useEffect(() => {
-    console.log(editedTransaction);
     if (editedTransaction) {
       bottomSheetRefDetail.current?.close();
       bottomSheetRef.current?.expand();
@@ -82,7 +81,6 @@ function Transaksi() {
           fetchTransaksi();
         }}
         onFinishSubmit={(data: ICatetinTransaksi) => {
-          console.log(data);
           fetchTransaksi();
           if (data.type === '3' || data.type === '4') {
             dispatch(setSelectedTransaction(data.id));
