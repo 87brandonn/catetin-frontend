@@ -52,7 +52,7 @@ function CreateModal({
         <Controller
           control={control}
           render={({ field: { onChange, value } }) => (
-            <CatetinInput placeholder="Nama Transaksi" onChangeText={onChange} value={value} />
+            <CatetinInput bottomSheet={true} placeholder="Nama Transaksi" onChangeText={onChange} value={value} />
           )}
           name="name"
         />
@@ -66,6 +66,7 @@ function CreateModal({
           }}
         >
           <CatetinInput
+            bottomSheet={true}
             placeholder="Tanggal Transaksi"
             pointerEvents="none"
             value={watch('tanggal')?.toISOString().split('T')[0]}
@@ -81,6 +82,7 @@ function CreateModal({
           disabled={editingMode}
         >
           <CatetinInput
+            bottomSheet={true}
             pointerEvents="none"
             placeholder="Tipe Transaksi"
             value={watch('tipe')?.label}
@@ -98,6 +100,7 @@ function CreateModal({
             control={control}
             render={({ field: { onChange, value } }) => (
               <CatetinInput
+                bottomSheet={true}
                 placeholder="Nominal Transaksi"
                 keyboardType="numeric"
                 value={value?.toString() || ''}
@@ -116,6 +119,7 @@ function CreateModal({
           control={control}
           render={({ field: { onChange, onBlur, value } }) => (
             <CatetinInput
+              bottomSheet={true}
               placeholder="Deskripsi"
               onChangeText={(value: string) => {
                 onChange(value);

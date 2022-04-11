@@ -137,7 +137,12 @@ function TransactionDetailAddBarang(props: {
   }, [errors]);
 
   return (
-    <TransactionBottomSheetWrapper showBack title="Tambah Barang" to="Transaction Detail Edit">
+    <TransactionBottomSheetWrapper
+      showBack
+      title="Tambah Barang"
+      to="Transaction Detail Edit"
+      params={{ id: selectedTransaction }}
+    >
       <View style={tw`flex items-center`}>
         <Controller
           control={control}

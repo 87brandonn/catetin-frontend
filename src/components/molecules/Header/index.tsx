@@ -25,7 +25,6 @@ function Header({ title = '' }: { title?: string }) {
           Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
         },
       });
-      console.log(data);
       setProfileData(data);
     } catch (err) {
       console.log(err);

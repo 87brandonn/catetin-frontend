@@ -1,4 +1,4 @@
-import BottomSheet from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet';
 import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 import { Portal } from '@gorhom/portal';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -7,7 +7,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 import { createStackNavigator, StackNavigationOptions } from '@react-navigation/stack';
 import moment from 'moment';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useForm } from 'react-hook-form';
 import { View } from 'react-native';
@@ -66,7 +66,7 @@ function TransactionCreateBottomSheet({
   onFinishDelete,
   onFinishSubmit,
 }: ITransactionDetailBottomSheet) {
-  const snapPoints = useMemo(() => ['90%'], []);
+  const snapPoints = useMemo(() => ['80%'], []);
   const [loadingDelete, setLoadingDelete] = useState(false);
 
   const [loading, setLoading] = useState(false);
@@ -187,6 +187,11 @@ function TransactionCreateBottomSheet({
     }
   };
 
+  const renderBackdrop = useCallback(
+    (props) => <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} pres  />,
+    [],
+  );
+
   return (
     <Portal>
       <BottomSheet
@@ -194,6 +199,7 @@ function TransactionCreateBottomSheet({
         index={-1}
         snapPoints={snapPoints}
         backgroundStyle={tw`bg-white shadow-lg`}
+        backdropComponent={renderBackdrop}
         enablePanDownToClose
       >
         <NavigationContainer independent={true}>

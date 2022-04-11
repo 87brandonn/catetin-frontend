@@ -12,11 +12,13 @@ function TransactionBottomSheetWrapper({
   children,
   showBack,
   to = 'Transaction Default',
+  params = {},
 }: {
   title: string;
   children: React.ReactNode;
   showBack?: boolean;
   to?: string;
+  params?: any;
 }) {
   const { navigate } = useNavigation<StackNavigationProp<RootStackParamList, 'Transaksi'>>();
   return (
@@ -28,7 +30,7 @@ function TransactionBottomSheetWrapper({
       <View style={tw`relative`}>
         {showBack && (
           <View style={tw`absolute left-0 z-10`}>
-            <TouchableOpacity onPress={() => requestAnimationFrame(() => navigate(to as any))}>
+            <TouchableOpacity onPress={() => requestAnimationFrame(() => navigate(to as any, params))}>
               <Icon name="chevron-left" type="feather" tvParallaxProperties="" />
             </TouchableOpacity>
           </View>
