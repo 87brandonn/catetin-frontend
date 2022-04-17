@@ -2,6 +2,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ResponseType } from 'expo-auth-session';
 import * as Facebook from 'expo-auth-session/providers/facebook';
+import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -35,8 +36,12 @@ const schema = yup
 
 function Register({ navigation: { navigate } }: NativeStackScreenProps<RootStackParamList, 'Register'>) {
   const [loadingRegister, setLoadingRegister] = useState(false);
-  const [errorRegister, setErrorRegister] = useState('');
   const [loadUser, setLoadUser] = useState(false);
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    expoClientId: '478756255587-1hsqks41ku9r9qp8qumvoe199oehu2v5.apps.googleusercontent.com',
+    iosClientId: '478756255587-9mnonnev35sl3tn0pd7i2hmnjjsuiivi.apps.googleusercontent.com',
+    androidClientId: '478756255587-v7qv1rvfemqarqad2jik5j03r6ubdoj8.apps.googleusercontent.com',
+  });
 
   const checkProfile = useCallback(
     async (token: string | null) => {
@@ -67,6 +72,36 @@ function Register({ navigation: { navigate } }: NativeStackScreenProps<RootStack
     [navigate],
   );
 
+  const getUserInfo = useCallback(
+    async (token: string | undefined) => {
+      const userInfo = await fetch('https://www.googleapis.com/userinfo/v2/me', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const serialized = await userInfo.json();
+      try {
+        const {
+          data: { token },
+        } = await axiosCatetin.post('/auth/login/gmail', {
+          email: serialized.email,
+        });
+        await AsyncStorage.setItem('accessToken', token);
+        checkProfile(token);
+      } catch (err) {
+        console.log(err);
+      }
+    },
+    [checkProfile],
+  );
+
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const { authentication } = response;
+      getUserInfo(authentication?.accessToken);
+    }
+  }, [response, getUserInfo]);
+
   const {
     control,
     handleSubmit,
@@ -89,7 +124,6 @@ function Register({ navigation: { navigate } }: NativeStackScreenProps<RootStack
         password,
         email,
       });
-      setErrorRegister('');
       AsyncStorage.setItem('accessToken', token);
       checkProfile(token);
     } catch (err: any) {
@@ -180,12 +214,6 @@ function Register({ navigation: { navigate } }: NativeStackScreenProps<RootStack
               <Text style={tw`text-blue-400`}>Login</Text>
             </TouchableOpacity>
           </View>
-
-          {!!errorRegister && (
-            <View>
-              <Text style={tw`text-red-500 mt-2`}>{errorRegister}</Text>
-            </View>
-          )}
         </View>
 
         <Button
@@ -193,6 +221,16 @@ function Register({ navigation: { navigate } }: NativeStackScreenProps<RootStack
           title="Register"
           buttonStyle={tw`bg-blue-500 rounded-[8px] mb-4`}
           onPress={handleSubmit(onSubmit)}
+        />
+        <Button
+          disabled={!request}
+          title="Register with Gmail"
+          buttonStyle={tw`bg-blue-500 rounded-[8px] mb-4`}
+          onPress={() =>
+            promptAsync({
+              showInRecents: true,
+            })
+          }
         />
         <Button
           disabled={!requestFb}

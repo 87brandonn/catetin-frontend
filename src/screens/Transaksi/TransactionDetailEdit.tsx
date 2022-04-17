@@ -48,7 +48,7 @@ function TransactionDetailEdit(props: { route: RouteProp<ParamListBase, 'Transac
           setLoadingFetch(false);
         }
       } catch (err) {
-        console.log(err);
+        // do nothing
       }
     },
     [selectedTransaction],
@@ -86,7 +86,7 @@ function TransactionDetailEdit(props: { route: RouteProp<ParamListBase, 'Transac
       );
       fetchBarang();
     } catch (err) {
-      console.log(err);
+      // do nothing
     } finally {
       setLoadingAdd((prevState) => ({
         ...prevState,
@@ -144,7 +144,6 @@ function TransactionDetailEdit(props: { route: RouteProp<ParamListBase, 'Transac
               value={(eachBarang.amount !== 0 && eachBarang?.amount?.toString()) || ''}
               keyboardType="numeric"
               onChangeText={(value) => {
-                console.log(props.route.params.type);
                 if (parseInt(value || '0', 10) > eachBarang.stock && props.route.params?.type === '3') {
                   setErrorAdd((prevState) => ({
                     ...prevState,

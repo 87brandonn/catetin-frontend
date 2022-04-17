@@ -11,12 +11,15 @@ import Toast from 'react-native-toast-message';
 import * as yup from 'yup';
 import { axiosCatetin } from '../../api';
 import AppLayout from '../../layouts/AppLayout';
+import * as RootNavigation from '../../hooks/RootNavigation';
 import CatetinScrollView from '../../layouts/ScrollView';
 import { ICatetinBarang, ICatetinBarangWithTransaksi } from '../../types/barang';
 import TransactionAction from '../Transaksi/TransactionAction';
 import CreateModal from './BarangBottomSheet';
 import BarangDetailBottomSheet from './BarangDetailBottomSheet';
 import BarangFilterBottomSheet from './BarangFilterBottomSheet';
+import CatetinBottomSheet from '../../components/molecules/BottomSheet';
+import CatetinBottomSheetWrapper from '../../components/molecules/BottomSheet/BottomSheetWrapper';
 
 export interface IFormSchema {
   id: number;
@@ -34,7 +37,7 @@ const schema = yup.object().shape({
   barang_picture: yup.mixed(),
 });
 
-function Barang() {
+function Barang(props: any) {
   const {
     control,
     handleSubmit,
@@ -226,14 +229,8 @@ function Barang() {
   };
   return (
     <AppLayout headerTitle="Barang">
-      <Portal>
-        <BottomSheet
-          ref={bottomSheetRef}
-          index={-1}
-          snapPoints={snapPoints}
-          backgroundStyle={tw`bg-white shadow-lg`}
-          enablePanDownToClose
-        >
+      <CatetinBottomSheet bottomSheetRef={bottomSheetRef}>
+        <CatetinBottomSheetWrapper single title="Create Barang">
           <CreateModal
             control={control}
             errors={errors}
@@ -244,24 +241,30 @@ function Barang() {
             title="Create Barang"
             loadingDelete={loadingDelete}
           />
-        </BottomSheet>
-      </Portal>
-      <BarangFilterBottomSheet
-        onResetSort={(query) => {
-          bottomSheetRefFilter.current?.close();
-          fetchBarang(query);
-        }}
-        onApplySort={(query) => {
-          bottomSheetRefFilter.current?.close();
-          fetchBarang(query);
-        }}
-        bottomSheetRefFilter={bottomSheetRefFilter}
-      />
-      <BarangDetailBottomSheet
-        bottomSheetRefDetail={bottomSheetRefDetail}
-        data={barangTransaksi}
-        loading={loadDetail}
-      />
+        </CatetinBottomSheetWrapper>
+      </CatetinBottomSheet>
+
+      <CatetinBottomSheet bottomSheetRef={bottomSheetRefFilter}>
+        <CatetinBottomSheetWrapper single title="Sort">
+          <BarangFilterBottomSheet
+            onResetSort={(query) => {
+              bottomSheetRefFilter.current?.close();
+              fetchBarang(query);
+            }}
+            onApplySort={(query) => {
+              bottomSheetRefFilter.current?.close();
+              fetchBarang(query);
+            }}
+          />
+        </CatetinBottomSheetWrapper>
+      </CatetinBottomSheet>
+
+      <CatetinBottomSheet bottomSheetRef={bottomSheetRefDetail}>
+        <CatetinBottomSheetWrapper single title="Detail Barang">
+          <BarangDetailBottomSheet data={barangTransaksi} loading={loadDetail} />
+        </CatetinBottomSheetWrapper>
+      </CatetinBottomSheet>
+
       <TransactionAction
         onClickPlus={() => {
           reset({
@@ -282,9 +285,13 @@ function Barang() {
         style={tw`flex-1`}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchBarang(undefined, true)} />}
       >
-        <View style={tw`px-4 py-5`}>
+        <View style={tw`px-4 py-3`}>
           {loadingFetch ? (
             <ActivityIndicator />
+          ) : barang?.length === 0 ? (
+            <View style={tw`flex-1 bg-gray-400 py-3 px-4 rounded-lg shadow`}>
+              <Text style={tw`text-slate-100 text-base`}>Tidak ada barang</Text>
+            </View>
           ) : (
             barang.map((singleBarang: ICatetinBarang) => (
               <Fragment key={singleBarang.id}>

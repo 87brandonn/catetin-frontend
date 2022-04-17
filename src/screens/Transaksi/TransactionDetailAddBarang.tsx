@@ -37,9 +37,9 @@ function TransactionDetailAddBarang(props: {
     resolver: yupResolver(schema),
     defaultValues: {
       id: 0,
-      stok: '',
+      stok: 0,
       name: '',
-      harga: '',
+      harga: 0,
       barang_picture: null,
     },
   });
@@ -109,8 +109,8 @@ function TransactionDetailAddBarang(props: {
       reset({
         id: 0,
         name: '',
-        stok: '',
-        harga: '',
+        stok: 0,
+        harga: 0,
         barang_picture: null,
       });
       Toast.show({
@@ -120,6 +120,7 @@ function TransactionDetailAddBarang(props: {
       });
       props.navigation.navigate('Transaction Detail Edit', {
         from: 'add-barang',
+        id: selectedTransaction,
       });
     } catch (err: any) {
       Toast.show({
@@ -167,7 +168,7 @@ function TransactionDetailAddBarang(props: {
         <Text style={tw`text-base mb-1`}>Nama Barang</Text>
         <Controller
           control={control}
-          render={({ field: { onChange, onBlur, value } }) => (
+          render={({ field: { onChange, value } }) => (
             <CatetinInput
               placeholder="Nama Barang"
               onChangeText={onChange}
@@ -183,10 +184,10 @@ function TransactionDetailAddBarang(props: {
         <Text style={tw`text-base mb-1`}>Stok</Text>
         <Controller
           control={control}
-          render={({ field: { onChange, onBlur, value } }) => (
+          render={({ field: { onChange, value } }) => (
             <CatetinInput
               placeholder="Stok"
-              onChangeText={(value) => onChange(parseInt(value || '0', 10))}
+              onChangeText={(value) => onChange(parseInt(Number(value) ? value : '0' || '0', 10))}
               value={(value !== 0 && value.toString()) || ''}
               keyboardType="numeric"
               bottomSheet
@@ -200,7 +201,7 @@ function TransactionDetailAddBarang(props: {
         <Text style={tw`text-base mb-1`}>Harga</Text>
         <Controller
           control={control}
-          render={({ field: { onChange, onBlur, value } }) => (
+          render={({ field: { onChange, value } }) => (
             <CatetinInput
               placeholder="Harga"
               onChangeText={(value) => onChange(parseInt(value || '0', 10))}

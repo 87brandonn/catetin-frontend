@@ -1,5 +1,6 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import Toast from 'react-native-toast-message';
 import { ResponseType } from 'expo-auth-session';
 import * as Facebook from 'expo-auth-session/providers/facebook';
 import * as Google from 'expo-auth-session/providers/google';
@@ -50,7 +51,6 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
   });
 
   const [loadingLogin, setLoadingLogin] = useState(false);
-  const [errorLogin, setErrorLogin] = useState('');
 
   const [requestFb, responseFb, promptAsyncFb] = Facebook.useAuthRequest({
     clientId: '709036773596885',
@@ -66,12 +66,14 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
         username,
         password,
       });
-      setErrorLogin('');
       await AsyncStorage.setItem('accessToken', token);
       checkProfile(token);
     } catch (err: any) {
-      console.log(err);
-      setErrorLogin(err.response?.data?.message || 'Failed to register');
+      Toast.show({
+        type: 'customToast',
+        text2: err.response?.data?.message || 'Failed to register',
+        position: 'bottom',
+      });
     } finally {
       setLoadingLogin(false);
     }
@@ -81,7 +83,6 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
 
   const checkProfile = useCallback(
     async (token: string | null, onSubmit = true) => {
-      console.log(token);
       if (onSubmit) {
         setLoadingLogin(true);
       } else {
@@ -216,12 +217,6 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
                   <Text style={tw`text-blue-400`}>Register</Text>
                 </TouchableOpacity>
               </View>
-
-              {!!errorLogin && (
-                <View>
-                  <Text style={tw`text-red-500 mt-2`}>{errorLogin}</Text>
-                </View>
-              )}
             </View>
             <Button
               loading={loadingLogin}

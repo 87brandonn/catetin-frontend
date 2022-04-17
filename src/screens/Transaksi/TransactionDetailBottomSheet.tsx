@@ -3,8 +3,10 @@ import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 import { Portal } from '@gorhom/portal';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator, StackNavigationOptions } from '@react-navigation/stack';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import tw from 'twrnc';
+import CatetinBottomSheet from '../../components/molecules/BottomSheet';
+import CatetinBottomSheetWrapper from '../../components/molecules/BottomSheet/BottomSheetWrapper';
 import { screenOptions } from '../../utils';
 import TransactionDetail from './TransactionDetail';
 import TransactionDetailAddBarang from './TransactionDetailAddBarang';
@@ -18,36 +20,33 @@ interface ITransactionDetailBottomSheet {
 const Stack = createStackNavigator();
 
 function TransactionDetailBottomSheet({ bottomSheetRefDetail }: ITransactionDetailBottomSheet) {
-  const snapPoints = useMemo(() => ['75%'], []);
-
+  const [refreshingDetail, setRefreshingDetail] = useState(false);
   return (
-    <Portal>
-      <BottomSheet
-        ref={bottomSheetRefDetail}
-        index={-1}
-        snapPoints={snapPoints}
-        backgroundStyle={tw`bg-white shadow-lg`}
-        enablePanDownToClose
-      >
-        <NavigationContainer>
-          <Stack.Navigator
-            screenOptions={screenOptions as StackNavigationOptions}
-            initialRouteName="Transaction Detail"
-          >
-            <Stack.Screen name="Transaction Detail">{(props) => <TransactionDetail {...props} />}</Stack.Screen>
-            <Stack.Screen name="Transaction Detail Edit">
-              {(props) => <TransactionDetailEdit {...props} />}
-            </Stack.Screen>
-            <Stack.Screen name="Transaction Edit Quantity">
-              {(props) => <TransactionEditQuantity {...props} />}
-            </Stack.Screen>
-            <Stack.Screen name="Transaction Detail Add Barang">
-              {(props) => <TransactionDetailAddBarang {...props} />}
-            </Stack.Screen>
-          </Stack.Navigator>
-        </NavigationContainer>
-      </BottomSheet>
-    </Portal>
+    <CatetinBottomSheet bottomSheetRef={bottomSheetRefDetail}>
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={screenOptions as StackNavigationOptions} initialRouteName="Transaction Detail">
+          <Stack.Screen name="Transaction Detail">
+            {(props) => (
+              <CatetinBottomSheetWrapper
+                refreshing={refreshingDetail}
+                onRefresh={() => setRefreshingDetail(true)}
+                {...props}
+                title="Transaksi"
+              >
+                <TransactionDetail refreshing={refreshingDetail} onRefresh={(val) => setRefreshingDetail(val)} />
+              </CatetinBottomSheetWrapper>
+            )}
+          </Stack.Screen>
+          <Stack.Screen name="Transaction Detail Edit">{(props) => <TransactionDetailEdit {...props} />}</Stack.Screen>
+          <Stack.Screen name="Transaction Edit Quantity">
+            {(props) => <TransactionEditQuantity {...props} />}
+          </Stack.Screen>
+          <Stack.Screen name="Transaction Detail Add Barang">
+            {(props) => <TransactionDetailAddBarang {...props} />}
+          </Stack.Screen>
+        </Stack.Navigator>
+      </NavigationContainer>
+    </CatetinBottomSheet>
   );
 }
 

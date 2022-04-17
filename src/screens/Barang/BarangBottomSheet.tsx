@@ -34,14 +34,7 @@ export interface ICreateModalBarang {
 
 function CreateModal({ control, errors, loading, onSave, title, onDelete, loadingDelete, watch }: ICreateModalBarang) {
   return (
-    <BottomSheetScrollView
-      showsHorizontalScrollIndicator={false}
-      showsVerticalScrollIndicator={false}
-      style={tw`flex-1 px-3`}
-    >
-      <View style={tw`mb-4`}>
-        <Text style={tw`font-bold text-lg text-center`}>{title}</Text>
-      </View>
+    <>
       <View style={tw`mb-4`}>
         <Text style={tw`mb-1 text-base`}>Nama Barang</Text>
         <Controller
@@ -69,7 +62,11 @@ function CreateModal({ control, errors, loading, onSave, title, onDelete, loadin
               placeholder="Stok"
               style={tw`border-b border-gray-100 px-4 py-3 rounded`}
               onChangeText={(value) => {
-                onChange(parseInt(value || '0', 10));
+                if (Number(value)) {
+                  onChange(parseInt(value, 10));
+                } else {
+                  onChange(parseInt('0', 10));
+                }
               }}
               keyboardType="numeric"
               value={(value !== 0 && value.toString()) || ''}
@@ -148,7 +145,7 @@ function CreateModal({ control, errors, loading, onSave, title, onDelete, loadin
           </View>
         )}
       </View>
-    </BottomSheetScrollView>
+    </>
   );
 }
 
