@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import tw from 'twrnc';
 import { titleCase } from '../../utils';
 
 interface IBarangFilterBottomSheet {
-  onResetSort: (query: QueryFilter) => void;
-  onApplySort: (query: QueryFilter) => void;
+  sortData: string | undefined;
+  onResetSort: (query: string | undefined) => void;
+  onApplySort: (query: string | undefined) => void;
 }
 
 const optionsFilter = [
@@ -25,19 +26,22 @@ const optionsFilter = [
 ];
 interface QueryFilter {
   sort: Array<string> | undefined;
-  nama_barang: string | undefined;
 }
 
-function BarangFilterBottomSheet({ onResetSort, onApplySort }: IBarangFilterBottomSheet) {
+function BarangFilterBottomSheet({ onResetSort, onApplySort, sortData }: IBarangFilterBottomSheet) {
   const [queryFilter, setQueryFilter] = useState<QueryFilter>({
     sort: undefined,
-    nama_barang: undefined,
   });
+
+  useEffect(() => {
+    setQueryFilter({
+      sort: sortData?.split(',') || undefined,
+    });
+  }, [sortData]);
 
   const handleSort = (value: string) => {
     let serializeQuery: {
       sort: Array<string> | undefined;
-      nama_barang: string | undefined;
     } = { ...queryFilter };
     const indexQuery = serializeQuery.sort?.findIndex((key) => value === key.replace('-', '')) as number;
     if (indexQuery === undefined || indexQuery === -1) {
@@ -84,14 +88,7 @@ function BarangFilterBottomSheet({ onResetSort, onApplySort }: IBarangFilterBott
         buttonStyle={tw`bg-red-400 mb-3`}
         titleStyle={tw`font-bold`}
         onPress={() => {
-          setQueryFilter({
-            sort: undefined,
-            nama_barang: undefined,
-          });
-          onResetSort({
-            sort: undefined,
-            nama_barang: undefined,
-          });
+          onResetSort(undefined);
         }}
       />
       <Button
@@ -101,7 +98,7 @@ function BarangFilterBottomSheet({ onResetSort, onApplySort }: IBarangFilterBott
         onPress={() => {
           const filter = JSON.parse(JSON.stringify(queryFilter));
           filter.sort = filter.sort.join(',');
-          onApplySort(filter);
+          onApplySort(filter.sort);
         }}
       />
     </View>

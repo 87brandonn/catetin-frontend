@@ -1,16 +1,15 @@
-import { ParamListBase, RouteProp } from '@react-navigation/native';
-import React, { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { View, Text } from 'react-native';
-import Toast from 'react-native-toast-message';
+import { ParamListBase, RouteProp, useNavigation } from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
+import { Text, View } from 'react-native';
 import { Avatar, Button } from 'react-native-elements';
+import Toast from 'react-native-toast-message';
 import tw from 'twrnc';
 import { axiosCatetin } from '../../api';
 import CatetinInput from '../../components/molecules/Input';
 import { useAppSelector } from '../../hooks';
 import { RootState } from '../../store';
 import { ICatetinBarangWithTransaksiDetail } from '../../types/barang';
-import TransactionBottomSheetWrapper from './TransactionBottomSheetWrapper';
 
 function TransactionEditQuantity(props: {
   route: RouteProp<ParamListBase, 'Transaction Edit Quantity'>;
@@ -23,6 +22,8 @@ function TransactionEditQuantity(props: {
   const [originalItemData, setOriginalItemData] = useState<ICatetinBarangWithTransaksiDetail | null>(null);
 
   const [error, setError] = useState(false);
+
+  const navigation = useNavigation();
 
   useEffect(() => {
     if (selectedTransaction !== props.route.params?.id) {
@@ -56,7 +57,7 @@ function TransactionEditQuantity(props: {
         text2: `Berhasil melakukan update jumlah`,
         position: 'bottom',
       });
-      props.navigation.navigate('Transaction Detail');
+      navigation.navigate('Transaction Detail');
     } catch (err) {
       console.log(err);
       Toast.show({
@@ -71,7 +72,7 @@ function TransactionEditQuantity(props: {
   };
 
   return (
-    <TransactionBottomSheetWrapper showBack title="Edit Barang" to="Transaction Detail">
+    <View style={tw`flex-1`}>
       <View style={tw`flex items-center`}>
         <Avatar
           size={300}
@@ -129,7 +130,7 @@ function TransactionEditQuantity(props: {
           loading={loadingSave}
         />
       </View>
-    </TransactionBottomSheetWrapper>
+    </View>
   );
 }
 

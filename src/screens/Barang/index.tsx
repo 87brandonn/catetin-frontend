@@ -20,6 +20,7 @@ import BarangDetailBottomSheet from './BarangDetailBottomSheet';
 import BarangFilterBottomSheet from './BarangFilterBottomSheet';
 import CatetinBottomSheet from '../../components/molecules/BottomSheet';
 import CatetinBottomSheetWrapper from '../../components/molecules/BottomSheet/BottomSheetWrapper';
+import CatetinToast from '../../components/molecules/Toast';
 
 export interface IFormSchema {
   id: number;
@@ -61,37 +62,49 @@ function Barang(props: any) {
   const [loadingFetch, setLoadingFetch] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  const [params, setParams] = useState<{
+    nama_barang: string;
+    sort: string | undefined;
+    transactionId: number | undefined;
+  }>({
+    nama_barang: '',
+    sort: undefined,
+    transactionId: undefined,
+  });
+
   const bottomSheetRef = useRef<BottomSheet>(null);
   const bottomSheetRefFilter = useRef<BottomSheet>(null);
   const bottomSheetRefDetail = useRef<BottomSheet>(null);
 
-  const fetchBarang = useCallback(async (params = {}, isRefreshing = false) => {
-    if (isRefreshing) {
-      setRefreshing(true);
-    } else {
-      setLoadingFetch(true);
-    }
-    try {
-      const {
-        data: { data },
-      } = await axiosCatetin.get('/barang', {
-        params,
-        headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
-        },
-      });
-      console.log(data);
-      setBarang(data);
-    } catch (err) {
-      console.log(err);
-    } finally {
+  const fetchBarang = useCallback(
+    async (isRefreshing = false) => {
       if (isRefreshing) {
-        setRefreshing(false);
+        setRefreshing(true);
       } else {
-        setLoadingFetch(false);
+        setLoadingFetch(true);
       }
-    }
-  }, []);
+      try {
+        const {
+          data: { data },
+        } = await axiosCatetin.get('/barang', {
+          params,
+          headers: {
+            Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+          },
+        });
+        setBarang(data);
+      } catch (err) {
+        CatetinToast('error', 'Terjadi kesalahan. Gagal mengambil data barang.');
+      } finally {
+        if (isRefreshing) {
+          setRefreshing(false);
+        } else {
+          setLoadingFetch(false);
+        }
+      }
+    },
+    [params],
+  );
 
   useEffect(() => {
     fetchBarang();
@@ -145,8 +158,6 @@ function Barang(props: any) {
     );
   };
 
-  const snapPoints = useMemo(() => ['50%', '75%'], []);
-
   const handleViewDetail = async (singleBarang: ICatetinBarang) => {
     try {
       setLoadDetail(true);
@@ -161,7 +172,6 @@ function Barang(props: any) {
           Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
         },
       });
-      console.log(barangTransaksiData);
       setBarangTransaksi(barangTransaksiData);
     } catch (err: any) {
       console.error(err);
@@ -249,11 +259,18 @@ function Barang(props: any) {
           <BarangFilterBottomSheet
             onResetSort={(query) => {
               bottomSheetRefFilter.current?.close();
-              fetchBarang(query);
+              setParams((prevParams) => ({
+                ...prevParams,
+                sort: query,
+              }));
             }}
+            sortData={params.sort}
             onApplySort={(query) => {
               bottomSheetRefFilter.current?.close();
-              fetchBarang(query);
+              setParams((prevParams) => ({
+                ...prevParams,
+                sort: query,
+              }));
             }}
           />
         </CatetinBottomSheetWrapper>
@@ -279,11 +296,18 @@ function Barang(props: any) {
         onClickFilter={() => {
           bottomSheetRefFilter.current?.expand();
         }}
+        onChangeSearch={(value) => {
+          setParams((prevParams) => ({
+            ...prevParams,
+            nama_barang: value,
+          }));
+        }}
+        searchValue={params.nama_barang}
       />
 
       <CatetinScrollView
         style={tw`flex-1`}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchBarang(undefined, true)} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchBarang(true)} />}
       >
         <View style={tw`px-4 py-3`}>
           {loadingFetch ? (

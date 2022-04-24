@@ -1,8 +1,8 @@
 import { yupResolver } from '@hookform/resolvers/yup';
-import { ParamListBase, RouteProp } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ParamListBase, RouteProp, useNavigation } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform, Text, View } from 'react-native';
 import { Avatar, Button } from 'react-native-elements';
 import ImagePicker from 'react-native-image-crop-picker';
@@ -14,7 +14,6 @@ import CatetinInput from '../../components/molecules/Input';
 import { useAppSelector } from '../../hooks';
 import { RootState } from '../../store';
 import { IFormSchema } from '../Barang';
-import TransactionBottomSheetWrapper from './TransactionBottomSheetWrapper';
 
 const schema = yup.object().shape({
   id: yup.number(),
@@ -45,6 +44,8 @@ function TransactionDetailAddBarang(props: {
   });
 
   const { selectedTransaction } = useAppSelector((state: RootState) => state.transaction);
+
+  const { navigate } = useNavigation();
 
   useEffect(() => {
     if (selectedTransaction !== props.route.params?.id) {
@@ -118,7 +119,7 @@ function TransactionDetailAddBarang(props: {
         text2: `Berhasil menambah barang`,
         position: 'bottom',
       });
-      props.navigation.navigate('Transaction Detail Edit', {
+      navigate('Transaction Detail Edit', {
         from: 'add-barang',
         id: selectedTransaction,
       });
@@ -133,17 +134,8 @@ function TransactionDetailAddBarang(props: {
     }
   };
 
-  useEffect(() => {
-    console.log(errors);
-  }, [errors]);
-
   return (
-    <TransactionBottomSheetWrapper
-      showBack
-      title="Tambah Barang"
-      to="Transaction Detail Edit"
-      params={{ id: selectedTransaction }}
-    >
+    <View style={tw`flex-1`}>
       <View style={tw`flex items-center`}>
         <Controller
           control={control}
@@ -223,7 +215,7 @@ function TransactionDetailAddBarang(props: {
           loading={loading}
         />
       </View>
-    </TransactionBottomSheetWrapper>
+    </View>
   );
 }
 

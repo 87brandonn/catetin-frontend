@@ -7,7 +7,7 @@ import moment from 'moment';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Text, TouchableOpacity, View, Switch } from 'react-native';
-import { Avatar, Button } from 'react-native-elements';
+import { Avatar, Button, Icon } from 'react-native-elements';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import ActionSheet from 'react-native-actionsheet';
 import ImagePicker from 'react-native-image-crop-picker';
@@ -139,7 +139,9 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
           Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
         },
       });
-      if (data?.month) {
+      if (!data) {
+        setValueScheduler('type', null);
+      } else if (data?.month !== null) {
         setValueScheduler('type', {
           label: 'Tahunan',
           value: 3,
@@ -149,7 +151,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
           label: 'Bulanan',
           value: 2,
         });
-      } else if (data?.dayOfWeek) {
+      } else if (data?.dayOfWeek !== null) {
         setValueScheduler('type', {
           label: 'Mingguan',
           value: 1,
@@ -160,7 +162,6 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
           value: 0,
         });
       }
-      console.log(data);
       const defaultDate = new Date();
 
       if (data?.hour !== null && data?.hour >= 0) {
@@ -177,11 +178,11 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
 
       setValueScheduler('time', `${defaultDate}`);
       setValueScheduler('scheduleId', data?.id || 0);
-      setValueScheduler('dayOfWeek', data?.dayOfWeek || undefined);
+      setValueScheduler('dayOfWeek', data?.dayOfWeek !== null ? data?.dayOfWeek : undefined);
       setValueScheduler('dayOfMonth', data?.dayOfMonth || undefined);
-      setValueScheduler('month', data?.month || undefined);
+      setValueScheduler('month', data?.month !== null ? data?.month : undefined);
     } catch (err) {
-      // do nothing
+      CatetinToast('error', 'Terjadi kesalahan. Gagal mengambil data schedule.');
     } finally {
       setLoadingScheduler(false);
     }
@@ -200,7 +201,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
       console.log(data);
       setProfileData(data);
     } catch (err) {
-      console.log(err);
+      CatetinToast('error', 'Terjadi kesalahan. Gagal mengambil data profil.');
     } finally {
       setLoading(false);
     }
@@ -313,51 +314,51 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
   const monthOptions = [
     {
       label: 'Januari',
-      value: 1,
+      value: 0,
     },
     {
       label: 'Februari',
-      value: 2,
+      value: 1,
     },
     {
       label: 'Maret',
-      value: 3,
+      value: 2,
     },
     {
       label: 'April',
-      value: 4,
+      value: 3,
     },
     {
       label: 'Mei',
-      value: 5,
+      value: 4,
     },
     {
       label: 'Juni',
-      value: 6,
+      value: 5,
     },
     {
       label: 'Juli',
-      value: 7,
+      value: 6,
     },
     {
       label: 'Agustus',
-      value: 8,
+      value: 7,
     },
     {
       label: 'September',
-      value: 9,
+      value: 8,
     },
     {
       label: 'Oktober',
-      value: 10,
+      value: 9,
     },
     {
       label: 'November',
-      value: 11,
+      value: 10,
     },
     {
       label: 'Desember',
-      value: 12,
+      value: 11,
     },
   ];
 
@@ -388,7 +389,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
     },
     {
       label: 'Minggu',
-      value: 7,
+      value: 0,
     },
   ];
 
@@ -436,8 +437,8 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
         },
       );
 
-      CatetinToast(undefined, 'Schedule telah di terapkan.');
       bottomSheetLaporanRef.current?.close();
+      CatetinToast(undefined, 'Schedule telah di terapkan.');
       fetchScheduler();
     } catch (err) {
       CatetinToast('error', 'Terjadi kesalahan. Gagal melakukan update schedule.');
@@ -532,28 +533,6 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
       <CatetinBottomSheet bottomSheetRef={bottomSheetLaporanRef}>
         <CatetinBottomSheetWrapper single title="Schedule Laporan Keuangan" refreshable={false}>
           <View style={tw`flex-1`}>
-            {/* <View style={tw`mb-4`}>
-              <View style={tw`bg-amber-500 px-3 py-2 rounded-lg shadow-lg`}>
-                <Text style={tw`text-white font-bold`}>
-                  {watchScheduler('type') && (
-                    <>
-                      Scheduler akan di set secara {watchScheduler('type')?.label}{' '}
-                      {watchScheduler('month') &&
-                        `setiap bulan ${
-                          monthOptions.find((opt, index) => index + 1 === watchScheduler('month'))?.label
-                        } `}
-                      {watchScheduler('dayOfMonth') && `setiap tanggal ${watchScheduler('dayOfMonth')} `}
-                      {watchScheduler('dayOfWeek') &&
-                        `pada hari ${
-                          dayOptions.find((opt, index) => index + 1 === watchScheduler('dayOfWeek'))?.label
-                        } `}
-                      {watchScheduler('time') && `pukul ${moment(watchScheduler('time')).format('HH:mm')}`}
-                    </>
-                  )}
-                </Text>
-              </View>
-            </View> */}
-
             {optionsSchedule.map((opt, index: number) => (
               <TouchableOpacity
                 style={tw`px-3 mb-3 py-2 rounded-lg ${watchScheduler('type')?.value === index ? 'bg-blue-500' : ''}`}
@@ -673,7 +652,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
                 </View>
               )}
 
-              {watchScheduler('type') && watchScheduler('type')!.value >= 1 && (
+              {watchScheduler('type') && watchScheduler('type')!.value === 1 && (
                 <View style={tw`flex flex-row mb-3`}>
                   <View style={tw`flex-grow-1 flex-1`}>
                     <Text style={tw` mb-1`}>Hari</Text>
@@ -848,32 +827,15 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
             </View>
 
             <View style={tw`mb-4`}>
-              <Text style={tw`mb-1 text-base`}>Schedule Laporan Keuangan</Text>
               <TouchableOpacity
                 onPress={() => {
                   bottomSheetLaporanRef.current?.expand();
                 }}
+                style={tw`mb-1 flex flex-row bg-blue-500 items-center px-3 py-2 shadow-lg rounded-lg justify-between`}
               >
-                <CatetinInput
-                  pointerEvents="none"
-                  placeholder="Schedule Laporan Keuangan"
-                  style={tw`border border-slate-200 mb-1`}
-                  value={scheduleLaporan?.label}
-                  onChangeText={(value) => {
-                    // setProfileData(
-                    //   (data) =>
-                    //     ({
-                    //       ...data,
-                    //       nama_toko: value,
-                    //     } as ProfileJoinUser),
-                    // );
-                  }}
-                ></CatetinInput>
+                <Text style={tw`text-base font-bold text-white`}>Schedule Laporan Keuangan</Text>
+                <Icon name="chevron-right" iconStyle={tw`text-white`} tvParallaxProperties="" />
               </TouchableOpacity>
-              <Text style={tw`mb-1 text-xs text-slate-500`}>
-                Laporan keuangan berikutnya akan dikirim otomatis pada tanggal: {getNextDate().format('DD MMMM YYYY')}{' '}
-                (berlaku untuk periode seterusnya)
-              </Text>
             </View>
           </View>
 

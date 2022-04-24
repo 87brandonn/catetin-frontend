@@ -90,11 +90,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
       });
       setGraphData(data);
     } catch (err) {
-      Toast.show({
-        type: 'customToast',
-        text2: `Gagal mengambil data graph`,
-        position: 'bottom',
-      });
+      CatetinToast('error', `Gagal mengambil data graph`);
     } finally {
       setLoadingGraph(false);
     }
@@ -116,11 +112,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
       });
       setMaxOutcome(data);
     } catch (err) {
-      Toast.show({
-        type: 'customToast',
-        text2: `Gagal mengambil data barang ter-frequent`,
-        position: 'bottom',
-      });
+      CatetinToast('error', `Gagal mengambil data total pengeluaran`);
     } finally {
       setLoadingMaxOutcome(false);
     }
@@ -142,11 +134,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
       });
       setMaxIncome(data);
     } catch (err) {
-      Toast.show({
-        type: 'customToast',
-        text2: `Gagal mengambil data barang ter-frequent`,
-        position: 'bottom',
-      });
+      CatetinToast('error', `Gagal mengambil data pemasukan`);
     } finally {
       setLoadingMaxIncome(false);
     }
@@ -169,11 +157,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
       console.log(data);
       setFrequentItem(data);
     } catch (err) {
-      Toast.show({
-        type: 'customToast',
-        text2: `Gagal mengambil data barang ter-frequent`,
-        position: 'bottom',
-      });
+      CatetinToast('error', `Gagal mengambil data barang ter-frequent`);
     } finally {
       setLoadingFrequentItem(false);
     }
@@ -196,11 +180,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
       console.log(data);
       setBestItem(data);
     } catch (err) {
-      Toast.show({
-        type: 'customToast',
-        text2: `Gagal mengambil data barang terbaik`,
-        position: 'bottom',
-      });
+      CatetinToast('error', `Gagal mengambil data barang terbaik`);
     } finally {
       setLoadingBestItem(false);
     }
@@ -222,11 +202,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
       });
       setImpressionData(data);
     } catch (err) {
-      Toast.show({
-        type: 'customToast',
-        text2: `Gagal mengambil data impresi`,
-        position: 'bottom',
-      });
+      CatetinToast('error', `Gagal mengambil data impresi`);
     } finally {
       setLoadingImpression(false);
     }
@@ -248,11 +224,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
       });
       setTotalOutcome(data);
     } catch (err) {
-      Toast.show({
-        type: 'customToast',
-        text2: `Gagal mengambil data total pengeluaran`,
-        position: 'bottom',
-      });
+      CatetinToast('error', `Gagal mengambil data total pengeluaran`);
     } finally {
       setLoadingTotalOutcome(false);
     }
@@ -274,11 +246,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
       });
       setTotalIncome(data);
     } catch (err) {
-      Toast.show({
-        type: 'customToast',
-        text2: `Gagal mengambil data total pemasukan`,
-        position: 'bottom',
-      });
+      CatetinToast('error', `Gagal mengambil data total pemasukan`);
     } finally {
       setLoadingTotalIncome(false);
     }
@@ -358,7 +326,14 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
 
   const [activePeriode, setActivePeriode] = useState('all');
   const Stack = createStackNavigator();
-  const [customDate, setCustomDate] = useState<{ from: Date; until: Date }>({ from: new Date(), until: new Date() });
+  const defaultFrom = new Date();
+  const defaultTo = new Date();
+  defaultFrom.setUTCHours(0, 0, 0, 0);
+  defaultTo.setUTCHours(23, 59, 59, 999);
+  const [customDate, setCustomDate] = useState<{ from: Date; until: Date }>({
+    from: defaultFrom,
+    until: defaultTo,
+  });
   const [customPeriod, setCustomPeriod] = useState<{ value: number; date: string }>({ value: 1, date: 'days' });
 
   const customPeriodeOptions = [

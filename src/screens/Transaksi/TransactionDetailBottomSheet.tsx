@@ -1,10 +1,7 @@
-import BottomSheet from '@gorhom/bottom-sheet';
 import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
-import { Portal } from '@gorhom/portal';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator, StackNavigationOptions } from '@react-navigation/stack';
-import React, { useMemo, useState } from 'react';
-import tw from 'twrnc';
+import React, { useState } from 'react';
 import CatetinBottomSheet from '../../components/molecules/BottomSheet';
 import CatetinBottomSheetWrapper from '../../components/molecules/BottomSheet/BottomSheetWrapper';
 import { screenOptions } from '../../utils';
@@ -37,12 +34,26 @@ function TransactionDetailBottomSheet({ bottomSheetRefDetail }: ITransactionDeta
               </CatetinBottomSheetWrapper>
             )}
           </Stack.Screen>
-          <Stack.Screen name="Transaction Detail Edit">{(props) => <TransactionDetailEdit {...props} />}</Stack.Screen>
+          <Stack.Screen name="Transaction Detail Edit">
+            {(props) => (
+              <CatetinBottomSheetWrapper {...props} title="Detail Barang" showBack to="Transaction Detail">
+                <TransactionDetailEdit {...props} />
+              </CatetinBottomSheetWrapper>
+            )}
+          </Stack.Screen>
           <Stack.Screen name="Transaction Edit Quantity">
-            {(props) => <TransactionEditQuantity {...props} />}
+            {(props) => (
+              <CatetinBottomSheetWrapper {...props} title="Jumlah Barang" showBack to="Transaction Detail">
+                <TransactionEditQuantity {...props} />
+              </CatetinBottomSheetWrapper>
+            )}
           </Stack.Screen>
           <Stack.Screen name="Transaction Detail Add Barang">
-            {(props) => <TransactionDetailAddBarang {...props} />}
+            {(props) => (
+              <CatetinBottomSheetWrapper {...props} title="Tambah Barang" showBack to="Transaction Detail Edit">
+                <TransactionDetailAddBarang {...props} />
+              </CatetinBottomSheetWrapper>
+            )}
           </Stack.Screen>
         </Stack.Navigator>
       </NavigationContainer>

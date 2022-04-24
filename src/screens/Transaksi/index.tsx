@@ -1,12 +1,13 @@
 import BottomSheet from '@gorhom/bottom-sheet';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import moment from 'moment';
 import 'moment/min/locales';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityIndicator, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
 import { Avatar, Badge } from 'react-native-elements';
 import tw from 'twrnc';
 import { axiosCatetin } from '../../api';
+import CatetinToast from '../../components/molecules/Toast';
 import { useAppDispatch, useAppSelector } from '../../hooks';
 import AppLayout from '../../layouts/AppLayout';
 import CatetinScrollView from '../../layouts/ScrollView';
@@ -26,33 +27,42 @@ function Transaksi() {
 
   const [transaksi, setTransaksi] = useState<ICatetinTransaksiWithDetail[] | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [params, setParams] = useState({
+    search: '',
+  });
 
-  const fetchTransaksi = useCallback(async (isMounted = true, refreshing = false) => {
-    if (refreshing) {
-      setRefreshing(true);
-    } else {
-      setLoadingTransaksi(true);
-    }
-    try {
-      const {
-        data: { data },
-      } = await axiosCatetin.get('/transaksi', {
-        headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
-        },
-      });
-      if (isMounted) {
-        setTransaksi(data);
+  const fetchTransaksi = useCallback(
+    async (isMounted = true, refreshing = false) => {
+      if (refreshing) {
+        setRefreshing(true);
+      } else {
+        setLoadingTransaksi(true);
+      }
+      try {
+        const {
+          data: { data },
+        } = await axiosCatetin.get('/transaksi', {
+          params,
+          headers: {
+            Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+          },
+        });
+        if (isMounted) {
+          setTransaksi(data);
+        }
+      } catch (err) {
+        CatetinToast('error', 'Terjadi kesalahan. Gagal mengambil data transaksi.');
+        console.log(err);
+      } finally {
         if (refreshing) {
           setRefreshing(false);
         } else {
           setLoadingTransaksi(false);
         }
       }
-    } catch (err) {
-      console.log(err);
-    }
-  }, []);
+    },
+    [params],
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -98,6 +108,13 @@ function Transaksi() {
         onClickFilter={() => {
           bottomSheetRefFilter.current?.expand();
         }}
+        onChangeSearch={(value) => {
+          setParams((prevParams) => ({
+            ...prevParams,
+            search: value,
+          }));
+        }}
+        searchValue={params.search}
       />
       <CatetinScrollView
         style={tw`flex-1 py-3`}
@@ -160,6 +177,7 @@ function Transaksi() {
             </TouchableOpacity>
           ))
         )}
+        <View style={tw`mb-[42px]`} />
       </CatetinScrollView>
     </AppLayout>
   );

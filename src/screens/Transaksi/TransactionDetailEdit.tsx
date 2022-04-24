@@ -1,15 +1,15 @@
-import React, { useCallback, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { TextInput, View, Text, ActivityIndicator } from 'react-native';
-import { Button, Icon } from 'react-native-elements';
+import { ParamListBase, RouteProp, useNavigation } from '@react-navigation/native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Text, View } from 'react-native';
+import { Avatar, Button, Icon } from 'react-native-elements';
 import tw from 'twrnc';
-import { Avatar } from 'react-native-elements';
-import TransactionBottomSheetWrapper from './TransactionBottomSheetWrapper';
-import { ICatetinBarang } from '../../types/barang';
 import { axiosCatetin } from '../../api';
-import { RouteProp, ParamListBase } from '@react-navigation/native';
+import CatetinInput from '../../components/molecules/Input';
+import CatetinToast from '../../components/molecules/Toast';
 import { useAppSelector } from '../../hooks';
 import { RootState } from '../../store';
+import { ICatetinBarang } from '../../types/barang';
 
 function TransactionDetailEdit(props: { route: RouteProp<ParamListBase, 'Transaction Detail Edit'>; navigation: any }) {
   const [loadingFetch, setLoadingFetch] = useState(true);
@@ -29,8 +29,10 @@ function TransactionDetailEdit(props: { route: RouteProp<ParamListBase, 'Transac
     })[]
   >([]);
 
+  const navigation = useNavigation();
+
   const fetchBarang = useCallback(
-    async (isMounted = true) => {
+    async (isMounted = true, search = '') => {
       setLoadingFetch(true);
       try {
         const {
@@ -41,6 +43,7 @@ function TransactionDetailEdit(props: { route: RouteProp<ParamListBase, 'Transac
           },
           params: {
             transactionId: selectedTransaction,
+            nama_barang: search,
           },
         });
         if (isMounted) {
@@ -48,7 +51,7 @@ function TransactionDetailEdit(props: { route: RouteProp<ParamListBase, 'Transac
           setLoadingFetch(false);
         }
       } catch (err) {
-        // do nothing
+        CatetinToast('error', 'Terjadi kesalahan pada server. Gagal mengambil data barang.');
       }
     },
     [selectedTransaction],
@@ -86,7 +89,7 @@ function TransactionDetailEdit(props: { route: RouteProp<ParamListBase, 'Transac
       );
       fetchBarang();
     } catch (err) {
-      // do nothing
+      CatetinToast('error', 'Terjadi kesalahan pada server. Gagal melakukan update barang.');
     } finally {
       setLoadingAdd((prevState) => ({
         ...prevState,
@@ -96,7 +99,7 @@ function TransactionDetailEdit(props: { route: RouteProp<ParamListBase, 'Transac
   };
 
   const handleInputBarang = () => {
-    props.navigation.navigate('Transaction Detail Add Barang', {
+    navigation.navigate('Transaction Detail Add Barang', {
       id: selectedTransaction,
     });
   };
@@ -110,11 +113,19 @@ function TransactionDetailEdit(props: { route: RouteProp<ParamListBase, 'Transac
   useEffect(() => {
     fetchBarang();
   }, [fetchBarang]);
+
   return (
-    <TransactionBottomSheetWrapper showBack title="Barang" to="Transaction Detail">
+    <View style={tw`flex-1`}>
       <View style={tw`flex-row flex items-center mb-4`}>
         <View style={tw`flex-grow-1 mr-3`}>
-          <TextInput style={tw`bg-gray-100 px-3 py-3 rounded-[12px]`} placeholder="Search" />
+          <CatetinInput
+            bottomSheet
+            style={tw`bg-gray-100 px-3 py-3 rounded-[12px] border-0`}
+            placeholder="Search"
+            onChangeText={(value) => {
+              fetchBarang(true, value);
+            }}
+          />
         </View>
         <View>
           <Icon name="pluscircleo" type="ant-design" onPress={() => handleInputBarang()} tvParallaxProperties="" />
@@ -138,8 +149,9 @@ function TransactionDetailEdit(props: { route: RouteProp<ParamListBase, 'Transac
             <Text style={tw`text-base`}>{eachBarang.name}</Text>
             <Text style={tw`text-base`}>IDR {eachBarang.price.toLocaleString()}</Text>
             <Text style={tw`text-base mb-1`}>Stok: {eachBarang.stock.toLocaleString()}</Text>
-            <TextInput
-              style={tw`bg-gray-100 px-3 py-2 rounded-lg mb-2`}
+            <CatetinInput
+              bottomSheet
+              style={tw`bg-gray-100 px-3 py-2 rounded-lg mb-2 border-0`}
               placeholder="Jumlah"
               value={(eachBarang.amount !== 0 && eachBarang?.amount?.toString()) || ''}
               keyboardType="numeric"
@@ -174,7 +186,7 @@ function TransactionDetailEdit(props: { route: RouteProp<ParamListBase, 'Transac
           </View>
         ))
       )}
-    </TransactionBottomSheetWrapper>
+    </View>
   );
 }
 

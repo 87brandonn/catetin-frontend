@@ -1,28 +1,27 @@
-import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet';
 import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
-import { Portal } from '@gorhom/portal';
 import { yupResolver } from '@hookform/resolvers/yup';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { NavigationContainer } from '@react-navigation/native';
-import Toast from 'react-native-toast-message';
 import { createStackNavigator, StackNavigationOptions } from '@react-navigation/stack';
 import moment from 'moment';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { View } from 'react-native';
+import Toast from 'react-native-toast-message';
 import tw from 'twrnc';
 import * as yup from 'yup';
 import { axiosCatetin } from '../../api';
+import CatetinBottomSheet from '../../components/molecules/BottomSheet';
+import CatetinBottomSheetWrapper from '../../components/molecules/BottomSheet/BottomSheetWrapper';
 import CatetinSelect from '../../components/molecules/Select';
-import { ICatetinTransaksi } from '../../types/transaksi';
-import { screenOptions } from '../../utils';
-import CreateModal from './TransactionBottomSheet';
-import TransactionBottomSheetWrapper from './TransactionBottomSheetWrapper';
-import { setSelectedTransaction } from '../../store/features/transactionSlice';
 import { useAppDispatch, useAppSelector } from '../../hooks';
 import { optionsTransaksi } from '../../static/optionsTransaksi';
 import { RootState } from '../../store';
+import { setSelectedTransaction } from '../../store/features/transactionSlice';
+import { ICatetinTransaksi } from '../../types/transaksi';
+import { screenOptions } from '../../utils';
+import CreateModal from './TransactionBottomSheet';
 
 export interface ICatetinTipeTransaksi {
   label: string;
@@ -187,71 +186,57 @@ function TransactionCreateBottomSheet({
     }
   };
 
-  const renderBackdrop = useCallback(
-    (props) => <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} pres  />,
-    [],
-  );
-
   return (
-    <Portal>
-      <BottomSheet
-        ref={bottomSheetRef}
-        index={-1}
-        snapPoints={snapPoints}
-        backgroundStyle={tw`bg-white shadow-lg`}
-        backdropComponent={renderBackdrop}
-        enablePanDownToClose
-      >
-        <NavigationContainer independent={true}>
-          <Stack.Navigator screenOptions={screenOptions as StackNavigationOptions}>
-            <Stack.Screen name="Transaction Default" options={{ headerLeft: () => null }}>
-              {(props) => (
-                <TransactionBottomSheetWrapper title="Create Transaksi">
-                  <CreateModal
-                    control={control}
-                    errors={errors}
-                    watch={watch}
-                    loading={loading}
-                    onSave={() => handleSubmit(onSubmit)()}
-                    showDelete={watch('transaksi_id') !== 0}
-                    loadingDelete={loadingDelete}
-                    onDelete={() => handleDelete()}
-                    {...props}
-                  />
-                </TransactionBottomSheetWrapper>
-              )}
-            </Stack.Screen>
-            <Stack.Screen name="Transaction Date">
-              {(props) => (
-                <TransactionBottomSheetWrapper title="Transaction Date" showBack>
-                  <DateTimePicker
-                    display="spinner"
-                    mode="datetime"
-                    value={watch('tanggal')}
-                    onChange={(event, date) => setValue('tanggal', date as Date)}
-                  />
-                </TransactionBottomSheetWrapper>
-              )}
-            </Stack.Screen>
-            <Stack.Screen name="Transaction Type">
-              {(props) => (
-                <TransactionBottomSheetWrapper title="Transaction Type" showBack>
-                  <View style={tw`flex-1`}>
-                    <CatetinSelect
-                      onSelectOption={(option) => {
-                        setValue('tipe', option);
-                      }}
-                      options={optionsTransaksi}
-                      selected={watch('tipe')}
-                    ></CatetinSelect>
-                  </View>
-                </TransactionBottomSheetWrapper>
-              )}
-            </Stack.Screen>
-          </Stack.Navigator>
-        </NavigationContainer>
-      </BottomSheet>
-    </Portal>
+    <CatetinBottomSheet bottomSheetRef={bottomSheetRef}>
+      <NavigationContainer independent={true}>
+        <Stack.Navigator screenOptions={screenOptions as StackNavigationOptions}>
+          <Stack.Screen name="Transaction Default" options={{ headerLeft: () => null }}>
+            {(props) => (
+              <CatetinBottomSheetWrapper {...props} title="Create Transaksi">
+                <CreateModal
+                  control={control}
+                  errors={errors}
+                  watch={watch}
+                  loading={loading}
+                  onSave={() => handleSubmit(onSubmit)()}
+                  showDelete={watch('transaksi_id') !== 0}
+                  loadingDelete={loadingDelete}
+                  onDelete={() => handleDelete()}
+                  {...props}
+                />
+              </CatetinBottomSheetWrapper>
+            )}
+          </Stack.Screen>
+          <Stack.Screen name="Transaction Date">
+            {(props) => (
+              <CatetinBottomSheetWrapper {...props} title="Transaction Date" showBack to="Transaction Default">
+                <DateTimePicker
+                  display="spinner"
+                  mode="datetime"
+                  value={watch('tanggal')}
+                  onChange={(event, date) => setValue('tanggal', date as Date)}
+                />
+              </CatetinBottomSheetWrapper>
+            )}
+          </Stack.Screen>
+          <Stack.Screen name="Transaction Type">
+            {(props) => (
+              <CatetinBottomSheetWrapper {...props} title="Transaction Type" showBack to="Transaction Default">
+                <View style={tw`flex-1`}>
+                  <CatetinSelect
+                    onSelectOption={(option) => {
+                      setValue('tipe', option);
+                    }}
+                    options={optionsTransaksi}
+                    selected={watch('tipe')}
+                  ></CatetinSelect>
+                </View>
+              </CatetinBottomSheetWrapper>
+            )}
+          </Stack.Screen>
+        </Stack.Navigator>
+      </NavigationContainer>
+    </CatetinBottomSheet>
   );
 }
 
