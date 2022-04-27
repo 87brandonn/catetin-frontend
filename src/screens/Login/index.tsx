@@ -1,19 +1,18 @@
 import { yupResolver } from '@hookform/resolvers/yup';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import Toast from 'react-native-toast-message';
-import { ResponseType } from 'expo-auth-session';
-import * as Facebook from 'expo-auth-session/providers/facebook';
 import * as Google from 'expo-auth-session/providers/google';
+import * as Facebook from 'expo-facebook';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityIndicator, KeyboardAvoidingView, Text, TouchableOpacity, View } from 'react-native';
-import { Button } from 'react-native-elements';
+import { Button, Icon } from 'react-native-elements';
 import tw from 'twrnc';
 import * as yup from 'yup';
 import { axiosCatetin } from '../../api';
 import CatetinInput from '../../components/molecules/Input';
+import CatetinToast from '../../components/molecules/Toast';
 import AppLayout from '../../layouts/AppLayout';
 import { RootStackParamList } from '../../navigation';
 
@@ -50,12 +49,46 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
     },
   });
 
-  const [loadingLogin, setLoadingLogin] = useState(false);
+  const [loadingFacebook, setLoadingFacebook] = useState(false);
 
-  const [requestFb, responseFb, promptAsyncFb] = Facebook.useAuthRequest({
-    clientId: '709036773596885',
-    responseType: ResponseType.Code,
-  });
+  async function logInFacebook() {
+    setLoadingFacebook(true);
+    try {
+      await Facebook.initializeAsync({
+        appId: '709036773596885',
+      });
+      const { type, token }: any = await Facebook.logInWithReadPermissionsAsync({
+        permissions: ['public_profile'],
+      });
+      if (type === 'success') {
+        const response = await fetch(
+          `https://graph.facebook.com/me?fields=id,name,email,picture&access_token=${token}`,
+        );
+        const { email, name } = await response.json();
+        const {
+          data: { token: catetinToken },
+        } = await axiosCatetin.post('/auth/login/facebook', {
+          email,
+          name,
+        });
+        await AsyncStorage.setItem('accessToken', catetinToken);
+        const profileData = await checkProfile(catetinToken);
+        if (profileData?.verified && profileData?.Profile?.storeName) {
+          navigate('Home');
+        } else if (profileData?.verified === false) {
+          navigate('VerifyEmail');
+        } else if (!profileData?.Profile?.storeName) {
+          navigate('TokoLanding');
+        }
+      }
+    } catch (err: any) {
+      CatetinToast('error', 'An error occured while authenticating facebook.');
+    } finally {
+      setLoadingFacebook(false);
+    }
+  }
+
+  const [loadingLogin, setLoadingLogin] = useState(false);
 
   const onSubmit = async ({ username, password }: FormData) => {
     setLoadingLogin(true);
@@ -67,106 +100,106 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
         password,
       });
       await AsyncStorage.setItem('accessToken', token);
-      checkProfile(token);
+      const profileData = await checkProfile(token);
+      if (profileData?.verified && profileData?.Profile?.storeName) {
+        navigate('Home');
+      } else if (profileData?.verified === false) {
+        navigate('VerifyEmail');
+      } else if (!profileData?.Profile?.storeName) {
+        navigate('TokoLanding');
+      }
     } catch (err: any) {
-      Toast.show({
-        type: 'customToast',
-        text2: err.response?.data?.message || 'Failed to register',
-        position: 'bottom',
-      });
+      CatetinToast(
+        'error',
+        err.response?.data?.message || 'An error occured while authenticating username and password.',
+      );
     } finally {
       setLoadingLogin(false);
     }
   };
 
   const [loadUser, setLoadUser] = useState(true);
+  const [loadingGmail, setLoadingGmail] = useState(false);
 
-  const checkProfile = useCallback(
-    async (token: string | null, onSubmit = true) => {
-      if (onSubmit) {
-        setLoadingLogin(true);
-      } else {
-        setLoadUser(true);
-      }
-      if (!token) {
-        if (onSubmit) {
-          setLoadingLogin(false);
-        } else {
-          setLoadUser(false);
-        }
-        return;
-      }
-      try {
-        const {
-          data: { data },
-        } = await axiosCatetin.get('/auth/profile', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (!data.Profile?.storeName) {
-          navigate('TokoLanding');
-        } else {
-          navigate('Home');
-        }
-      } catch (err: any) {
-        // do nothing
-      } finally {
-        if (onSubmit) {
-          setLoadingLogin(false);
-        } else {
-          setLoadUser(false);
-        }
-      }
-    },
-    [navigate],
-  );
+  const checkProfile = useCallback(async (token: string | null) => {
+    if (!token) {
+      return undefined;
+    }
+    try {
+      const {
+        data: { data },
+      } = await axiosCatetin.get('/auth/profile', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return data || null;
+    } catch (err: any) {
+      // do nothing
+    }
+    return undefined;
+  }, []);
 
   const redirectIfLoggedIn = useCallback(async () => {
+    setLoadUser(true);
     const accessToken = await AsyncStorage.getItem('accessToken');
-    checkProfile(accessToken, false);
-  }, [checkProfile]);
+    const profileData = await checkProfile(accessToken);
+    if (profileData?.verified && profileData?.Profile?.storeName) {
+      navigate('Home');
+    } else if (profileData?.verified === false) {
+      navigate('VerifyEmail');
+    } else if (!profileData?.Profile?.storeName) {
+      navigate('TokoLanding');
+    }
+    setLoadUser(false);
+  }, [checkProfile, navigate]);
 
   useEffect(() => {
     redirectIfLoggedIn();
   }, [redirectIfLoggedIn]);
 
-  useEffect(() => {
-    if (responseFb?.type === 'success') {
-      const { code } = responseFb.params;
-      console.log(code);
-    }
-  }, [responseFb]);
-
-  const getUserInfo = useCallback(
+  const loginGmail = useCallback(
     async (token: string | undefined) => {
-      const userInfo = await fetch('https://www.googleapis.com/userinfo/v2/me', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const serialized = await userInfo.json();
+      setLoadingGmail(true);
       try {
+        const userInfo = await fetch('https://www.googleapis.com/userinfo/v2/me', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const serialized = await userInfo.json();
         const {
-          data: { token },
+          data: { token: catetinToken },
         } = await axiosCatetin.post('/auth/login/gmail', {
           email: serialized.email,
+          name: serialized.name,
         });
-        await AsyncStorage.setItem('accessToken', token);
-        checkProfile(token);
+        await AsyncStorage.setItem('accessToken', catetinToken);
+        const profileData = await checkProfile(catetinToken);
+        console.log(profileData);
+        if (profileData?.verified && profileData?.Profile?.storeName) {
+          navigate('Home');
+        } else if (profileData?.verified === false) {
+          navigate('VerifyEmail');
+        } else if (!profileData?.Profile?.storeName) {
+          navigate('TokoLanding');
+        }
       } catch (err) {
-        console.log(err);
+        console.log(err, 'ERROR GMAIL');
+        CatetinToast('error', 'An error occured while authenticating gmail.');
+      } finally {
+        setLoadingGmail(false);
       }
     },
-    [checkProfile],
+    [checkProfile, navigate],
   );
 
   useEffect(() => {
     if (response?.type === 'success') {
       const { authentication } = response;
-      getUserInfo(authentication?.accessToken);
+      loginGmail(authentication?.accessToken);
     }
-  }, [response, getUserInfo]);
+  }, [response, loginGmail]);
   return (
     <AppLayout header={false} bottom={false}>
       <View style={tw`flex-1 justify-center px-3`}>
@@ -196,7 +229,7 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
                   control={control}
                   render={({ field: { onChange, onBlur, value } }) => (
                     <CatetinInput
-                      placeholder="Enter password"
+                      placeholder="Password"
                       onChangeText={onChange}
                       secureTextEntry
                       value={value}
@@ -218,30 +251,47 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
                 </TouchableOpacity>
               </View>
             </View>
-            <Button
-              loading={loadingLogin}
-              title="Login"
-              buttonStyle={tw`bg-blue-500 rounded-[8px] mb-4`}
+            <TouchableOpacity
+              disabled={loadingLogin}
+              style={tw`px-3 py-2 bg-blue-${
+                loadingLogin ? '300' : '500'
+              } rounded-xl shadow-xl flex flex-row justify-center items-center mb-3`}
               onPress={handleSubmit(onSubmit)}
-            />
-            <Button
-              disabled={!request}
-              title="Login with Gmail"
-              buttonStyle={tw`bg-blue-500 rounded-[8px] mb-4`}
+            >
+              <View>
+                <Text style={tw`font-medium text-white`}>Sign in</Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              disabled={loadingGmail}
+              style={tw`px-3 py-2 bg-[#4285F4] rounded-xl shadow-xl flex flex-row justify-center items-center mb-3`}
               onPress={() =>
                 promptAsync({
                   showInRecents: true,
                 })
               }
-            />
-            <Button
-              disabled={!requestFb}
-              title="Login with Facebook"
-              buttonStyle={tw`bg-blue-500 rounded-[8px]`}
-              onPress={() => {
-                promptAsyncFb();
+            >
+              <View>
+                <Icon name="google" iconStyle={tw`text-white mr-3`} type="ant-design" tvParallaxProperties="" />
+              </View>
+              <View>
+                <Text style={tw`font-medium text-white`}>Sign in with Google</Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              disabled={loadingFacebook}
+              style={tw`px-3 py-2 bg-[#4267B2] rounded-xl shadow-xl flex flex-row justify-center items-center mb-3`}
+              onPress={async () => {
+                await logInFacebook();
               }}
-            />
+            >
+              <View>
+                <Icon name="facebook" iconStyle={tw`text-white mr-3`} type="font-awesome-5" tvParallaxProperties="" />
+              </View>
+              <View>
+                <Text style={tw`font-medium text-white`}>Sign in with Facebook</Text>
+              </View>
+            </TouchableOpacity>
           </KeyboardAvoidingView>
         )}
       </View>

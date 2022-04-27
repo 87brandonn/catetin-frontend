@@ -17,7 +17,7 @@ import { ICatetinTransaksi, ICatetinTransaksiWithDetail } from '../../types/tran
 import TransactionAction from './TransactionAction';
 import TransactionCreateBottomSheet from './TransactionCreateBottomSheet';
 import TransactionDetailBottomSheet from './TransactionDetailBottomSheet';
-import TransactionSortBottomSheet from './TransactionFilterBottomSheet';
+import TransactionFilterBottomSheet from './TransactionFilterBottomSheet';
 
 function Transaksi() {
   const dispatch = useAppDispatch();
@@ -99,7 +99,17 @@ function Transaksi() {
         }}
       />
       <TransactionDetailBottomSheet bottomSheetRefDetail={bottomSheetRefDetail} />
-      <TransactionSortBottomSheet bottomSheetRefFilter={bottomSheetRefFilter} />
+      <TransactionFilterBottomSheet
+        bottomSheetRefFilter={bottomSheetRefFilter}
+        onApplyFilter={(data) => {
+          console.log(data);
+          bottomSheetRefFilter.current?.close();
+          setParams((prevParams) => ({
+            ...prevParams,
+            ...data,
+          }));
+        }}
+      />
       <TransactionAction
         onClickPlus={() => {
           dispatch(setEditedTransaction(null));

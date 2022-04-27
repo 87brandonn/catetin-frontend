@@ -3,12 +3,12 @@ import { useNavigation } from '@react-navigation/native';
 import moment from 'moment';
 import 'moment/min/locales';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, RefreshControl, Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { Avatar, Button } from 'react-native-elements';
 import tw from 'twrnc';
 import { axiosCatetin } from '../../api';
+import CatetinButton from '../../components/molecules/Button';
 import { useAppDispatch, useAppSelector } from '../../hooks';
-import CatetinScrollView from '../../layouts/ScrollView';
 import { optionsTransaksi } from '../../static/optionsTransaksi';
 import { RootState } from '../../store';
 import { setEditedTransaction } from '../../store/features/transactionSlice';
@@ -53,14 +53,14 @@ function TransactionDetail({ refreshing, onRefresh }: { refreshing: boolean; onR
     if (refreshing) {
       fetchTransaksiDetail(selectedTransaction as number, true);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshing]);
 
   useEffect(() => {
     if (selectedTransaction) {
       fetchTransaksiDetail(selectedTransaction);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTransaction]);
 
   return loadingDetail ? (
@@ -84,27 +84,25 @@ function TransactionDetail({ refreshing, onRefresh }: { refreshing: boolean; onR
       <Text style={tw`text-base`}>IDR {dataDetail?.nominal.toLocaleString()}</Text>
       <Text style={tw`text-base text-lg`}>Deskripsi:</Text>
       <Text style={tw`text-base mb-2`}>{dataDetail?.notes || '-'}</Text>
-      <Button
+      <CatetinButton
         title="Update Transaksi"
-        buttonStyle={tw`bg-blue-500 mb-3`}
-        titleStyle={tw`font-bold`}
         onPress={() => {
           dispatch(setEditedTransaction(dataDetail));
         }}
-      ></Button>
+        customStyle={'mb-3'}
+      />
       {(dataDetail?.type === '3' || dataDetail?.type === '4') && (
         <View style={tw`mb-[72px]`}>
-          <Button
+          <CatetinButton
             title="Update Detail Transaksi"
-            buttonStyle={tw`bg-blue-500 mb-3`}
-            titleStyle={tw`font-bold`}
             onPress={() => {
               navigate('Transaction Detail Edit', {
                 id: dataDetail.id,
                 type: dataDetail.type,
               });
             }}
-          ></Button>
+            customStyle={'mb-1'}
+          />
           <Text style={tw` text-xl font-bold mb-2`}>Detail:</Text>
           {dataDetail.Items.map((item) => (
             <View
@@ -124,10 +122,8 @@ function TransactionDetail({ refreshing, onRefresh }: { refreshing: boolean; onR
               <Text style={tw`text-base`}>Jumlah : {item.ItemTransaction.amount}</Text>
               <Text style={tw`text-base mb-1`}>IDR {item.ItemTransaction.total.toLocaleString()}</Text>
               <View>
-                <Button
+                <CatetinButton
                   title="Edit"
-                  buttonStyle={tw`bg-blue-500`}
-                  titleStyle={tw`font-bold`}
                   onPress={() => {
                     navigate('Transaction Edit Quantity', {
                       data: item,
@@ -136,7 +132,7 @@ function TransactionDetail({ refreshing, onRefresh }: { refreshing: boolean; onR
                     });
                   }}
                   disabled={item.deleted}
-                ></Button>
+                ></CatetinButton>
               </View>
             </View>
           ))}

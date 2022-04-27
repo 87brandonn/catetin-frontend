@@ -1,20 +1,19 @@
 import { yupResolver } from '@hookform/resolvers/yup';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { ResponseType } from 'expo-auth-session';
-import * as Facebook from 'expo-auth-session/providers/facebook';
 import * as Google from 'expo-auth-session/providers/google';
+import * as Facebook from 'expo-facebook';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { Button } from 'react-native-elements';
+import { Button, Icon } from 'react-native-elements';
 import Toast from 'react-native-toast-message';
 import tw from 'twrnc';
 import * as yup from 'yup';
 import { axiosCatetin } from '../../api';
 import CatetinInput from '../../components/molecules/Input';
-import { useAppDispatch } from '../../hooks';
+import CatetinToast from '../../components/molecules/Toast';
 import AppLayout from '../../layouts/AppLayout';
 import { RootStackParamList } from '../../navigation';
 
@@ -36,71 +35,73 @@ const schema = yup
 
 function Register({ navigation: { navigate } }: NativeStackScreenProps<RootStackParamList, 'Register'>) {
   const [loadingRegister, setLoadingRegister] = useState(false);
-  const [loadUser, setLoadUser] = useState(false);
   const [request, response, promptAsync] = Google.useAuthRequest({
     expoClientId: '478756255587-1hsqks41ku9r9qp8qumvoe199oehu2v5.apps.googleusercontent.com',
     iosClientId: '478756255587-9mnonnev35sl3tn0pd7i2hmnjjsuiivi.apps.googleusercontent.com',
     androidClientId: '478756255587-v7qv1rvfemqarqad2jik5j03r6ubdoj8.apps.googleusercontent.com',
   });
 
-  const checkProfile = useCallback(
-    async (token: string | null) => {
-      setLoadUser(true);
-      if (!token) {
-        setLoadUser(false);
-        return;
-      }
-      try {
-        const {
-          data: { data },
-        } = await axiosCatetin.get('/auth/profile', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (!data.Profile?.storeName) {
-          navigate('TokoLanding');
-        } else {
-          navigate('Home');
-        }
-      } catch (err: any) {
-        // do nothing
-      } finally {
-        setLoadUser(false);
-      }
-    },
-    [navigate],
-  );
+  const [loadingGmail, setLoadingGmail] = useState(false);
+  const [loadingFacebook, setLoadingFacebook] = useState(false);
 
-  const getUserInfo = useCallback(
-    async (token: string | undefined) => {
-      const userInfo = await fetch('https://www.googleapis.com/userinfo/v2/me', {
+  const checkProfile = useCallback(async (token: string | null) => {
+    if (!token) {
+      return undefined;
+    }
+    try {
+      const {
+        data: { data },
+      } = await axiosCatetin.get('/auth/profile', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      const serialized = await userInfo.json();
+      return data.Profile?.storeName || null;
+    } catch (err: any) {
+      // do nothing
+    }
+    return undefined;
+  }, []);
+
+  const loginGmail = useCallback(
+    async (token: string | undefined) => {
+      setLoadingGmail(true);
       try {
+        const userInfo = await fetch('https://www.googleapis.com/userinfo/v2/me', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const serialized = await userInfo.json();
         const {
-          data: { token },
+          data: { token: catetinToken },
         } = await axiosCatetin.post('/auth/login/gmail', {
           email: serialized.email,
+          name: serialized.name,
         });
-        await AsyncStorage.setItem('accessToken', token);
-        checkProfile(token);
+        await AsyncStorage.setItem('accessToken', catetinToken);
+        const hasStore = await checkProfile(catetinToken);
+        if (hasStore === null) {
+          navigate('TokoLanding');
+        } else if (hasStore) {
+          navigate('Home');
+        }
       } catch (err) {
-        console.log(err);
+        console.log(err, 'ERROR GMAIL');
+        CatetinToast('error', 'An error occured while authenticating gmail.');
+      } finally {
+        setLoadingGmail(false);
       }
     },
-    [checkProfile],
+    [checkProfile, navigate],
   );
 
   useEffect(() => {
     if (response?.type === 'success') {
       const { authentication } = response;
-      getUserInfo(authentication?.accessToken);
+      loginGmail(authentication?.accessToken);
     }
-  }, [response, getUserInfo]);
+  }, [response, loginGmail]);
 
   const {
     control,
@@ -114,6 +115,7 @@ function Register({ navigation: { navigate } }: NativeStackScreenProps<RootStack
       email: '',
     },
   });
+
   const onSubmit = async ({ username, password, email }: FormData) => {
     setLoadingRegister(true);
     try {
@@ -124,31 +126,59 @@ function Register({ navigation: { navigate } }: NativeStackScreenProps<RootStack
         password,
         email,
       });
-      AsyncStorage.setItem('accessToken', token);
-      checkProfile(token);
-    } catch (err: any) {
-      Toast.show({
-        type: 'customToast',
-        text1: 'Error',
-        text2: err.response?.data?.message || 'Failed to register',
-        position: 'bottom',
+      await AsyncStorage.setItem('accessToken', token);
+      await axiosCatetin.get('/auth/verify', {
+        headers: {
+          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+        },
       });
+      navigate('VerifyEmail');
+    } catch (err: any) {
+      console.log(JSON.stringify(err.response?.data.err));
+      CatetinToast(
+        'error',
+        err.response?.data?.message || 'An error occured while authenticating username and password.',
+      );
     } finally {
       setLoadingRegister(false);
     }
   };
 
-  const [requestFb, responseFb, promptAsyncFb] = Facebook.useAuthRequest({
-    clientId: '709036773596885',
-    responseType: ResponseType.Code,
-  });
-
-  useEffect(() => {
-    if (responseFb?.type === 'success') {
-      const { code } = responseFb.params;
-      console.log(code);
+  async function logInFacebook() {
+    setLoadingFacebook(true);
+    try {
+      await Facebook.initializeAsync({
+        appId: '709036773596885',
+      });
+      const { type, token }: any = await Facebook.logInWithReadPermissionsAsync({
+        permissions: ['public_profile'],
+      });
+      if (type === 'success') {
+        const response = await fetch(
+          `https://graph.facebook.com/me?fields=id,name,email,picture&access_token=${token}`,
+        );
+        const { email, name } = await response.json();
+        const {
+          data: { token: catetinToken },
+        } = await axiosCatetin.post('/auth/login/facebook', {
+          email,
+          name,
+        });
+        await AsyncStorage.setItem('accessToken', catetinToken);
+        const hasStore = await checkProfile(catetinToken);
+        console.log(hasStore);
+        if (hasStore === null) {
+          navigate('TokoLanding');
+        } else if (hasStore) {
+          navigate('Home');
+        }
+      }
+    } catch (err: any) {
+      CatetinToast('error', 'An error occured while authenticating facebook.');
+    } finally {
+      setLoadingFacebook(false);
     }
-  }, [responseFb]);
+  }
 
   return (
     <AppLayout bottom={false} header={false}>
@@ -158,13 +188,7 @@ function Register({ navigation: { navigate } }: NativeStackScreenProps<RootStack
             <Controller
               control={control}
               render={({ field: { onChange, onBlur, value } }) => (
-                <CatetinInput
-                  placeholder="Enter email"
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                  autoCapitalize="none"
-                />
+                <CatetinInput placeholder="Enter email" onChangeText={onChange} value={value} autoCapitalize="none" />
               )}
               name="email"
             />
@@ -174,13 +198,7 @@ function Register({ navigation: { navigate } }: NativeStackScreenProps<RootStack
             <Controller
               control={control}
               render={({ field: { onChange, onBlur, value } }) => (
-                <CatetinInput
-                  placeholder="Enter username"
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                  autoCapitalize="none"
-                />
+                <CatetinInput placeholder="Username" onChangeText={onChange} value={value} autoCapitalize="none" />
               )}
               name="username"
             />
@@ -192,8 +210,7 @@ function Register({ navigation: { navigate } }: NativeStackScreenProps<RootStack
               control={control}
               render={({ field: { onChange, onBlur, value } }) => (
                 <CatetinInput
-                  placeholder="Enter password"
-                  onBlur={onBlur}
+                  placeholder="Password"
                   onChangeText={onChange}
                   secureTextEntry
                   value={value}
@@ -216,30 +233,45 @@ function Register({ navigation: { navigate } }: NativeStackScreenProps<RootStack
           </View>
         </View>
 
-        <Button
-          loading={loadingRegister}
-          title="Register"
-          buttonStyle={tw`bg-blue-500 rounded-[8px] mb-4`}
+        <TouchableOpacity
+          disabled={loadingRegister}
+          style={tw`px-3 py-2 bg-[#4285F4] rounded-xl shadow-xl flex flex-row justify-center items-center mb-3`}
           onPress={handleSubmit(onSubmit)}
-        />
-        <Button
-          disabled={!request}
-          title="Register with Gmail"
-          buttonStyle={tw`bg-blue-500 rounded-[8px] mb-4`}
+        >
+          <View>
+            <Text style={tw`font-medium text-white`}>Register</Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          disabled={loadingGmail}
+          style={tw`px-3 py-2 bg-[#4285F4] rounded-xl shadow-xl flex flex-row justify-center items-center mb-3`}
           onPress={() =>
             promptAsync({
               showInRecents: true,
             })
           }
-        />
-        <Button
-          disabled={!requestFb}
-          title="Register with Facebook"
-          buttonStyle={tw`bg-blue-500 rounded-[8px]`}
-          onPress={() => {
-            promptAsyncFb();
+        >
+          <View>
+            <Icon name="google" iconStyle={tw`text-white mr-3`} type="ant-design" tvParallaxProperties="" />
+          </View>
+          <View>
+            <Text style={tw`font-medium text-white`}>Sign in with Google</Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          disabled={loadingFacebook}
+          style={tw`px-3 py-2 bg-[#4267B2] rounded-xl shadow-xl flex flex-row justify-center items-center mb-3`}
+          onPress={async () => {
+            await logInFacebook();
           }}
-        />
+        >
+          <View>
+            <Icon name="facebook" iconStyle={tw`text-white mr-3`} type="font-awesome-5" tvParallaxProperties="" />
+          </View>
+          <View>
+            <Text style={tw`font-medium text-white`}>Sign in with Facebook</Text>
+          </View>
+        </TouchableOpacity>
       </View>
     </AppLayout>
   );

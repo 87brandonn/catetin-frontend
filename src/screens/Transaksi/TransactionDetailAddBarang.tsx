@@ -10,6 +10,7 @@ import Toast from 'react-native-toast-message';
 import tw from 'twrnc';
 import * as yup from 'yup';
 import { axiosCatetin } from '../../api';
+import CatetinButton from '../../components/molecules/Button';
 import CatetinInput from '../../components/molecules/Input';
 import { useAppSelector } from '../../hooks';
 import { RootState } from '../../store';
@@ -207,13 +208,7 @@ function TransactionDetailAddBarang(props: {
         />
       </View>
       <View>
-        <Button
-          title="Save"
-          buttonStyle={tw`bg-blue-500`}
-          titleStyle={tw`font-bold`}
-          onPress={handleSubmit(onSubmit)}
-          loading={loading}
-        />
+        <CatetinButton title="Save" onPress={handleSubmit(onSubmit)} loading={loading} />
       </View>
     </View>
   );

@@ -24,6 +24,7 @@ import { RootStackParamList } from '../../navigation';
 import { ProfileJoinUser } from '../../types/profil';
 import { getAvatarTitle } from '../../utils';
 import CatetinToast from '../../components/molecules/Toast';
+import CatetinButton from '../../components/molecules/Button';
 
 export interface IFormSchema {
   current_password: string;
@@ -456,80 +457,71 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
 
   return (
     <AppLayout header={false}>
-      <Portal>
-        <BottomSheet
-          ref={bottomSheetRef}
-          index={-1}
-          snapPoints={snapPoints}
-          backgroundStyle={tw`bg-white shadow-lg`}
-          enablePanDownToClose
-        >
-          <KeyboardAvoidingView style={tw`flex-1 px-4`} behavior="padding">
-            <Text style={tw`text-xl text-center font-bold mb-3`}>Change Password</Text>
-            <View style={tw`mb-5`}>
-              <Controller
-                control={control}
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <CatetinInput
-                    bottomSheet
-                    placeholder="Enter current password"
-                    style={tw` py-3 rounded`}
-                    value={value}
-                    onChangeText={onChange}
-                    secureTextEntry
-                  ></CatetinInput>
-                )}
-                name="current_password"
-              />
-              {errors.current_password && <Text style={tw`text-red-500 mt-1`}>{errors.current_password.message}</Text>}
-            </View>
-            <View style={tw`mb-5`}>
-              <Controller
-                control={control}
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <CatetinInput
-                    bottomSheet
-                    placeholder="Enter new password"
-                    style={tw` py-3 rounded`}
-                    value={value}
-                    onChangeText={onChange}
-                    secureTextEntry
-                  ></CatetinInput>
-                )}
-                name="new_password"
-              />
-              {errors.new_password && <Text style={tw`text-red-500 mt-1`}>{errors.new_password.message}</Text>}
-            </View>
-            <View style={tw`mb-5`}>
-              <Controller
-                control={control}
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <CatetinInput
-                    bottomSheet
-                    placeholder="Reenter new password"
-                    style={tw` py-3 rounded`}
-                    value={value}
-                    onChangeText={onChange}
-                    secureTextEntry
-                  ></CatetinInput>
-                )}
-                name="confirm_new_password"
-              />
-              {errors.confirm_new_password && (
-                <Text style={tw`text-red-500 mt-1`}>{errors.confirm_new_password.message}</Text>
+      <CatetinBottomSheet bottomSheetRef={bottomSheetRef}>
+        <CatetinBottomSheetWrapper single title="Change Password">
+          <View style={tw`mb-5`}>
+            <Controller
+              control={control}
+              render={({ field: { onChange, value } }) => (
+                <CatetinInput
+                  bottomSheet
+                  placeholder="Enter current password"
+                  style={tw` py-3 rounded`}
+                  value={value}
+                  onChangeText={onChange}
+                  secureTextEntry
+                ></CatetinInput>
               )}
-            </View>
-            <Button
-              title="Save"
-              buttonStyle={tw`bg-blue-500`}
-              titleStyle={tw`font-bold`}
-              onPress={() => {
-                handleSubmit(onSubmit)();
-              }}
+              name="current_password"
             />
-          </KeyboardAvoidingView>
-        </BottomSheet>
-      </Portal>
+            {errors.current_password && <Text style={tw`text-red-500 mt-1`}>{errors.current_password.message}</Text>}
+          </View>
+          <View style={tw`mb-5`}>
+            <Controller
+              control={control}
+              render={({ field: { onChange, value } }) => (
+                <CatetinInput
+                  bottomSheet
+                  placeholder="Enter new password"
+                  style={tw` py-3 rounded`}
+                  value={value}
+                  onChangeText={onChange}
+                  secureTextEntry
+                ></CatetinInput>
+              )}
+              name="new_password"
+            />
+            {errors.new_password && <Text style={tw`text-red-500 mt-1`}>{errors.new_password.message}</Text>}
+          </View>
+          <View style={tw`mb-5`}>
+            <Controller
+              control={control}
+              render={({ field: { onChange, value } }) => (
+                <CatetinInput
+                  bottomSheet
+                  placeholder="Reenter new password"
+                  style={tw` py-3 rounded`}
+                  value={value}
+                  onChangeText={onChange}
+                  secureTextEntry
+                ></CatetinInput>
+              )}
+              name="confirm_new_password"
+            />
+            {errors.confirm_new_password && (
+              <Text style={tw`text-red-500 mt-1`}>{errors.confirm_new_password.message}</Text>
+            )}
+          </View>
+          <Button
+            title="Save"
+            buttonStyle={tw`bg-blue-500`}
+            titleStyle={tw`font-bold`}
+            onPress={() => {
+              handleSubmit(onSubmit)();
+            }}
+          />
+        </CatetinBottomSheetWrapper>
+      </CatetinBottomSheet>
       <CatetinBottomSheet bottomSheetRef={bottomSheetLaporanRef}>
         <CatetinBottomSheetWrapper single title="Schedule Laporan Keuangan" refreshable={false}>
           <View style={tw`flex-1`}>
@@ -841,10 +833,8 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
 
           <View style={tw`mb-4`}>
             <View style={tw`mb-3`}>
-              <Button
+              <CatetinButton
                 title="Save Changes"
-                buttonStyle={tw`bg-blue-500`}
-                titleStyle={tw`font-bold`}
                 onPress={() => {
                   handleSaveChanges();
                 }}
@@ -852,19 +842,16 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
               />
             </View>
             <View style={tw`mb-3`}>
-              <Button
+              <CatetinButton
                 title="Change Password"
-                buttonStyle={tw`bg-blue-500`}
-                titleStyle={tw`font-bold`}
                 onPress={() => {
                   bottomSheetRef.current?.expand();
                 }}
               />
             </View>
-            <Button
+            <CatetinButton
               title="Logout"
-              buttonStyle={tw`bg-gray-200`}
-              titleStyle={tw`font-bold`}
+              theme="danger"
               onPress={async () => {
                 await AsyncStorage.removeItem('accessToken');
                 navigate('Login');

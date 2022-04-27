@@ -4,24 +4,26 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator, StackNavigationOptions } from '@react-navigation/stack';
+import chunk from 'lodash/chunk';
 import moment from 'moment';
-import React, { useEffect, useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { Text, TouchableOpacity, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 import tw from 'twrnc';
 import * as yup from 'yup';
 import { axiosCatetin } from '../../api';
 import CatetinBottomSheet from '../../components/molecules/BottomSheet';
 import CatetinBottomSheetWrapper from '../../components/molecules/BottomSheet/BottomSheetWrapper';
-import CatetinSelect from '../../components/molecules/Select';
+import CatetinButton from '../../components/molecules/Button';
+import CatetinInput from '../../components/molecules/Input';
 import { useAppDispatch, useAppSelector } from '../../hooks';
+import { navigate } from '../../hooks/RootNavigation';
 import { optionsTransaksi } from '../../static/optionsTransaksi';
 import { RootState } from '../../store';
 import { setSelectedTransaction } from '../../store/features/transactionSlice';
 import { ICatetinTransaksi } from '../../types/transaksi';
 import { screenOptions } from '../../utils';
-import CreateModal from './TransactionBottomSheet';
 
 export interface ICatetinTipeTransaksi {
   label: string;
@@ -34,7 +36,7 @@ export interface TransactionCreateFormSchema {
   tipe: ICatetinTipeTransaksi | null | undefined;
   tanggal: Date;
   deskripsi: string;
-  total: number;
+  total: number | string;
 }
 
 export type TransactionCreateRootStackParamList = {
@@ -51,7 +53,10 @@ const schema = yup.object().shape({
   tipe: yup.mixed().required('Tipe transaksi is required'),
   tanggal: yup.date().required('Tanggal transaksi is required'),
   deskripsi: yup.string(),
-  total: yup.number().required('Total is required'),
+  total: yup.number().when('tipe', {
+    is: (opt) => opt.value === 1 || opt.value === 2,
+    then: (rule) => rule.typeError('Type must be number').required('Total is required'),
+  }),
 });
 
 interface ITransactionDetailBottomSheet {
@@ -65,7 +70,6 @@ function TransactionCreateBottomSheet({
   onFinishDelete,
   onFinishSubmit,
 }: ITransactionDetailBottomSheet) {
-  const snapPoints = useMemo(() => ['80%'], []);
   const [loadingDelete, setLoadingDelete] = useState(false);
 
   const [loading, setLoading] = useState(false);
@@ -90,6 +94,10 @@ function TransactionCreateBottomSheet({
       total: 0,
     },
   });
+
+  useEffect(() => {
+    console.log(errors);
+  }, [errors]);
 
   const dispatch = useAppDispatch();
 
@@ -193,43 +201,130 @@ function TransactionCreateBottomSheet({
           <Stack.Screen name="Transaction Default" options={{ headerLeft: () => null }}>
             {(props) => (
               <CatetinBottomSheetWrapper {...props} title="Create Transaksi">
-                <CreateModal
-                  control={control}
-                  errors={errors}
-                  watch={watch}
-                  loading={loading}
-                  onSave={() => handleSubmit(onSubmit)()}
-                  showDelete={watch('transaksi_id') !== 0}
-                  loadingDelete={loadingDelete}
-                  onDelete={() => handleDelete()}
-                  {...props}
-                />
-              </CatetinBottomSheetWrapper>
-            )}
-          </Stack.Screen>
-          <Stack.Screen name="Transaction Date">
-            {(props) => (
-              <CatetinBottomSheetWrapper {...props} title="Transaction Date" showBack to="Transaction Default">
-                <DateTimePicker
-                  display="spinner"
-                  mode="datetime"
-                  value={watch('tanggal')}
-                  onChange={(event, date) => setValue('tanggal', date as Date)}
-                />
-              </CatetinBottomSheetWrapper>
-            )}
-          </Stack.Screen>
-          <Stack.Screen name="Transaction Type">
-            {(props) => (
-              <CatetinBottomSheetWrapper {...props} title="Transaction Type" showBack to="Transaction Default">
-                <View style={tw`flex-1`}>
-                  <CatetinSelect
-                    onSelectOption={(option) => {
-                      setValue('tipe', option);
-                    }}
-                    options={optionsTransaksi}
-                    selected={watch('tipe')}
-                  ></CatetinSelect>
+                <View style={tw`flex-1`} {...props}>
+                  <View style={tw`mb-4 flex-1`}>
+                    <Text style={tw`mb-1 text-base`}>Nama Transaksi</Text>
+                    <Controller
+                      control={control}
+                      render={({ field: { onChange, value } }) => (
+                        <CatetinInput
+                          bottomSheet={true}
+                          placeholder="Nama Transaksi"
+                          onChangeText={onChange}
+                          value={value}
+                        />
+                      )}
+                      name="name"
+                    />
+                    {errors.name && <Text style={tw`text-red-400 mt-1`}>{errors.name.message}</Text>}
+                  </View>
+                  <View style={tw`mb-4 flex-1`}>
+                    <Text style={tw`mb-1 text-base`}>Tanggal Transaksi</Text>
+                    <TouchableOpacity
+                      onPress={() => {
+                        requestAnimationFrame(() => navigate('Transaction Date'));
+                      }}
+                    >
+                      <DateTimePicker
+                        display="spinner"
+                        mode="datetime"
+                        value={watch('tanggal')}
+                        onChange={(event, date) => setValue('tanggal', date as Date)}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                  <View style={tw`mb-4 flex-1`}>
+                    <Text style={tw`mb-1 text-base`}>Tipe Transaksi</Text>
+
+                    <View style={tw`flex-1`}>
+                      {chunk(optionsTransaksi, 2).map((optionChunk, index) => (
+                        <View style={tw`flex flex-1 flex-row mb-2`} key={index}>
+                          {optionChunk.map((option) => (
+                            <TouchableOpacity
+                              style={tw`flex-1 mr-2 ${
+                                watch('tipe')?.value === option.value ? 'bg-blue-500' : 'bg-gray-100'
+                              } px-3 py-2 rounded-lg shadow`}
+                              key={option.value}
+                              onPress={() => {
+                                setValue('tipe', option);
+                              }}
+                              disabled={watch('transaksi_id') !== 0}
+                            >
+                              <Text
+                                style={tw`text-center ${
+                                  watch('tipe')?.value === option.value ? 'font-bold text-white' : ''
+                                }`}
+                              >
+                                {option.label}
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      ))}
+                    </View>
+
+                    {errors.tipe && <Text style={tw`text-red-500 mt-1`}>{(errors.tipe as any)?.message as any}</Text>}
+                  </View>
+                  {(watch('tipe')?.value === 1 || watch('tipe')?.value === 2) && (
+                    <View style={tw`mb-4 flex-1`}>
+                      <Text style={tw`mb-1 text-base`}>Nominal Transaksi</Text>
+
+                      <Controller
+                        control={control}
+                        render={({ field: { onChange, value } }) => (
+                          <CatetinInput
+                            bottomSheet={true}
+                            placeholder="Nominal Transaksi"
+                            keyboardType="numeric"
+                            value={value?.toString() || ''}
+                            onChangeText={onChange}
+                          />
+                        )}
+                        name="total"
+                      />
+                      {errors.total && <Text style={tw`text-red-500 mt-1`}>{errors.total?.message as any}</Text>}
+                    </View>
+                  )}
+
+                  <View style={tw`mb-4 flex-1`}>
+                    <Text style={tw`mb-1 text-base`}>Deskripsi Transaksi</Text>
+                    <Controller
+                      control={control}
+                      render={({ field: { onChange, onBlur, value } }) => (
+                        <CatetinInput
+                          bottomSheet={true}
+                          placeholder="Deskripsi"
+                          onChangeText={(value: string) => {
+                            onChange(value);
+                          }}
+                          value={value}
+                        />
+                      )}
+                      name="deskripsi"
+                    />
+                    {errors.deskripsi && <Text style={tw`text-red-500 mt-1`}>{errors.deskripsi.message}</Text>}
+                  </View>
+
+                  <View>
+                    <CatetinButton
+                      title="Save"
+                      onPress={() => {
+                        handleSubmit(onSubmit)();
+                      }}
+                      loading={loading}
+                      customStyle={'mb-3'}
+                    />
+                    {watch('transaksi_id') !== 0 && (
+                      <CatetinButton
+                        title="Delete"
+                        theme="danger"
+                        onPress={() => {
+                          handleDelete();
+                        }}
+                        loading={loadingDelete}
+                      />
+                    )}
+                  </View>
                 </View>
               </CatetinBottomSheetWrapper>
             )}

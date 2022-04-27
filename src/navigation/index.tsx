@@ -2,9 +2,11 @@ import { PortalProvider } from '@gorhom/portal';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
-import { View, Text } from 'react-native';
+import { Text, View } from 'react-native';
+import { Icon } from 'react-native-elements';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import Toast, { ToastConfig } from 'react-native-toast-message';
 import tw from 'twrnc';
-import Toast, { BaseToast, ErrorToast, ToastConfig } from 'react-native-toast-message';
 import Barang from '../screens/Barang';
 import HomeScreen from '../screens/Home';
 import Login from '../screens/Login';
@@ -12,7 +14,7 @@ import ProfileScreen from '../screens/Profile';
 import Register from '../screens/Register';
 import TokoLanding from '../screens/TokoLanding';
 import Transaksi from '../screens/Transaksi';
-import { Icon } from 'react-native-elements';
+import VerifyEmail from '../screens/VerifyEmail';
 
 type RootStackParamList = {
   Home: undefined;
@@ -22,6 +24,7 @@ type RootStackParamList = {
   TokoLanding: undefined;
   Barang: undefined;
   Transaksi: undefined;
+  VerifyEmail: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -51,7 +54,7 @@ const toastConfig: ToastConfig = {
 
 export default function RootNavigation() {
   return (
-    <>
+    <SafeAreaProvider>
       <PortalProvider>
         <NavigationContainer>
           <Stack.Navigator initialRouteName="Login">
@@ -91,6 +94,13 @@ export default function RootNavigation() {
               }}
             />
             <Stack.Screen
+              name="VerifyEmail"
+              component={VerifyEmail}
+              options={{
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
               name="Barang"
               component={Barang}
               options={{
@@ -108,7 +118,7 @@ export default function RootNavigation() {
         </NavigationContainer>
       </PortalProvider>
       <Toast config={toastConfig} />
-    </>
+    </SafeAreaProvider>
   );
 }
 

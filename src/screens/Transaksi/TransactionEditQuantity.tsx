@@ -6,6 +6,7 @@ import { Avatar, Button } from 'react-native-elements';
 import Toast from 'react-native-toast-message';
 import tw from 'twrnc';
 import { axiosCatetin } from '../../api';
+import CatetinButton from '../../components/molecules/Button';
 import CatetinInput from '../../components/molecules/Input';
 import { useAppSelector } from '../../hooks';
 import { RootState } from '../../store';
@@ -119,10 +120,8 @@ function TransactionEditQuantity(props: {
         </View>
       )}
       <View>
-        <Button
+        <CatetinButton
           title="Save"
-          buttonStyle={tw`bg-blue-500`}
-          titleStyle={tw`font-bold`}
           onPress={() => {
             handleEditBarang();
           }}

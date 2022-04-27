@@ -33,11 +33,20 @@
       "favicon": "./assets/favicon.png"
     },
     "scheme": "com.brandonpardede.catetinapp",
+    "facebookScheme" : "fb709036773596885",
+    "facebookAppId" : "709036773596885",
+    "facebookDisplayName" : "Brandon Pardede",
     "plugins": [
       [
         "expo-image-picker",
         {
           "photosPermission": "The app accesses your photos to let you share them with your friends."
+        }
+      ],
+      [
+        "expo-facebook",
+        {
+          "userTrackingPermission": false
         }
       ]
     ]

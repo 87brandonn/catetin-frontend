@@ -38,7 +38,7 @@ function TransactionAction({ onClickPlus, onClickFilter, onChangeSearch, searchV
             onClickFilter();
           }}
         >
-          <Icon name="sort" type="material-icon" tvParallaxProperties="" />
+          <Icon name="filter" type="ant-design" tvParallaxProperties="" />
         </TouchableOpacity>
       </View>
     </View>

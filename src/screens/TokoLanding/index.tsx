@@ -15,10 +15,19 @@ function TokoLanding({ navigation: { navigate } }: NativeStackScreenProps<RootSt
   const onSubmit = async () => {
     setLoadingSubmit(true);
     try {
+      const {
+        data: { data },
+      } = await axiosCatetin.get(`/auth/profile`, {
+        headers: {
+          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+        },
+      });
+      const profileId = data?.Profile?.id || undefined;
       await axiosCatetin.put(
         '/auth/profile',
         {
           storeName: tokoName,
+          id: profileId,
         },
         {
           headers: {

@@ -6,6 +6,7 @@ import React, { Fragment, useCallback, useState } from 'react';
 import { ActivityIndicator, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { Icon } from 'react-native-elements';
 import tw from 'twrnc';
+import chunk from 'lodash/chunk';
 import { axiosCatetin } from '../../api';
 import CatetinBottomSheet from '../../components/molecules/BottomSheet';
 import CatetinBottomSheetWrapper from '../../components/molecules/BottomSheet/BottomSheetWrapper';
@@ -14,19 +15,27 @@ import CatetinInput from '../../components/molecules/Input';
 import CatetinToast from '../../components/molecules/Toast';
 import { optionsTransaksi } from '../../static/optionsTransaksi';
 import { ICatetinBarangWithTransaksi } from '../../types/barang';
+import moment from 'moment';
 
 interface ITransactionSortBottomSheet {
   bottomSheetRefFilter: React.RefObject<BottomSheetMethods>;
+  onApplyFilter: (params: {
+    end_date: Date | undefined;
+    start_date: Date | undefined;
+    items: number[] | undefined;
+    type: number[] | undefined;
+    nominal: number[] | undefined;
+  }) => void;
 }
-function TransactionSortBottomSheet({ bottomSheetRefFilter }: ITransactionSortBottomSheet) {
-  const [range, setRange] = useState(false);
+function TransactionSortBottomSheet({ bottomSheetRefFilter, onApplyFilter }: ITransactionSortBottomSheet) {
+  const [range, setRange] = useState(true);
   const [rangeNominal, setRangeNominal] = useState(false);
   const [search, setSearch] = useState('');
 
   const [loadingBarang, setLoadingBarang] = useState(false);
   const [barang, setBarang] = useState<ICatetinBarangWithTransaksi[] | null>(null);
-  const [start_date, setStartDate] = useState<Date | undefined>();
-  const [end_date, setEndDate] = useState<Date | undefined>();
+  const [start_date, setStartDate] = useState<Date | undefined>(moment().subtract(1, 'weeks').toDate());
+  const [end_date, setEndDate] = useState<Date | undefined>(moment().endOf('days').toDate());
 
   const [selectedBarang, setSelectedBarang] = useState<ICatetinBarangWithTransaksi[]>([]);
   const [selectedType, setSelectedType] = useState<number[]>([]);
@@ -59,7 +68,25 @@ function TransactionSortBottomSheet({ bottomSheetRefFilter }: ITransactionSortBo
       start_date,
       end_date: !range ? start_date : end_date,
     };
-    console.log(filter);
+    onApplyFilter(filter);
+  };
+
+  const handleResetFilter = () => {
+    setStartDate(moment().subtract(1, 'weeks').toDate());
+    setEndDate(moment().endOf('days').toDate());
+    setNominal([0, 0]);
+    setRangeNominal(false);
+    setRange(true);
+    setSelectedType([]);
+    setSelectedBarang([]);
+    setSearch('');
+    onApplyFilter({
+      end_date: undefined,
+      start_date: undefined,
+      nominal: undefined,
+      type: undefined,
+      items: undefined,
+    });
   };
 
   return (
@@ -108,22 +135,29 @@ function TransactionSortBottomSheet({ bottomSheetRefFilter }: ITransactionSortBo
           <View style={tw`mb-3 flex-1`}>
             <Text style={tw`text-lg font-medium mb-2`}>Tipe</Text>
             <View>
-              {optionsTransaksi.map((option) => (
-                <TouchableOpacity
-                  style={tw`px-3 justify-between flex flex-row mb-2 py-2`}
-                  key={option.value}
-                  onPress={() => {
-                    setSelectedType((prevType) => {
-                      if (prevType.includes(option.value)) {
-                        return prevType.filter((selectedEach) => selectedEach !== option.value);
-                      }
-                      return [...prevType, option.value];
-                    });
-                  }}
-                >
-                  <Text>{option.label}</Text>
-                  {selectedType.includes(option.value) && <Icon name="check" tvParallaxProperties="" />}
-                </TouchableOpacity>
+              {chunk(optionsTransaksi, 2).map((optionChunk, index) => (
+                <View style={tw`flex flex-row`} key={index}>
+                  {optionChunk.map((option) => (
+                    <TouchableOpacity
+                      style={tw`px-3 flex-1 justify-center flex flex-row mb-2 py-2 bg-gray-200 mr-3 rounded-2xl ${
+                        selectedType.includes(option.value) ? 'bg-blue-400' : 'border-transparent'
+                      }`}
+                      key={option.value}
+                      onPress={() => {
+                        setSelectedType((prevType) => {
+                          if (prevType.includes(option.value)) {
+                            return prevType.filter((selectedEach) => selectedEach !== option.value);
+                          }
+                          return [...prevType, option.value];
+                        });
+                      }}
+                    >
+                      <Text style={tw`${selectedType.includes(option.value) ? 'text-white font-medium' : ''}`}>
+                        {option.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               ))}
             </View>
           </View>
@@ -131,7 +165,16 @@ function TransactionSortBottomSheet({ bottomSheetRefFilter }: ITransactionSortBo
             <View style={tw`flex flex-row justify-between mb-3`}>
               <Text style={tw`text-lg font-medium`}>Tanggal</Text>
               <View style={tw`flex items-center`}>
-                <Switch style={tw`mb-1`} onChange={() => setRange(!range)} value={range} />
+                <Switch
+                  style={tw`mb-1`}
+                  onValueChange={(value) => {
+                    if (!value) {
+                      setStartDate(moment().endOf('days').toDate());
+                    }
+                    setRange(!range);
+                  }}
+                  value={range}
+                />
                 <Text style={tw`text-[12px]`}>Range</Text>
               </View>
             </View>
@@ -176,23 +219,27 @@ function TransactionSortBottomSheet({ bottomSheetRefFilter }: ITransactionSortBo
               }}
               value={search}
             />
-            <View style={tw`flex flex-row mb-3`}>
-              {selectedBarang.map((barang) => (
-                <View
-                  style={tw`flex-1 relative flex-row bg-gray-200 rounded-lg shadow px-3 py-2 mr-2 flex justify-center`}
-                  key={barang.id}
-                >
-                  <Text style={tw`text-center`}>{barang.name}</Text>
-                  <TouchableOpacity
-                    style={tw`absolute right-[-4px] bottom-full bg-gray-400 rounded-full w-[20px] h-[20px] flex justify-center items-center`}
-                    onPress={() => {
-                      setSelectedBarang((prevBarang) =>
-                        prevBarang.filter((barangState) => barangState.id !== barang.id),
-                      );
-                    }}
-                  >
-                    <Icon name="close" tvParallaxProperties="" size={16} color="white" />
-                  </TouchableOpacity>
+            <View>
+              {chunk(selectedBarang, 2).map((barangChunk, index) => (
+                <View style={tw`flex flex-row mb-3`} key={index}>
+                  {barangChunk.map((barang) => (
+                    <View
+                      style={tw`flex-1 relative flex-row bg-gray-200 rounded-lg shadow px-3 py-2 mr-2 flex justify-center`}
+                      key={barang.id}
+                    >
+                      <Text style={tw`text-center`}>{barang.name}</Text>
+                      <TouchableOpacity
+                        style={tw`absolute right-[-4px] bottom-full bg-gray-400 rounded-full w-[20px] h-[20px] flex justify-center items-center`}
+                        onPress={() => {
+                          setSelectedBarang((prevBarang) =>
+                            prevBarang.filter((barangState) => barangState.id !== barang.id),
+                          );
+                        }}
+                      >
+                        <Icon name="close" tvParallaxProperties="" size={16} color="white" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
                 </View>
               ))}
             </View>
@@ -228,7 +275,14 @@ function TransactionSortBottomSheet({ bottomSheetRefFilter }: ITransactionSortBo
           </View>
           <View>
             <CatetinButton title="Apply" onPress={() => handleApplyFilter()} />
-            <CatetinButton title="Reset" style={tw`mt-3`} theme="danger" />
+            <CatetinButton
+              title="Reset"
+              style={tw`mt-3`}
+              theme="danger"
+              onPress={() => {
+                handleResetFilter();
+              }}
+            />
           </View>
           <View style={tw`mb-[42px]`}></View>
         </View>
