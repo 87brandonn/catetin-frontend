@@ -11,16 +11,17 @@ import ActionSheet from 'react-native-actionsheet';
 import { LineChart } from 'react-native-chart-kit';
 import { Avatar, Badge, Button, Icon } from 'react-native-elements';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
-import Toast from 'react-native-toast-message';
 import tw from 'twrnc';
 import { axiosCatetin } from '../../api';
 import CatetinBottomSheet from '../../components/molecules/BottomSheet';
 import CatetinBottomSheetWrapper from '../../components/molecules/BottomSheet/BottomSheetWrapper';
 import CatetinInput from '../../components/molecules/Input';
 import CatetinToast from '../../components/molecules/Toast';
+import { useAppSelector } from '../../hooks';
 import AppLayout from '../../layouts/AppLayout';
 import CatetinScrollView from '../../layouts/ScrollView';
 import { RootStackParamList } from '../../navigation';
+import { RootState } from '../../store';
 import { ICatetinBarang } from '../../types/barang';
 import { ICatetinTransaksiWithDetail } from '../../types/transaksi';
 import { abbrNum } from '../../utils';
@@ -73,13 +74,14 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     start_date: undefined,
     end_date: undefined,
   });
+  const { activeStore } = useAppSelector((state: RootState) => state.store);
 
   const fetchGraphData = useCallback(async () => {
     try {
       setLoadingGraph(true);
       const {
         data: { data },
-      } = await axiosCatetin.get('/transaksi/summary', {
+      } = await axiosCatetin.get(`/transaksi/summary/${activeStore}`, {
         params: {
           graph: true,
           ...dateParams,
@@ -94,14 +96,14 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     } finally {
       setLoadingGraph(false);
     }
-  }, [dateParams]);
+  }, [activeStore, dateParams]);
 
   const fetchMaxOutcome = useCallback(async () => {
     try {
       setLoadingMaxOutcome(true);
       const {
         data: { data },
-      } = await axiosCatetin.get('/transaksi/summary', {
+      } = await axiosCatetin.get(`/transaksi/summary/${activeStore}`, {
         params: {
           max_outcome: true,
           ...dateParams,
@@ -116,14 +118,14 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     } finally {
       setLoadingMaxOutcome(false);
     }
-  }, [dateParams]);
+  }, [activeStore, dateParams]);
 
   const fetchMaxIncome = useCallback(async () => {
     try {
       setLoadingMaxIncome(true);
       const {
         data: { data },
-      } = await axiosCatetin.get('/transaksi/summary', {
+      } = await axiosCatetin.get(`/transaksi/summary/${activeStore}`, {
         params: {
           max_income: true,
           ...dateParams,
@@ -138,14 +140,14 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     } finally {
       setLoadingMaxIncome(false);
     }
-  }, [dateParams]);
+  }, [activeStore, dateParams]);
 
   const fetchFrequentItem = useCallback(async () => {
     try {
       setLoadingFrequentItem(true);
       const {
         data: { data },
-      } = await axiosCatetin.get('/transaksi/summary', {
+      } = await axiosCatetin.get(`/transaksi/summary/${activeStore}`, {
         params: {
           frequent_item: true,
           ...dateParams,
@@ -161,14 +163,14 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     } finally {
       setLoadingFrequentItem(false);
     }
-  }, [dateParams]);
+  }, [activeStore, dateParams]);
 
   const fetchBestItem = useCallback(async () => {
     try {
       setLoadingBestItem(true);
       const {
         data: { data },
-      } = await axiosCatetin.get('/transaksi/summary', {
+      } = await axiosCatetin.get(`/transaksi/summary/${activeStore}`, {
         params: {
           best_item: true,
           ...dateParams,
@@ -184,14 +186,14 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     } finally {
       setLoadingBestItem(false);
     }
-  }, [dateParams]);
+  }, [activeStore, dateParams]);
 
   const fetchImpression = useCallback(async () => {
     try {
       setLoadingImpression(true);
       const {
         data: { data },
-      } = await axiosCatetin.get('/transaksi/summary', {
+      } = await axiosCatetin.get(`/transaksi/summary/${activeStore}`, {
         params: {
           impression: true,
           ...dateParams,
@@ -206,14 +208,14 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     } finally {
       setLoadingImpression(false);
     }
-  }, [dateParams]);
+  }, [activeStore, dateParams]);
 
   const fetchTotalOutcome = useCallback(async () => {
     try {
       setLoadingTotalOutcome(true);
       const {
         data: { data },
-      } = await axiosCatetin.get('/transaksi/summary', {
+      } = await axiosCatetin.get(`/transaksi/summary/${activeStore}`, {
         params: {
           total_outcome: true,
           ...dateParams,
@@ -228,14 +230,14 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     } finally {
       setLoadingTotalOutcome(false);
     }
-  }, [dateParams]);
+  }, [activeStore, dateParams]);
 
   const fetchTotalIncome = useCallback(async () => {
     try {
       setLoadingTotalIncome(true);
       const {
         data: { data },
-      } = await axiosCatetin.get('/transaksi/summary', {
+      } = await axiosCatetin.get(`/transaksi/summary/${activeStore}`, {
         params: {
           total_income: true,
           ...dateParams,
@@ -250,7 +252,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     } finally {
       setLoadingTotalIncome(false);
     }
-  }, [dateParams]);
+  }, [activeStore, dateParams]);
 
   useEffect(() => {
     fetchGraphData();
@@ -408,7 +410,6 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
         };
       }
     }
-    console.log(finalObj);
     setDateParams(finalObj);
     bottomSheetRef.current?.close();
   };
@@ -622,9 +623,11 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
                 datasets: [
                   {
                     data: graphData?.map((data) => parseInt(data.data.outcome?.[0].sum_nominal || '0', 10)) || [],
+                    color: (opacity = 1) => 'rgb(239,68,68)',
                   },
                   {
                     data: graphData?.map((data) => parseInt(data.data.income?.[0].sum_nominal || '0', 10)) || [],
+                    color: (opacity = 1) => 'rgb(96,165,250)',
                   },
                 ],
               }}
@@ -670,10 +673,12 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
                   name={impressionData?.profit ? 'arrow-circle-up' : 'arrow-circle-down'}
                   style={tw`mr-2`}
                   size={36}
-                  iconStyle={tw`text-green-400`}
+                  iconStyle={tw`${impressionData?.profit ? 'text-green-400' : 'text-red-400'}`}
                   tvParallaxProperties=""
                 />
-                <Text style={tw`text-3xl font-bold text-blue-500`}>IDR {impressionData?.value.toLocaleString()}</Text>
+                <Text style={tw`text-3xl font-bold ${impressionData?.profit ? 'text-blue-500' : 'text-red-500'}`}>
+                  IDR {impressionData?.value.toLocaleString()}
+                </Text>
               </View>
             )}
           </View>
@@ -690,7 +695,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
           </View>
           <View style={tw`mb-4`}>
             <Text style={tw`text-xl`}>Total Pengeluaran</Text>
-            {loadingTotalIncome ? (
+            {loadingTotalOutcome ? (
               <SkeletonPlaceholder>
                 <View style={{ width: '75%', height: 20, borderRadius: 4 }} />
               </SkeletonPlaceholder>
@@ -743,7 +748,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
               ))
             )}
             <Text style={tw`text-sm text-slate-500`}>
-              Note: Barang ini memiliki nominal penjualan terbesar pada bulan ini
+              Note: Barang ini memiliki nominal penjualan terbesar pada periode ini
             </Text>
           </View>
           <View style={tw`mb-4`}>
@@ -790,7 +795,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
               ))
             )}
             <Text style={tw`text-sm text-slate-500`}>
-              Note: Barang ini memiliki jumlah penjualan terbesar pada bulan ini
+              Note: Barang ini memiliki jumlah penjualan terbesar pada periode ini
             </Text>
           </View>
           <View style={tw`mb-4`}>

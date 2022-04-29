@@ -7,27 +7,24 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import tw from 'twrnc';
 import { axiosCatetin } from '../../api';
 import { RootStackParamList } from '../../navigation';
+import { useAppDispatch } from '../../hooks';
+import { setActiveStore } from '../../store/features/storeSlice';
 
 function TokoLanding({ navigation: { navigate } }: NativeStackScreenProps<RootStackParamList, 'TokoLanding'>) {
   const [tokoName, setTokoName] = useState('');
   const [loadingSubmit, setLoadingSubmit] = useState(false);
+
+  const dispatch = useAppDispatch();
 
   const onSubmit = async () => {
     setLoadingSubmit(true);
     try {
       const {
         data: { data },
-      } = await axiosCatetin.get(`/auth/profile`, {
-        headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
-        },
-      });
-      const profileId = data?.Profile?.id || undefined;
-      await axiosCatetin.put(
-        '/auth/profile',
+      } = await axiosCatetin.post(
+        '/store',
         {
-          storeName: tokoName,
-          id: profileId,
+          name: tokoName,
         },
         {
           headers: {
@@ -35,6 +32,7 @@ function TokoLanding({ navigation: { navigate } }: NativeStackScreenProps<RootSt
           },
         },
       );
+      dispatch(setActiveStore(data.id));
       navigate('Home');
     } catch (error) {
       console.log(error);
@@ -66,7 +64,8 @@ function TokoLanding({ navigation: { navigate } }: NativeStackScreenProps<RootSt
         title="Kembali"
         buttonStyle={tw`bg-gray-200 rounded-[8px] mb-4 mx-3`}
         titleStyle={tw`text-gray-500`}
-        onPress={() => {
+        onPress={async () => {
+          await AsyncStorage.removeItem('accessToken');
           navigate('Login');
         }}
       />

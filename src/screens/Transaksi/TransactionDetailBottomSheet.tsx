@@ -4,6 +4,8 @@ import { createStackNavigator, StackNavigationOptions } from '@react-navigation/
 import React, { useState } from 'react';
 import CatetinBottomSheet from '../../components/molecules/BottomSheet';
 import CatetinBottomSheetWrapper from '../../components/molecules/BottomSheet/BottomSheetWrapper';
+import { useAppSelector } from '../../hooks';
+import { RootState } from '../../store';
 import { screenOptions } from '../../utils';
 import TransactionDetail from './TransactionDetail';
 import TransactionDetailAddBarang from './TransactionDetailAddBarang';
@@ -17,6 +19,7 @@ interface ITransactionDetailBottomSheet {
 const Stack = createStackNavigator();
 
 function TransactionDetailBottomSheet({ bottomSheetRefDetail }: ITransactionDetailBottomSheet) {
+  const { selectedTransaction } = useAppSelector((state: RootState) => state.transaction);
   const [refreshingDetail, setRefreshingDetail] = useState(false);
   return (
     <CatetinBottomSheet bottomSheetRef={bottomSheetRefDetail}>
@@ -50,7 +53,13 @@ function TransactionDetailBottomSheet({ bottomSheetRefDetail }: ITransactionDeta
           </Stack.Screen>
           <Stack.Screen name="Transaction Detail Add Barang">
             {(props) => (
-              <CatetinBottomSheetWrapper {...props} title="Tambah Barang" showBack to="Transaction Detail Edit">
+              <CatetinBottomSheetWrapper
+                {...props}
+                title="Tambah Barang"
+                showBack
+                to="Transaction Detail Edit"
+                params={{ id: selectedTransaction }}
+              >
                 <TransactionDetailAddBarang {...props} />
               </CatetinBottomSheetWrapper>
             )}

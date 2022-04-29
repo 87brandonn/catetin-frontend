@@ -1,6 +1,6 @@
 import { TransitionPresets } from '@react-navigation/stack';
 import { Platform } from 'react-native';
-import ImagePicker from 'react-native-image-crop-picker';
+import ImagePicker, { Image } from 'react-native-image-crop-picker';
 import { Profile, ProfileJoinUser } from '../types/profil';
 
 export const screenOptions = {
@@ -27,23 +27,35 @@ export const getAvatarTitle = (profile: ProfileJoinUser | null) => {
   return profile?.username?.match(/\b(\w)/g)?.join('');
 };
 
-export const handleUploadImage = async (rounded = true) => {
+export const handleUploadImage = async (rounded = true, picker = true) => {
   try {
-    const image = await ImagePicker.openPicker({
-      width: 300,
-      height: 400,
-      cropping: true,
-      mediaType: 'photo',
-      cropperCircleOverlay: rounded,
-    });
+    let image: Image;
+    if (picker) {
+      image = await ImagePicker.openPicker({
+        width: 1000,
+        height: 800,
+        cropping: true,
+        mediaType: 'photo',
+        cropperCircleOverlay: rounded,
+      });
+    } else {
+      image = await ImagePicker.openCamera({
+        width: 1000,
+        height: 800,
+        cropping: true,
+      });
+    }
+
     const formData = new FormData();
+    const path = image.path;
+    const imagePath = path.split('/');
     formData.append(
       'image',
       JSON.parse(
         JSON.stringify({
-          uri: Platform.OS === 'android' ? image.sourceURL : image.sourceURL?.replace('file://', ''),
+          uri: path,
           type: image.mime,
-          name: image.filename,
+          name: imagePath[imagePath.length - 1],
         }),
       ),
     );

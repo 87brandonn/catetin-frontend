@@ -1,26 +1,27 @@
 import BottomSheet from '@gorhom/bottom-sheet';
-import { Portal } from '@gorhom/portal';
 import { yupResolver } from '@hookform/resolvers/yup';
-import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { ActivityIndicator, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
 import { Avatar, Icon } from 'react-native-elements';
-import tw from 'twrnc';
 import Toast from 'react-native-toast-message';
+import tw from 'twrnc';
 import * as yup from 'yup';
 import { axiosCatetin } from '../../api';
+import CatetinBottomSheet from '../../components/molecules/BottomSheet';
+import CatetinBottomSheetWrapper from '../../components/molecules/BottomSheet/BottomSheetWrapper';
+import CatetinButton from '../../components/molecules/Button';
+import CatetinToast from '../../components/molecules/Toast';
+import { useAppSelector } from '../../hooks';
 import AppLayout from '../../layouts/AppLayout';
-import * as RootNavigation from '../../hooks/RootNavigation';
 import CatetinScrollView from '../../layouts/ScrollView';
+import { RootState } from '../../store';
 import { ICatetinBarang, ICatetinBarangWithTransaksi } from '../../types/barang';
 import TransactionAction from '../Transaksi/TransactionAction';
 import CreateModal from './BarangBottomSheet';
 import BarangDetailBottomSheet from './BarangDetailBottomSheet';
 import BarangFilterBottomSheet from './BarangFilterBottomSheet';
-import CatetinBottomSheet from '../../components/molecules/BottomSheet';
-import CatetinBottomSheetWrapper from '../../components/molecules/BottomSheet/BottomSheetWrapper';
-import CatetinToast from '../../components/molecules/Toast';
 
 export interface IFormSchema {
   id: number;
@@ -38,7 +39,7 @@ const schema = yup.object().shape({
   barang_picture: yup.mixed(),
 });
 
-function Barang(props: any) {
+function Barang() {
   const {
     control,
     handleSubmit,
@@ -56,6 +57,8 @@ function Barang(props: any) {
       barang_picture: null,
     },
   });
+
+  const { activeStore } = useAppSelector((state: RootState) => state.store);
 
   const [loading, setLoading] = useState(false);
   const [barang, setBarang] = useState<ICatetinBarang[]>([]);
@@ -86,7 +89,7 @@ function Barang(props: any) {
       try {
         const {
           data: { data },
-        } = await axiosCatetin.get('/barang', {
+        } = await axiosCatetin.get(`/barang/${activeStore}/list`, {
           params,
           headers: {
             Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
@@ -103,7 +106,7 @@ function Barang(props: any) {
         }
       }
     },
-    [params],
+    [activeStore, params],
   );
 
   useEffect(() => {
@@ -125,7 +128,7 @@ function Barang(props: any) {
 
   const onPost = async (data: IFormSchema) => {
     await axiosCatetin.post(
-      '/barang',
+      `/barang/${activeStore}`,
       {
         name: data.name,
         price: data.harga,
@@ -296,6 +299,7 @@ function Barang(props: any) {
         onClickFilter={() => {
           bottomSheetRefFilter.current?.expand();
         }}
+        showImport
         onChangeSearch={(value) => {
           setParams((prevParams) => ({
             ...prevParams,
@@ -305,19 +309,32 @@ function Barang(props: any) {
         searchValue={params.nama_barang}
       />
 
-      <CatetinScrollView
-        style={tw`flex-1`}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchBarang(true)} />}
-      >
-        <View style={tw`px-4 py-3`}>
-          {loadingFetch ? (
-            <ActivityIndicator />
-          ) : barang?.length === 0 ? (
-            <View style={tw`flex-1 bg-gray-400 py-3 px-4 rounded-lg shadow`}>
-              <Text style={tw`text-slate-100 text-base`}>Tidak ada barang</Text>
-            </View>
-          ) : (
-            barang.map((singleBarang: ICatetinBarang) => (
+      <View style={tw`flex-1`}>
+        {loadingFetch ? (
+          <ActivityIndicator />
+        ) : barang?.length === 0 ? (
+          <View style={tw`flex-1 justify-center items-center`}>
+            <Text style={tw`font-semibold text-2xl mb-1`}>Tidak ada barang</Text>
+            <CatetinButton
+              title="Tambah Barang"
+              onPress={() => {
+                reset({
+                  id: 0,
+                  name: '',
+                  harga: 0,
+                  stok: 0,
+                  barang_picture: null,
+                });
+                bottomSheetRef.current?.expand();
+              }}
+            />
+          </View>
+        ) : (
+          <CatetinScrollView
+            style={tw`flex-1 py-3 px-3`}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchBarang(true)} />}
+          >
+            {barang.map((singleBarang: ICatetinBarang) => (
               <Fragment key={singleBarang.id}>
                 <TouchableOpacity
                   style={tw`px-3 py-2 mb-2 flex flex-row`}
@@ -360,10 +377,10 @@ function Barang(props: any) {
                   </View>
                 </TouchableOpacity>
               </Fragment>
-            ))
-          )}
-        </View>
-      </CatetinScrollView>
+            ))}
+          </CatetinScrollView>
+        )}
+      </View>
     </AppLayout>
   );
 }

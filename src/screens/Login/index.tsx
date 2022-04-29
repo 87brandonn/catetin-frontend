@@ -6,15 +6,19 @@ import * as Facebook from 'expo-facebook';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { ActivityIndicator, KeyboardAvoidingView, Text, TouchableOpacity, View } from 'react-native';
-import { Button, Icon } from 'react-native-elements';
+import { ActivityIndicator, KeyboardAvoidingView, Text, TouchableOpacity, View, Image } from 'react-native';
+import { Icon } from 'react-native-elements';
 import tw from 'twrnc';
 import * as yup from 'yup';
 import { axiosCatetin } from '../../api';
 import CatetinInput from '../../components/molecules/Input';
 import CatetinToast from '../../components/molecules/Toast';
+import { useAppDispatch } from '../../hooks';
 import AppLayout from '../../layouts/AppLayout';
 import { RootStackParamList } from '../../navigation';
+import { setActiveStore } from '../../store/features/storeSlice';
+import { User } from '../../types/profil';
+import { ICatetinStore } from '../../types/store';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -50,6 +54,7 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
   });
 
   const [loadingFacebook, setLoadingFacebook] = useState(false);
+  const dispatch = useAppDispatch();
 
   async function logInFacebook() {
     setLoadingFacebook(true);
@@ -72,12 +77,13 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
           name,
         });
         await AsyncStorage.setItem('accessToken', catetinToken);
-        const profileData = await checkProfile(catetinToken);
-        if (profileData?.verified && profileData?.Profile?.storeName) {
+        const data = await getUserInfo(catetinToken);
+        if (data?.profileData?.verified && data?.storeData.length > 0) {
+          dispatch(setActiveStore(data.storeData?.[0].id));
           navigate('Home');
-        } else if (profileData?.verified === false) {
+        } else if (data?.profileData?.verified === false) {
           navigate('VerifyEmail');
-        } else if (!profileData?.Profile?.storeName) {
+        } else if (data?.storeData.length === 0) {
           navigate('TokoLanding');
         }
       }
@@ -100,12 +106,13 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
         password,
       });
       await AsyncStorage.setItem('accessToken', token);
-      const profileData = await checkProfile(token);
-      if (profileData?.verified && profileData?.Profile?.storeName) {
+      const data = await getUserInfo(token);
+      if (data?.profileData?.verified && data.storeData) {
+        dispatch(setActiveStore(data.storeData?.[0].id));
         navigate('Home');
-      } else if (profileData?.verified === false) {
+      } else if (data?.profileData?.verified === false) {
         navigate('VerifyEmail');
-      } else if (!profileData?.Profile?.storeName) {
+      } else if (data?.storeData.length === 0) {
         navigate('TokoLanding');
       }
     } catch (err: any) {
@@ -121,38 +128,63 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
   const [loadUser, setLoadUser] = useState(true);
   const [loadingGmail, setLoadingGmail] = useState(false);
 
-  const checkProfile = useCallback(async (token: string | null) => {
-    if (!token) {
+  const getUserInfo = useCallback(
+    async (token: string | null): Promise<{ profileData: User; storeData: ICatetinStore[] } | undefined> => {
+      if (!token) {
+        return undefined;
+      }
+      try {
+        const promises = [];
+        promises.push(
+          axiosCatetin.get('/auth/profile', {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
+        );
+        promises.push(
+          axiosCatetin.get('/store', {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
+        );
+        const [
+          {
+            data: { data: profileData },
+          },
+          {
+            data: { data: storeData },
+          },
+        ] = await Promise.all(promises);
+        return {
+          profileData,
+          storeData,
+        };
+      } catch (err: any) {
+        // do nothing
+      }
       return undefined;
-    }
-    try {
-      const {
-        data: { data },
-      } = await axiosCatetin.get('/auth/profile', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      return data || null;
-    } catch (err: any) {
-      // do nothing
-    }
-    return undefined;
-  }, []);
+    },
+    [],
+  );
 
   const redirectIfLoggedIn = useCallback(async () => {
     setLoadUser(true);
     const accessToken = await AsyncStorage.getItem('accessToken');
-    const profileData = await checkProfile(accessToken);
-    if (profileData?.verified && profileData?.Profile?.storeName) {
-      navigate('Home');
-    } else if (profileData?.verified === false) {
-      navigate('VerifyEmail');
-    } else if (!profileData?.Profile?.storeName) {
-      navigate('TokoLanding');
+    const data = await getUserInfo(accessToken);
+    if (data?.profileData) {
+      if (data?.profileData?.verified && data?.storeData.length > 0) {
+        dispatch(setActiveStore(data?.storeData?.[0]?.id));
+        navigate('Home');
+      } else if (data?.profileData.verified === false) {
+        navigate('VerifyEmail');
+      } else if (data?.storeData.length === 0) {
+        navigate('TokoLanding');
+      }
     }
     setLoadUser(false);
-  }, [checkProfile, navigate]);
+  }, [dispatch, getUserInfo, navigate]);
 
   useEffect(() => {
     redirectIfLoggedIn();
@@ -175,23 +207,23 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
           name: serialized.name,
         });
         await AsyncStorage.setItem('accessToken', catetinToken);
-        const profileData = await checkProfile(catetinToken);
-        console.log(profileData);
-        if (profileData?.verified && profileData?.Profile?.storeName) {
+        const data = await getUserInfo(catetinToken);
+        console.log(data);
+        if (data?.profileData?.verified && data?.storeData.length > 0) {
+          dispatch(setActiveStore(data.storeData?.[0]?.id));
           navigate('Home');
-        } else if (profileData?.verified === false) {
+        } else if (data?.profileData?.verified === false) {
           navigate('VerifyEmail');
-        } else if (!profileData?.Profile?.storeName) {
+        } else if (data?.storeData.length === 0) {
           navigate('TokoLanding');
         }
       } catch (err) {
-        console.log(err, 'ERROR GMAIL');
         CatetinToast('error', 'An error occured while authenticating gmail.');
       } finally {
         setLoadingGmail(false);
       }
     },
-    [checkProfile, navigate],
+    [dispatch, getUserInfo, navigate],
   );
 
   useEffect(() => {
@@ -202,12 +234,15 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
   }, [response, loginGmail]);
   return (
     <AppLayout header={false} bottom={false}>
-      <View style={tw`flex-1 justify-center px-3`}>
+      <View style={tw`flex-1 px-4`}>
         {loadUser ? (
           <ActivityIndicator />
         ) : (
-          <KeyboardAvoidingView behavior="padding">
-            <View style={tw`mb-3`}>
+          <KeyboardAvoidingView style={tw`flex flex-1 justify-evenly`} behavior="padding">
+            <View style={tw`flex items-center  shadow-xl`}>
+              <Image source={require('../../assets/rounded-icon.png')} style={tw`w-[96px] h-[96px]`} />
+            </View>
+            <View style={tw``}>
               <View style={tw`mb-3`}>
                 <Controller
                   control={control}
@@ -217,14 +252,14 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
                       onChangeText={onChange}
                       value={value}
                       autoCapitalize="none"
+                      isError={!!errors.username}
                     />
                   )}
                   name="username"
                 />
-                {errors.username && <Text style={tw`text-red-500 mt-1`}>{errors.username.message}</Text>}
               </View>
 
-              <View>
+              <View style={tw`mb-3`}>
                 <Controller
                   control={control}
                   render={({ field: { onChange, onBlur, value } }) => (
@@ -234,64 +269,74 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
                       secureTextEntry
                       value={value}
                       autoCapitalize="none"
+                      isError={!!errors.password}
                     />
                   )}
                   name="password"
                 />
-                {errors.password && <Text style={tw`text-red-500 mt-1`}>{errors.password.message}</Text>}
               </View>
-              <View style={tw`flex flex-row items-center mt-2`}>
-                <Text style={tw`text-gray-400 mr-1`}>Don&apos;t have an account?</Text>
-                <TouchableOpacity
-                  onPress={() => {
-                    navigate('Register');
-                  }}
-                >
-                  <Text style={tw`text-blue-400`}>Register</Text>
-                </TouchableOpacity>
+              <View>
+                <Text style={tw`text-right text-blue-500 font-bold`}>Forgot Password?</Text>
               </View>
             </View>
-            <TouchableOpacity
-              disabled={loadingLogin}
-              style={tw`px-3 py-2 bg-blue-${
-                loadingLogin ? '300' : '500'
-              } rounded-xl shadow-xl flex flex-row justify-center items-center mb-3`}
-              onPress={handleSubmit(onSubmit)}
-            >
-              <View>
-                <Text style={tw`font-medium text-white`}>Sign in</Text>
+            <View>
+              <TouchableOpacity
+                disabled={loadingLogin}
+                style={tw`px-3 py-2 bg-blue-${
+                  loadingLogin ? '300' : '500'
+                } rounded-xl shadow-xl flex flex-row justify-center items-center mb-4`}
+                onPress={handleSubmit(onSubmit)}
+              >
+                <View>
+                  <Text style={tw`font-medium text-white`}>Sign in</Text>
+                </View>
+              </TouchableOpacity>
+              <View style={tw`mb-4 flex flex-row items-center justify-between`}>
+                <View style={tw`w-full h-[1px] bg-gray-300 mr-2 flex-1`}></View>
+                <Text style={tw`text-gray-400 font-bold`}>OR</Text>
+                <View style={tw`w-full h-[1px] bg-gray-300 ml-2 flex-1`}></View>
               </View>
-            </TouchableOpacity>
-            <TouchableOpacity
-              disabled={loadingGmail}
-              style={tw`px-3 py-2 bg-[#4285F4] rounded-xl shadow-xl flex flex-row justify-center items-center mb-3`}
-              onPress={() =>
-                promptAsync({
-                  showInRecents: true,
-                })
-              }
-            >
-              <View>
-                <Icon name="google" iconStyle={tw`text-white mr-3`} type="ant-design" tvParallaxProperties="" />
-              </View>
-              <View>
-                <Text style={tw`font-medium text-white`}>Sign in with Google</Text>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity
-              disabled={loadingFacebook}
-              style={tw`px-3 py-2 bg-[#4267B2] rounded-xl shadow-xl flex flex-row justify-center items-center mb-3`}
-              onPress={async () => {
-                await logInFacebook();
-              }}
-            >
-              <View>
-                <Icon name="facebook" iconStyle={tw`text-white mr-3`} type="font-awesome-5" tvParallaxProperties="" />
-              </View>
-              <View>
-                <Text style={tw`font-medium text-white`}>Sign in with Facebook</Text>
-              </View>
-            </TouchableOpacity>
+              <TouchableOpacity
+                disabled={loadingGmail}
+                style={tw`px-3 py-2 bg-[#4285F4] rounded-xl shadow-xl flex flex-row justify-center items-center mb-4`}
+                onPress={() =>
+                  promptAsync({
+                    showInRecents: true,
+                  })
+                }
+              >
+                <View>
+                  <Icon name="google" iconStyle={tw`text-white mr-3`} type="ant-design" tvParallaxProperties="" />
+                </View>
+                <View>
+                  <Text style={tw`font-medium text-white`}>Sign in with Google</Text>
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                disabled={loadingFacebook}
+                style={tw`px-3 py-2 bg-[#4267B2] rounded-xl shadow-xl flex flex-row justify-center items-center mb-4`}
+                onPress={async () => {
+                  await logInFacebook();
+                }}
+              >
+                <View>
+                  <Icon name="facebook" iconStyle={tw`text-white mr-3`} type="font-awesome-5" tvParallaxProperties="" />
+                </View>
+                <View>
+                  <Text style={tw`font-medium text-white`}>Sign in with Facebook</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+            <View style={tw`flex flex-row items-center justify-center`}>
+              <Text style={tw`text-gray-400 mr-1`}>Don&apos;t have an account?</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  navigate('Register');
+                }}
+              >
+                <Text style={tw`text-blue-400 font-bold`}>Register</Text>
+              </TouchableOpacity>
+            </View>
           </KeyboardAvoidingView>
         )}
       </View>

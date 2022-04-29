@@ -19,6 +19,8 @@ function TransactionDetailEdit(props: { route: RouteProp<ParamListBase, 'Transac
     [key: string]: boolean;
   } | null>(null);
 
+  const { activeStore } = useAppSelector((state: RootState) => state.store);
+
   const [errorAdd, setErrorAdd] = useState<{
     [key: string]: boolean;
   } | null>(null);
@@ -37,7 +39,7 @@ function TransactionDetailEdit(props: { route: RouteProp<ParamListBase, 'Transac
       try {
         const {
           data: { data },
-        }: { data: { data: ICatetinBarang[] } } = await axiosCatetin.get('/barang', {
+        }: { data: { data: ICatetinBarang[] } } = await axiosCatetin.get(`/barang/${activeStore}/list`, {
           headers: {
             Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
           },

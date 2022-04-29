@@ -9,6 +9,9 @@ import CatetinScrollView from '../../../layouts/ScrollView';
 interface ICatetinBottomSheetWrapper {
   children: React.ReactNode;
   showBack?: boolean;
+  showRight?: boolean;
+  onPressRight?: () => void;
+  rightTitle?: string;
   title?: string;
   params?: any;
   to?: any;
@@ -20,8 +23,11 @@ interface ICatetinBottomSheetWrapper {
 
 function CatetinBottomSheetWrapper({
   showBack = false,
+  showRight = false,
+  rightTitle = '',
   title = '',
   params = {},
+  onPressRight = () => ({}),
   to = '',
   single = false,
   children,
@@ -38,7 +44,7 @@ function CatetinBottomSheetWrapper({
 
   return (
     <CatetinScrollView
-      style={tw`bg-white px-3`}
+      style={tw`bg-white px-4`}
       refreshControl={
         refreshable ? (
           <RefreshControl
@@ -60,9 +66,15 @@ function CatetinBottomSheetWrapper({
             </TouchableOpacity>
           </View>
         )}
-        <View>
-          <Text style={tw`font-bold text-xl text-center`}>{title}</Text>
-        </View>
+        <Text style={tw`font-bold text-xl text-center`}>{title}</Text>
+        {showRight && (
+          <View style={tw`absolute right-0 z-10`}>
+            <TouchableOpacity onPress={() => requestAnimationFrame(() => onPressRight())}>
+              <Text style={tw`font-bold text-lg text-right text-blue-500`}>{rightTitle}</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         <View />
       </View>
       <View style={tw`flex-1`}>{children}</View>

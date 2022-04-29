@@ -9,7 +9,6 @@ import moment from 'moment';
 import React, { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Text, TouchableOpacity, View } from 'react-native';
-import Toast from 'react-native-toast-message';
 import tw from 'twrnc';
 import * as yup from 'yup';
 import { axiosCatetin } from '../../api';
@@ -17,8 +16,8 @@ import CatetinBottomSheet from '../../components/molecules/BottomSheet';
 import CatetinBottomSheetWrapper from '../../components/molecules/BottomSheet/BottomSheetWrapper';
 import CatetinButton from '../../components/molecules/Button';
 import CatetinInput from '../../components/molecules/Input';
+import CatetinToast from '../../components/molecules/Toast';
 import { useAppDispatch, useAppSelector } from '../../hooks';
-import { navigate } from '../../hooks/RootNavigation';
 import { optionsTransaksi } from '../../static/optionsTransaksi';
 import { RootState } from '../../store';
 import { setSelectedTransaction } from '../../store/features/transactionSlice';
@@ -54,7 +53,7 @@ const schema = yup.object().shape({
   tanggal: yup.date().required('Tanggal transaksi is required'),
   deskripsi: yup.string(),
   total: yup.number().when('tipe', {
-    is: (opt) => opt.value === 1 || opt.value === 2,
+    is: (opt: { label: string; value: number }) => opt?.value === 1 || opt?.value === 2,
     then: (rule) => rule.typeError('Type must be number').required('Total is required'),
   }),
 });
@@ -75,6 +74,7 @@ function TransactionCreateBottomSheet({
   const [loading, setLoading] = useState(false);
 
   const { editedTransaction } = useAppSelector((state: RootState) => state.transaction);
+  const { activeStore } = useAppSelector((state: RootState) => state.store);
 
   const {
     control,
@@ -95,10 +95,6 @@ function TransactionCreateBottomSheet({
     },
   });
 
-  useEffect(() => {
-    console.log(errors);
-  }, [errors]);
-
   const dispatch = useAppDispatch();
 
   useEffect(() => {
@@ -109,7 +105,7 @@ function TransactionCreateBottomSheet({
       setValue('total', editedTransaction.nominal);
       setValue(
         'tipe',
-        optionsTransaksi.find((opt) => opt.value === parseInt(editedTransaction.type, 10)),
+        optionsTransaksi.find((opt) => opt?.value === parseInt(editedTransaction.type, 10)),
       );
       setValue('transaksi_id', editedTransaction.id);
     } else {
@@ -132,7 +128,7 @@ function TransactionCreateBottomSheet({
       if (data.transaksi_id === 0) {
         const {
           data: { data: insertedData },
-        } = await axiosCatetin.post('/transaksi', finalData, {
+        } = await axiosCatetin.post(`/transaksi/${activeStore}`, finalData, {
           headers: {
             Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
           },
@@ -159,19 +155,11 @@ function TransactionCreateBottomSheet({
         tipe: null,
         transaksi_id: 0,
       });
-      Toast.show({
-        type: 'customToast',
-        text2: `Sukses ${data.transaksi_id === 0 ? 'menambah' : 'memperbarui'} transaksi`,
-        position: 'bottom',
-      });
+      CatetinToast('default', `Sukses ${data.transaksi_id === 0 ? 'menambah' : 'memperbarui'} transaksi`);
       dispatch(setSelectedTransaction(null));
       onFinishSubmit(dataTransaksi);
     } catch (err: any) {
-      Toast.show({
-        type: 'customToast',
-        text2: err.response?.data?.message || 'Failed to create transaction',
-        position: 'bottom',
-      });
+      CatetinToast('error', err.response?.data?.message || 'Failed to create transaction');
     } finally {
       setLoading(false);
     }
@@ -220,18 +208,11 @@ function TransactionCreateBottomSheet({
                   </View>
                   <View style={tw`mb-4 flex-1`}>
                     <Text style={tw`mb-1 text-base`}>Tanggal Transaksi</Text>
-                    <TouchableOpacity
-                      onPress={() => {
-                        requestAnimationFrame(() => navigate('Transaction Date'));
-                      }}
-                    >
-                      <DateTimePicker
-                        display="spinner"
-                        mode="datetime"
-                        value={watch('tanggal')}
-                        onChange={(event, date) => setValue('tanggal', date as Date)}
-                      />
-                    </TouchableOpacity>
+                    <DateTimePicker
+                      mode="datetime"
+                      value={watch('tanggal')}
+                      onChange={(event, date) => setValue('tanggal', date as Date)}
+                    />
                   </View>
                   <View style={tw`mb-4 flex-1`}>
                     <Text style={tw`mb-1 text-base`}>Tipe Transaksi</Text>

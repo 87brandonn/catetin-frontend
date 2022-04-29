@@ -3,10 +3,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import moment from 'moment';
 import 'moment/min/locales';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
+import { RefreshControl, Text, TouchableOpacity, View } from 'react-native';
 import { Avatar, Badge } from 'react-native-elements';
+import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import tw from 'twrnc';
 import { axiosCatetin } from '../../api';
+import CatetinButton from '../../components/molecules/Button';
 import CatetinToast from '../../components/molecules/Toast';
 import { useAppDispatch, useAppSelector } from '../../hooks';
 import AppLayout from '../../layouts/AppLayout';
@@ -24,6 +26,7 @@ function Transaksi() {
   const [loadingTransaksi, setLoadingTransaksi] = useState(true);
 
   const { editedTransaction } = useAppSelector((state: RootState) => state.transaction);
+  const { activeStore } = useAppSelector((state: RootState) => state.store);
 
   const [transaksi, setTransaksi] = useState<ICatetinTransaksiWithDetail[] | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -41,7 +44,7 @@ function Transaksi() {
       try {
         const {
           data: { data },
-        } = await axiosCatetin.get('/transaksi', {
+        } = await axiosCatetin.get(`/transaksi/${activeStore}/list`, {
           params,
           headers: {
             Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
@@ -61,7 +64,7 @@ function Transaksi() {
         }
       }
     },
-    [params],
+    [activeStore, params],
   );
 
   useEffect(() => {
@@ -126,27 +129,39 @@ function Transaksi() {
         }}
         searchValue={params.search}
       />
-      <CatetinScrollView
-        style={tw`flex-1 py-3`}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => {
-              fetchTransaksi(true, true);
+
+      {loadingTransaksi ? (
+        <SkeletonPlaceholder>
+          <View style={tw`w-full h-[100px] mb-3 rounded-lg`}></View>
+          <View style={tw`w-full h-[100px] mb-3 rounded-lg`}></View>
+          <View style={tw`w-full h-[100px] mb-3 rounded-lg`}></View>
+        </SkeletonPlaceholder>
+      ) : transaksi?.length === 0 ? (
+        <View style={tw`flex-1 justify-center items-center`}>
+          <Text style={tw`font-semibold text-2xl mb-1`}>Tidak ada transaksi</Text>
+          <CatetinButton
+            title="Tambah Transaksi"
+            onPress={() => {
+              dispatch(setEditedTransaction(null));
+              bottomSheetRef.current?.expand();
             }}
           />
-        }
-      >
-        {loadingTransaksi ? (
-          <ActivityIndicator />
-        ) : transaksi?.length === 0 ? (
-          <View style={tw`flex-1 bg-gray-400 py-3 px-4 mx-4 rounded-lg shadow`}>
-            <Text style={tw`text-slate-100 text-base`}>Tidak ada transaksi</Text>
-          </View>
-        ) : (
-          transaksi?.map((item) => (
+        </View>
+      ) : (
+        <CatetinScrollView
+          style={tw`flex-1 py-3 px-3`}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => {
+                fetchTransaksi(true, true);
+              }}
+            />
+          }
+        >
+          {transaksi?.map((item) => (
             <TouchableOpacity
-              style={tw`shadow-lg bg-white rounded-[12px] mx-3 px-3 py-2 mb-2 flex flex-row justify-between`}
+              style={tw`shadow-lg bg-white rounded-[12px] px-3 py-2 mb-2 flex flex-row justify-between`}
               key={item.id}
               onPress={() => {
                 bottomSheetRefDetail.current?.close();
@@ -185,10 +200,9 @@ function Transaksi() {
                 </View>
               </View>
             </TouchableOpacity>
-          ))
-        )}
-        <View style={tw`mb-[42px]`} />
-      </CatetinScrollView>
+          ))}
+        </CatetinScrollView>
+      )}
     </AppLayout>
   );
 }

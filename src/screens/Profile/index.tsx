@@ -1,30 +1,32 @@
 import BottomSheet from '@gorhom/bottom-sheet';
-import { Portal } from '@gorhom/portal';
 import { yupResolver } from '@hookform/resolvers/yup';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import moment from 'moment';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Text, TouchableOpacity, View, Switch } from 'react-native';
-import { Avatar, Button, Icon } from 'react-native-elements';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { ActivityIndicator, Platform, Switch, Text, TouchableOpacity, View } from 'react-native';
 import ActionSheet from 'react-native-actionsheet';
+import { Avatar, Button, Icon } from 'react-native-elements';
 import ImagePicker from 'react-native-image-crop-picker';
+import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import Toast from 'react-native-toast-message';
 import tw from 'twrnc';
 import * as yup from 'yup';
 import { axiosCatetin } from '../../api';
 import CatetinBottomSheet from '../../components/molecules/BottomSheet';
 import CatetinBottomSheetWrapper from '../../components/molecules/BottomSheet/BottomSheetWrapper';
+import CatetinButton from '../../components/molecules/Button';
+import CatetinImagePicker from '../../components/molecules/ImagePicker';
 import CatetinInput from '../../components/molecules/Input';
-import CatetinSelect from '../../components/molecules/Select';
+import CatetinToast from '../../components/molecules/Toast';
+import { useAppSelector } from '../../hooks';
 import AppLayout from '../../layouts/AppLayout';
 import { RootStackParamList } from '../../navigation';
+import { RootState } from '../../store';
 import { ProfileJoinUser } from '../../types/profil';
 import { getAvatarTitle } from '../../utils';
-import CatetinToast from '../../components/molecules/Toast';
-import CatetinButton from '../../components/molecules/Button';
 
 export interface IFormSchema {
   current_password: string;
@@ -87,6 +89,8 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
   const [loadingScheduler, setLoadingScheduler] = useState(true);
   const [loadingAddScheduler, setLoadingAddScheduler] = useState(false);
 
+  const { activeStore } = useAppSelector((state: RootState) => state.store);
+
   const [scheduleLaporan, setScheduleLaporan] = useState<{
     label: string;
     value: string;
@@ -135,7 +139,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
     try {
       const {
         data: { data },
-      } = await axiosCatetin.get(`/scheduler`, {
+      } = await axiosCatetin.get(`/scheduler/${activeStore}`, {
         headers: {
           Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
         },
@@ -243,22 +247,6 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
   const bottomSheetRef = useRef<BottomSheet>(null);
   const bottomSheetLaporanRef = useRef<BottomSheet>(null);
 
-  const snapPoints = useMemo(() => ['85%'], []);
-
-  const getNextDate = () => {
-    let date = moment();
-    if (scheduleLaporan?.value === 'daily') {
-      date = date.add(1, 'days');
-    } else if (scheduleLaporan?.value === 'weekly') {
-      date = date.add(1, 'weeks');
-    } else if (scheduleLaporan?.value === 'monthly') {
-      date = date.add(1, 'months');
-    } else if (scheduleLaporan?.value === 'yearly') {
-      date = date.add(1, 'years');
-    }
-    return date;
-  };
-
   const onSubmit = (data: IFormSchema) => {
     reset({
       new_password: '',
@@ -266,46 +254,6 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
       confirm_new_password: '',
     });
     bottomSheetRef.current?.close();
-  };
-
-  const handleOpenProfileImage = async () => {
-    try {
-      const image = await ImagePicker.openPicker({
-        width: 300,
-        height: 400,
-        cropping: true,
-        mediaType: 'photo',
-        cropperCircleOverlay: true,
-      });
-      const formData = new FormData();
-      formData.append(
-        'image',
-        JSON.parse(
-          JSON.stringify({
-            uri: Platform.OS === 'android' ? image.sourceURL : image.sourceURL?.replace('file://', ''),
-            type: image.mime,
-            name: image.filename,
-          }),
-        ),
-      );
-      const response = await fetch('https://catetin-be.herokuapp.com/media', {
-        method: 'POST',
-        body: formData,
-      });
-      const { url } = await response.json();
-      setProfileData(
-        (data) =>
-          ({
-            ...data,
-            Profile: {
-              ...data?.Profile,
-              profilePicture: url,
-            },
-          } as ProfileJoinUser),
-      );
-    } catch (err: any) {
-      // ignore error
-    }
   };
 
   const optionsSchedule = ['Harian', 'Mingguan', 'Bulanan', 'Tahunan'];
@@ -422,7 +370,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
       }
 
       await axiosCatetin.post(
-        `/scheduler`,
+        `/scheduler/${activeStore}`,
         {
           id: data.scheduleId || undefined,
           hour: moment(data.time).hours(),
@@ -465,7 +413,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
               render={({ field: { onChange, value } }) => (
                 <CatetinInput
                   bottomSheet
-                  placeholder="Enter current password"
+                  placeholder="Current password"
                   style={tw` py-3 rounded`}
                   value={value}
                   onChangeText={onChange}
@@ -482,7 +430,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
               render={({ field: { onChange, value } }) => (
                 <CatetinInput
                   bottomSheet
-                  placeholder="Enter new password"
+                  placeholder="New password"
                   style={tw` py-3 rounded`}
                   value={value}
                   onChangeText={onChange}
@@ -730,95 +678,103 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
             </View>
 
             <View style={tw`mb-3`}>
-              <Button
+              <CatetinButton
                 title="Simpan"
-                buttonStyle={tw`bg-blue-500 rounded-[8px]`}
                 onPress={() => {
                   handleSubmitScheduler(onSubmitScheduler)();
                 }}
-                loading={loadingAddScheduler}
+                disabled={loadingAddScheduler}
               />
             </View>
           </View>
         </CatetinBottomSheetWrapper>
       </CatetinBottomSheet>
 
-      {loading ? (
-        <View style={tw`flex-1 items-center justify-center`}>
-          <ActivityIndicator />
-        </View>
-      ) : (
-        <View style={tw`flex-1 px-4 flex justify-between`}>
+      {
+        <View style={tw`flex-1 px-4 flex justify-between mt-4`}>
           <View>
-            <View style={tw`items-center mt-4`}>
-              <Avatar
-                size={96}
-                rounded
-                source={{
-                  uri: profileData?.Profile.profilePicture || undefined,
-                }}
-                containerStyle={tw`bg-gray-300`}
-                titleStyle={tw`text-gray-200`}
-                title={getAvatarTitle(profileData)}
-              >
-                <Avatar.Accessory
-                  size={24}
-                  onPress={async () => {
-                    handleOpenProfileImage();
+            <View style={tw`items-center relative mb-4`}>
+              {loading ? (
+                <SkeletonPlaceholder>
+                  <View style={tw`w-[96px] h-[96px] rounded-full`}></View>
+                </SkeletonPlaceholder>
+              ) : (
+                <CatetinImagePicker
+                  data={profileData?.Profile?.profilePicture || ''}
+                  title={getAvatarTitle(profileData)}
+                  onUploadImage={(url) => {
+                    setProfileData(
+                      (data) =>
+                        ({
+                          ...data,
+                          Profile: {
+                            ...data?.Profile,
+                            profilePicture: url,
+                          },
+                        } as ProfileJoinUser),
+                    );
                   }}
-                  tvParallaxProperties=""
-                />
-              </Avatar>
+                >
+                  <View style={tw`flex flex-row justify-center items-center absolute top-0 right-0`}>
+                    <Icon
+                      name="check-circle"
+                      type="font-awesome-5"
+                      tvParallaxProperties=""
+                      iconStyle={tw`text-green-300 mr-1`}
+                    />
+                  </View>
+                </CatetinImagePicker>
+              )}
             </View>
             <View style={tw`mb-4`}>
-              <CatetinInput
-                style={tw`text-3xl text-center border-0`}
-                value={profileData?.Profile.displayName || ''}
-                onChangeText={(value) => {
-                  setProfileData(
-                    (data) =>
-                      ({
-                        ...data,
-                        Profile: {
-                          ...data?.Profile,
-                          displayName: value,
-                        },
-                      } as ProfileJoinUser),
-                  );
-                }}
-                placeholder={'Display Name'}
-              ></CatetinInput>
+              {loading ? (
+                <SkeletonPlaceholder>
+                  <View style={tw`flex flex-row justify-center`}>
+                    <View style={tw`w-[200px] h-[10px] rounded text-center`}></View>
+                  </View>
+                </SkeletonPlaceholder>
+              ) : (
+                <CatetinInput
+                  style={tw`text-3xl p-0 font-medium text-center border-0`}
+                  value={profileData?.Profile?.displayName || ''}
+                  onChangeText={(value) => {
+                    setProfileData(
+                      (data) =>
+                        ({
+                          ...data,
+                          Profile: {
+                            ...data?.Profile,
+                            displayName: value,
+                          },
+                        } as ProfileJoinUser),
+                    );
+                  }}
+                  placeholder={'Display Name'}
+                ></CatetinInput>
+              )}
             </View>
-            <View style={tw`mb-4`}>
+            <View style={tw`mb-3`}>
               <Text style={tw`mb-1 text-base`}>Username</Text>
-              <Text style={tw`font-bold text-lg`}>{profileData?.username}</Text>
+              {loading ? (
+                <SkeletonPlaceholder>
+                  <View style={tw`w-full h-[10px] rounded`}></View>
+                </SkeletonPlaceholder>
+              ) : (
+                <Text style={tw`font-medium text-lg`}>{profileData?.username}</Text>
+              )}
             </View>
-            <View style={tw`mb-4`}>
+            <View style={tw`mb-3`}>
               <Text style={tw`mb-1 text-base`}>Email</Text>
-              <Text style={tw`font-bold text-lg`}>{profileData?.email}</Text>
-            </View>
-            <View style={tw`mb-4`}>
-              <Text style={tw`mb-1 text-base`}>Nama Toko</Text>
-              <CatetinInput
-                placeholder="Nama Toko"
-                style={tw`border border-slate-200`}
-                value={profileData?.Profile.storeName || ''}
-                onChangeText={(value) => {
-                  setProfileData(
-                    (data) =>
-                      ({
-                        ...data,
-                        Profile: {
-                          ...data?.Profile,
-                          storeName: value,
-                        },
-                      } as ProfileJoinUser),
-                  );
-                }}
-              ></CatetinInput>
+              {loading ? (
+                <SkeletonPlaceholder>
+                  <View style={tw`w-full h-[10px] rounded`}></View>
+                </SkeletonPlaceholder>
+              ) : (
+                <Text style={tw`font-medium text-lg`}>{profileData?.email}</Text>
+              )}
             </View>
 
-            <View style={tw`mb-4`}>
+            <View style={tw`mb-3`}>
               <TouchableOpacity
                 onPress={() => {
                   bottomSheetLaporanRef.current?.expand();
@@ -859,7 +815,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
             />
           </View>
         </View>
-      )}
+      }
     </AppLayout>
   );
 }

@@ -47,6 +47,7 @@ function TransactionDetailAddBarang(props: {
   const { selectedTransaction } = useAppSelector((state: RootState) => state.transaction);
 
   const { navigate } = useNavigation();
+  const { activeStore } = useAppSelector((state: RootState) => state.store);
 
   useEffect(() => {
     if (selectedTransaction !== props.route.params?.id) {
@@ -89,7 +90,7 @@ function TransactionDetailAddBarang(props: {
 
   const onPost = async (data: IFormSchema) => {
     await axiosCatetin.post(
-      '/barang',
+      `/barang/${activeStore}`,
       {
         name: data.name,
         price: data.harga,

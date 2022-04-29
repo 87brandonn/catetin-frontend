@@ -1,19 +1,14 @@
 import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet';
 import { Portal } from '@gorhom/portal';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import tw from 'twrnc';
 
 interface ICatetinBottomSheet {
   children: React.ReactNode;
   bottomSheetRef: React.RefObject<BottomSheet>;
-  showBack?: boolean;
-  title?: string;
-  params?: any;
-  to?: any;
+  snapPoints?: string[];
 }
-function CatetinBottomSheet({ children, bottomSheetRef }: ICatetinBottomSheet) {
-  const snapPoints = useMemo(() => ['50%', '75%'], []);
-
+function CatetinBottomSheet({ children, bottomSheetRef, snapPoints = ['50%', '75%'] }: ICatetinBottomSheet) {
   const renderBackdrop = useCallback(
     (props) => <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} pres />,
     [],

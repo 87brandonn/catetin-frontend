@@ -6,7 +6,7 @@ import * as Facebook from 'expo-facebook';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { KeyboardAvoidingView, Text, TouchableOpacity, View, Image } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import Toast from 'react-native-toast-message';
 import tw from 'twrnc';
@@ -51,12 +51,12 @@ function Register({ navigation: { navigate } }: NativeStackScreenProps<RootStack
     try {
       const {
         data: { data },
-      } = await axiosCatetin.get('/auth/profile', {
+      } = await axiosCatetin.get('/store', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      return data.Profile?.storeName || null;
+      return data || null;
     } catch (err: any) {
       // do nothing
     }
@@ -80,10 +80,10 @@ function Register({ navigation: { navigate } }: NativeStackScreenProps<RootStack
           name: serialized.name,
         });
         await AsyncStorage.setItem('accessToken', catetinToken);
-        const hasStore = await checkProfile(catetinToken);
-        if (hasStore === null) {
+        const storeData = await checkProfile(catetinToken);
+        if (storeData.length === 0) {
           navigate('TokoLanding');
-        } else if (hasStore) {
+        } else if (storeData.length > 0) {
           navigate('Home');
         }
       } catch (err) {
@@ -134,7 +134,6 @@ function Register({ navigation: { navigate } }: NativeStackScreenProps<RootStack
       });
       navigate('VerifyEmail');
     } catch (err: any) {
-      console.log(JSON.stringify(err.response?.data.err));
       CatetinToast(
         'error',
         err.response?.data?.message || 'An error occured while authenticating username and password.',
@@ -165,11 +164,10 @@ function Register({ navigation: { navigate } }: NativeStackScreenProps<RootStack
           name,
         });
         await AsyncStorage.setItem('accessToken', catetinToken);
-        const hasStore = await checkProfile(catetinToken);
-        console.log(hasStore);
-        if (hasStore === null) {
+        const storeData = await checkProfile(catetinToken);
+        if (storeData.length === 0) {
           navigate('TokoLanding');
-        } else if (hasStore) {
+        } else if (storeData.length > 0) {
           navigate('Home');
         }
       }
@@ -182,96 +180,119 @@ function Register({ navigation: { navigate } }: NativeStackScreenProps<RootStack
 
   return (
     <AppLayout bottom={false} header={false}>
-      <View style={tw`flex-1 justify-center px-3`}>
-        <View style={tw`mb-3`}>
-          <View style={tw`mb-3`}>
-            <Controller
-              control={control}
-              render={({ field: { onChange, onBlur, value } }) => (
-                <CatetinInput placeholder="Enter email" onChangeText={onChange} value={value} autoCapitalize="none" />
-              )}
-              name="email"
-            />
-            {errors.email && <Text style={tw`text-red-500 mt-1`}>{errors.email.message}</Text>}
+      <View style={tw`flex-1 px-4`}>
+        <KeyboardAvoidingView behavior="padding" style={tw`flex-1 justify-evenly flex`}>
+          <View style={tw`flex items-center shadow-xl`}>
+            <Image source={require('../../assets/rounded-icon.png')} style={tw`w-[96px] h-[96px]`} />
           </View>
-          <View style={tw`mb-3`}>
-            <Controller
-              control={control}
-              render={({ field: { onChange, onBlur, value } }) => (
-                <CatetinInput placeholder="Username" onChangeText={onChange} value={value} autoCapitalize="none" />
-              )}
-              name="username"
-            />
-            {errors.username && <Text style={tw`text-red-500 mt-1`}>{errors.username.message}</Text>}
+          <View>
+            <View style={tw`mb-3`}>
+              <Controller
+                control={control}
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <CatetinInput
+                    placeholder="Email"
+                    onChangeText={onChange}
+                    value={value}
+                    autoCapitalize="none"
+                    isError={!!errors.email}
+                  />
+                )}
+                name="email"
+              />
+            </View>
+            <View style={tw`mb-3`}>
+              <Controller
+                control={control}
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <CatetinInput
+                    placeholder="Username"
+                    onChangeText={onChange}
+                    value={value}
+                    autoCapitalize="none"
+                    isError={!!errors.username}
+                  />
+                )}
+                name="username"
+              />
+            </View>
+
+            <View>
+              <Controller
+                control={control}
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <CatetinInput
+                    placeholder="Password"
+                    onChangeText={onChange}
+                    secureTextEntry
+                    value={value}
+                    autoCapitalize="none"
+                    isError={!!errors.password}
+                  />
+                )}
+                name="password"
+              />
+            </View>
           </View>
 
           <View>
-            <Controller
-              control={control}
-              render={({ field: { onChange, onBlur, value } }) => (
-                <CatetinInput
-                  placeholder="Password"
-                  onChangeText={onChange}
-                  secureTextEntry
-                  value={value}
-                  autoCapitalize="none"
-                />
-              )}
-              name="password"
-            />
-            {errors.password && <Text style={tw`text-red-500 mt-1`}>{errors.password.message}</Text>}
+            <TouchableOpacity
+              disabled={loadingRegister}
+              style={tw`px-3 py-2 bg-[#4285F4] rounded-xl shadow-xl flex flex-row justify-center items-center mb-3`}
+              onPress={handleSubmit(onSubmit)}
+            >
+              <View>
+                <Text style={tw`font-medium text-white`}>Register</Text>
+              </View>
+            </TouchableOpacity>
+            <View style={tw`mb-3 flex flex-row items-center justify-between`}>
+              <View style={tw`w-full h-[1px] bg-gray-300 mr-2 flex-1`}></View>
+              <Text style={tw`text-gray-400 font-bold`}>OR</Text>
+              <View style={tw`w-full h-[1px] bg-gray-300 ml-2 flex-1`}></View>
+            </View>
+            <TouchableOpacity
+              disabled={loadingGmail}
+              style={tw`px-3 py-2 bg-[#4285F4] rounded-xl shadow-xl flex flex-row justify-center items-center mb-3`}
+              onPress={() =>
+                promptAsync({
+                  showInRecents: true,
+                })
+              }
+            >
+              <View>
+                <Icon name="google" iconStyle={tw`text-white mr-3`} type="ant-design" tvParallaxProperties="" />
+              </View>
+              <View>
+                <Text style={tw`font-medium text-white`}>Register with Google</Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              disabled={loadingFacebook}
+              style={tw`px-3 py-2 bg-[#4267B2] rounded-xl shadow-xl flex flex-row justify-center items-center mb-3`}
+              onPress={async () => {
+                await logInFacebook();
+              }}
+            >
+              <View>
+                <Icon name="facebook" iconStyle={tw`text-white mr-3`} type="font-awesome-5" tvParallaxProperties="" />
+              </View>
+              <View>
+                <Text style={tw`font-medium text-white`}>Register with Facebook</Text>
+              </View>
+            </TouchableOpacity>
           </View>
-          <View style={tw`flex flex-row items-center mt-2`}>
+
+          <View style={tw`flex flex-row items-center justify-center`}>
             <Text style={tw`text-gray-400 mr-1`}>Already have an account?</Text>
             <TouchableOpacity
               onPress={() => {
                 navigate('Login');
               }}
             >
-              <Text style={tw`text-blue-400`}>Login</Text>
+              <Text style={tw`text-blue-400 font-bold`}>Login</Text>
             </TouchableOpacity>
           </View>
-        </View>
-
-        <TouchableOpacity
-          disabled={loadingRegister}
-          style={tw`px-3 py-2 bg-[#4285F4] rounded-xl shadow-xl flex flex-row justify-center items-center mb-3`}
-          onPress={handleSubmit(onSubmit)}
-        >
-          <View>
-            <Text style={tw`font-medium text-white`}>Register</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity
-          disabled={loadingGmail}
-          style={tw`px-3 py-2 bg-[#4285F4] rounded-xl shadow-xl flex flex-row justify-center items-center mb-3`}
-          onPress={() =>
-            promptAsync({
-              showInRecents: true,
-            })
-          }
-        >
-          <View>
-            <Icon name="google" iconStyle={tw`text-white mr-3`} type="ant-design" tvParallaxProperties="" />
-          </View>
-          <View>
-            <Text style={tw`font-medium text-white`}>Sign in with Google</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity
-          disabled={loadingFacebook}
-          style={tw`px-3 py-2 bg-[#4267B2] rounded-xl shadow-xl flex flex-row justify-center items-center mb-3`}
-          onPress={async () => {
-            await logInFacebook();
-          }}
-        >
-          <View>
-            <Icon name="facebook" iconStyle={tw`text-white mr-3`} type="font-awesome-5" tvParallaxProperties="" />
-          </View>
-          <View>
-            <Text style={tw`font-medium text-white`}>Sign in with Facebook</Text>
-          </View>
-        </TouchableOpacity>
+        </KeyboardAvoidingView>
       </View>
     </AppLayout>
   );

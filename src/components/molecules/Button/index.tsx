@@ -10,10 +10,10 @@ function CatetinButton({ customStyle = '', theme = 'default', ...rest }: ICateti
   return (
     <Button
       buttonStyle={tw`px-3 py-2 ${
-        theme === 'default' ? 'bg-blue-500' : theme === 'danger' ? 'bg-red-500' : ''
-      } rounded-2xl shadow-lg ${customStyle}`}
+        theme === 'default' ? 'bg-blue-500' : theme === 'danger' ? 'bg-red-500' : 'bg-transparent'
+      } rounded-lg  ${customStyle}`}
       titleStyle={tw`font-bold`}
-      containerStyle = {tw`bg-transparent`}
+      containerStyle = {tw`bg-white`}
       {...rest}
     />
   );

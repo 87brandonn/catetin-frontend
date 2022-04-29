@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import tw from 'twrnc';
+import CatetinButton from '../../components/molecules/Button';
 import { titleCase } from '../../utils';
 
 interface IBarangFilterBottomSheet {
@@ -68,7 +69,7 @@ function BarangFilterBottomSheet({ onResetSort, onApplySort, sortData }: IBarang
             handleSort(value);
           }}
         >
-          <View style={tw`flex flex-row justify-between px-4`}>
+          <View style={tw`flex flex-row justify-between`}>
             <View style={tw`py-3 mb-2 rounded-[12px]`}>
               <Text>{titleCase(label)}</Text>
             </View>
@@ -83,22 +84,20 @@ function BarangFilterBottomSheet({ onResetSort, onApplySort, sortData }: IBarang
           </View>
         </TouchableOpacity>
       ))}
-      <Button
-        title="Reset"
-        buttonStyle={tw`bg-red-400 mb-3`}
-        titleStyle={tw`font-bold`}
-        onPress={() => {
-          onResetSort(undefined);
-        }}
-      />
-      <Button
+      <CatetinButton
         title="Apply"
-        buttonStyle={tw`bg-blue-500`}
-        titleStyle={tw`font-bold`}
+        style={tw`mb-3`}
         onPress={() => {
           const filter = JSON.parse(JSON.stringify(queryFilter));
           filter.sort = filter.sort.join(',');
           onApplySort(filter.sort);
+        }}
+      />
+      <CatetinButton
+        title="Reset"
+        theme="danger"
+        onPress={() => {
+          onResetSort(undefined);
         }}
       />
     </View>

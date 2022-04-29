@@ -2,9 +2,10 @@ import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import React from 'react';
 import { Control, Controller, FieldError, UseFormWatch } from 'react-hook-form';
 import { Text, View } from 'react-native';
-import { Avatar, Button } from 'react-native-elements';
+import { Avatar, Button, Icon } from 'react-native-elements';
 import tw from 'twrnc';
 import { IFormSchema } from '.';
+import CatetinImagePicker from '../../components/molecules/ImagePicker';
 import CatetinInput from '../../components/molecules/Input';
 import { handleUploadImage } from '../../utils';
 
@@ -102,19 +103,16 @@ function CreateModal({ control, errors, loading, onSave, title, onDelete, loadin
         <Controller
           control={control}
           render={({ field: { onChange, onBlur, value } }) => (
-            <Avatar
+            <CatetinImagePicker
+              data={value || undefined}
+              onUploadImage={(url) => {
+                onChange(url);
+              }}
               size={188}
-              source={{
-                uri: value || undefined,
-              }}
-              avatarStyle={tw`rounded-[12px]`}
+              rounded={false}
               containerStyle={tw`bg-gray-300 rounded-[12px]`}
-              onPress={async () => {
-                const imageUrl = await handleUploadImage(false);
-                onChange(imageUrl);
-              }}
-              key={value}
-            ></Avatar>
+              avatarStyle={tw`rounded-[12px]`}
+            ></CatetinImagePicker>
           )}
           name="barang_picture"
         />

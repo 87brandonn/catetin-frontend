@@ -14,8 +14,8 @@ function CatetinInput({
   return !bottomSheet ? (
     <TextInput
       style={{
-        ...tw`px-4 py-3 bg-white rounded-[5px]`,
-        ...tw`border ${isFocused ? 'border-blue-500' : isError ? 'border-red-400' : 'border-slate-100'}`,
+        ...tw`px-4 py-3 ${isError ? 'bg-red-100' : 'bg-white'} rounded-[5px]`,
+        ...tw`border ${isFocused ? 'border-blue-500' : isError ? 'border-transparent' : 'border-slate-100'}`,
         ...tw`${disabled ? 'opacity-50' : 'opacity-100'}`,
         ...(style as TextStyle),
       }}
