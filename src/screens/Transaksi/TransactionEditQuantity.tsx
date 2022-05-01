@@ -26,6 +26,8 @@ function TransactionEditQuantity(props: {
 
   const navigation = useNavigation();
 
+  const { accessToken } = useAppSelector((state: RootState) => state.auth);
+
   useEffect(() => {
     if (selectedTransaction !== props.route.params?.id) {
       props.navigation.navigate('Transaction Detail');
@@ -49,7 +51,7 @@ function TransactionEditQuantity(props: {
         },
         {
           headers: {
-            Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+            Authorization: `Bearer ${accessToken}`,
           },
         },
       );
@@ -69,7 +71,6 @@ function TransactionEditQuantity(props: {
     } finally {
       setLoadingSave(false);
     }
-    console.log(itemData);
   };
 
   return (
@@ -90,7 +91,10 @@ function TransactionEditQuantity(props: {
           value={(itemData?.ItemTransaction.amount !== 0 && itemData?.ItemTransaction.amount.toString()) || ''}
           onChangeText={(text) => {
             if (
-              originalItemData?.stock + originalItemData?.ItemTransaction.amount - parseInt(text || '0', 10) < 0 &&
+              (originalItemData?.stock || 0) +
+                (originalItemData?.ItemTransaction.amount || 0) -
+                parseInt(text || '0', 10) <
+                0 &&
               props.route.params.type === '3'
             ) {
               setError(true);

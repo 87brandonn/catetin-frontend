@@ -1,5 +1,4 @@
 import BottomSheet from '@gorhom/bottom-sheet';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { NavigationContainer } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -78,6 +77,8 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
   });
   const { activeStore } = useAppSelector((state: RootState) => state.store);
 
+  const { accessToken } = useAppSelector((state: RootState) => state.auth);
+
   const fetchGraphData = useCallback(async () => {
     try {
       setLoadingGraph(true);
@@ -89,7 +90,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
           ...dateParams,
         },
         headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
       setGraphData(data);
@@ -100,11 +101,12 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     } finally {
       setLoadingGraph(false);
     }
-  }, [activeStore, dateParams]);
+  }, [accessToken, activeStore, dateParams]);
 
   const fetchMaxOutcome = useCallback(async () => {
     try {
       setLoadingMaxOutcome(true);
+      console.log(accessToken);
       const {
         data: { data },
       } = await axiosCatetin.get(`/transaksi/summary/${activeStore}`, {
@@ -113,7 +115,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
           ...dateParams,
         },
         headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
       setMaxOutcome(data);
@@ -124,7 +126,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     } finally {
       setLoadingMaxOutcome(false);
     }
-  }, [activeStore, dateParams]);
+  }, [accessToken, activeStore, dateParams]);
 
   const fetchMaxIncome = useCallback(async () => {
     try {
@@ -137,7 +139,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
           ...dateParams,
         },
         headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
       setMaxIncome(data);
@@ -148,7 +150,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     } finally {
       setLoadingMaxIncome(false);
     }
-  }, [activeStore, dateParams]);
+  }, [accessToken, activeStore, dateParams]);
 
   const fetchFrequentItem = useCallback(async () => {
     try {
@@ -161,7 +163,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
           ...dateParams,
         },
         headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
       console.log(data);
@@ -173,7 +175,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     } finally {
       setLoadingFrequentItem(false);
     }
-  }, [activeStore, dateParams]);
+  }, [accessToken, activeStore, dateParams]);
 
   const fetchBestItem = useCallback(async () => {
     try {
@@ -186,7 +188,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
           ...dateParams,
         },
         headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
       console.log(data);
@@ -198,7 +200,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     } finally {
       setLoadingBestItem(false);
     }
-  }, [activeStore, dateParams]);
+  }, [accessToken, activeStore, dateParams]);
 
   const fetchImpression = useCallback(async () => {
     try {
@@ -211,7 +213,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
           ...dateParams,
         },
         headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
       setImpressionData(data);
@@ -222,7 +224,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     } finally {
       setLoadingImpression(false);
     }
-  }, [activeStore, dateParams]);
+  }, [accessToken, activeStore, dateParams]);
 
   const fetchTotalOutcome = useCallback(async () => {
     try {
@@ -235,7 +237,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
           ...dateParams,
         },
         headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
       setTotalOutcome(data);
@@ -246,7 +248,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     } finally {
       setLoadingTotalOutcome(false);
     }
-  }, [activeStore, dateParams]);
+  }, [accessToken, activeStore, dateParams]);
 
   const fetchTotalIncome = useCallback(async () => {
     try {
@@ -259,7 +261,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
           ...dateParams,
         },
         headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
       setTotalIncome(data);
@@ -270,7 +272,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     } finally {
       setLoadingTotalIncome(false);
     }
-  }, [activeStore, dateParams]);
+  }, [accessToken, activeStore, dateParams]);
 
   useEffect(() => {
     fetchGraphData();
@@ -442,7 +444,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
 
   return (
     <AppLayout headerTitle="Home">
-      <CatetinBottomSheet bottomSheetRef={bottomSheetRef} title="Periode">
+      <CatetinBottomSheet bottomSheetRef={bottomSheetRef}>
         <NavigationContainer independent={true}>
           <Stack.Navigator>
             <Stack.Screen name="Periode" options={{ header: () => null }}>
@@ -460,8 +462,6 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
                         tvParallaxProperties=""
                         onPress={() => {
                           setActivePeriode(periode.value);
-                          // bottomSheetRef.current?.close();
-                          // dispatch(setActiveStore(store.id));
                         }}
                       />
                     </View>

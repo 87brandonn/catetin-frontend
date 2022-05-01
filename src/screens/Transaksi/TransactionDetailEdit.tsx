@@ -20,6 +20,7 @@ function TransactionDetailEdit(props: { route: RouteProp<ParamListBase, 'Transac
   } | null>(null);
 
   const { activeStore } = useAppSelector((state: RootState) => state.store);
+  const { accessToken } = useAppSelector((state: RootState) => state.auth);
 
   const [errorAdd, setErrorAdd] = useState<{
     [key: string]: boolean;
@@ -41,7 +42,7 @@ function TransactionDetailEdit(props: { route: RouteProp<ParamListBase, 'Transac
           data: { data },
         }: { data: { data: ICatetinBarang[] } } = await axiosCatetin.get(`/barang/${activeStore}/list`, {
           headers: {
-            Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+            Authorization: `Bearer ${accessToken}`,
           },
           params: {
             transactionId: selectedTransaction,
@@ -56,7 +57,7 @@ function TransactionDetailEdit(props: { route: RouteProp<ParamListBase, 'Transac
         CatetinToast('error', 'Terjadi kesalahan pada server. Gagal mengambil data barang.');
       }
     },
-    [selectedTransaction],
+    [accessToken, activeStore, selectedTransaction],
   );
 
   useEffect(() => {
@@ -85,7 +86,7 @@ function TransactionDetailEdit(props: { route: RouteProp<ParamListBase, 'Transac
         },
         {
           headers: {
-            Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+            Authorization: `Bearer ${accessToken}`,
           },
         },
       );

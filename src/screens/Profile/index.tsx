@@ -21,10 +21,13 @@ import CatetinButton from '../../components/molecules/Button';
 import CatetinImagePicker from '../../components/molecules/ImagePicker';
 import CatetinInput from '../../components/molecules/Input';
 import CatetinToast from '../../components/molecules/Toast';
-import { useAppSelector } from '../../hooks';
+import { useAppDispatch, useAppSelector } from '../../hooks';
 import AppLayout from '../../layouts/AppLayout';
 import { RootStackParamList } from '../../navigation';
 import { RootState } from '../../store';
+import { setAccessToken, setLoggedIn, setProfile, setStore } from '../../store/features/authSlice';
+import { setActiveStore } from '../../store/features/storeSlice';
+import { setEditedTransaction, setSelectedTransaction } from '../../store/features/transactionSlice';
 import { ProfileJoinUser } from '../../types/profil';
 import { getAvatarTitle } from '../../utils';
 
@@ -90,6 +93,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
   const [loadingAddScheduler, setLoadingAddScheduler] = useState(false);
 
   const { activeStore } = useAppSelector((state: RootState) => state.store);
+  const { accessToken } = useAppSelector((state: RootState) => state.auth);
 
   const [scheduleLaporan, setScheduleLaporan] = useState<{
     label: string;
@@ -113,6 +117,8 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
       confirm_new_password: '',
     },
   });
+
+  const dispatch = useAppDispatch();
 
   const {
     control: controlScheduler,
@@ -141,7 +147,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
         data: { data },
       } = await axiosCatetin.get(`/scheduler/${activeStore}`, {
         headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
       if (!data) {
@@ -179,7 +185,6 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
         2: !!data?.dayOfMonth || false,
         3: !!data?.month || false,
       });
-      console.log(defaultDate);
 
       setValueScheduler('time', `${defaultDate}`);
       setValueScheduler('scheduleId', data?.id || 0);
@@ -191,7 +196,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
     } finally {
       setLoadingScheduler(false);
     }
-  }, [activeStore, setValueScheduler]);
+  }, [accessToken, activeStore, setValueScheduler]);
 
   const fetchProfile = useCallback(async () => {
     setLoading(true);
@@ -200,7 +205,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
         data: { data },
       } = await axiosCatetin.get('/auth/profile', {
         headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
       setProfileData(data);
@@ -209,7 +214,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [accessToken]);
 
   const handleSaveChanges = async () => {
     setLoadingUpdate(true);
@@ -222,7 +227,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
         { profilePicture, displayName, id },
         {
           headers: {
-            Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+            Authorization: `Bearer ${accessToken}`,
           },
         },
       );
@@ -377,7 +382,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
         },
         {
           headers: {
-            Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+            Authorization: `Bearer ${accessToken}`,
           },
         },
       );
@@ -806,8 +811,13 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
               title="Logout"
               theme="danger"
               onPress={async () => {
-                await AsyncStorage.removeItem('accessToken');
-                navigate('Login');
+                dispatch(setAccessToken(null));
+                dispatch(setProfile(null));
+                dispatch(setActiveStore(null));
+                dispatch(setStore(null));
+                dispatch(setSelectedTransaction(null));
+                dispatch(setEditedTransaction(null));
+                dispatch(setLoggedIn(false));
               }}
             />
           </View>

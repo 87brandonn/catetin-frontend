@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
@@ -21,6 +20,8 @@ function KategoriBarangSheet({ onSave, data: categoryData, ...rest }: IKategoriB
   const [data, setData] = useState<ICatetinItemCategory[] | null>(null);
   const [originalData, setOriginalData] = useState<ICatetinItemCategory[] | null>(null);
 
+  const { accessToken } = useAppSelector((state: RootState) => state.auth);
+
   useEffect(() => {
     if (rest.route?.params?.from === 'add-category' && rest.route?.params?.success) {
       fetchCategoryItem();
@@ -40,7 +41,7 @@ function KategoriBarangSheet({ onSave, data: categoryData, ...rest }: IKategoriB
         data: { data },
       } = await axiosCatetin.get(`/item-category/${activeStore}`, {
         headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
       setData(data);
@@ -50,7 +51,7 @@ function KategoriBarangSheet({ onSave, data: categoryData, ...rest }: IKategoriB
     } finally {
       setLoading(false);
     }
-  }, [activeStore]);
+  }, [accessToken, activeStore]);
 
   const { navigate } = useNavigation();
 

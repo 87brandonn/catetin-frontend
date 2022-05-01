@@ -6,7 +6,9 @@ import tw from 'twrnc';
 import { axiosCatetin } from '../../api';
 import CatetinButton from '../../components/molecules/Button';
 import CatetinToast from '../../components/molecules/Toast';
+import { useAppSelector } from '../../hooks';
 import AppLayout from '../../layouts/AppLayout';
+import { RootState } from '../../store';
 
 function VerifyEmail() {
   const { navigate } = useNavigation();
@@ -27,6 +29,8 @@ function VerifyEmail() {
 
   const refInput = useRef([]);
 
+  const { accessToken } = useAppSelector((state: RootState) => state.auth);
+
   useEffect(() => {
     refInput?.current?.[1].focus();
   }, [refInput]);
@@ -40,7 +44,7 @@ function VerifyEmail() {
         },
         {
           headers: {
-            Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+            Authorization: `Bearer ${accessToken}`,
           },
         },
       );
@@ -57,7 +61,7 @@ function VerifyEmail() {
     try {
       await axiosCatetin.get('/auth/verify', {
         headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
       CatetinToast('default', 'Email has been sent');
@@ -86,7 +90,7 @@ function VerifyEmail() {
           },
           {
             headers: {
-              Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+              Authorization: `Bearer ${accessToken}`,
             },
           },
         );

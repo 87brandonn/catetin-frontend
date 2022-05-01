@@ -22,6 +22,8 @@ function TransactionDetail({ refreshing, onRefresh }: { refreshing: boolean; onR
   const { selectedTransaction } = useAppSelector((state: RootState) => state.transaction);
   const dispatch = useAppDispatch();
 
+  const { accessToken } = useAppSelector((state: RootState) => state.auth);
+
   const fetchTransaksiDetail = async (id: number, refreshing = false) => {
     if (refreshing) {
       onRefresh(true);
@@ -33,7 +35,7 @@ function TransactionDetail({ refreshing, onRefresh }: { refreshing: boolean; onR
         data: { data },
       } = await axiosCatetin.get(`/transaksi/${id}`, {
         headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
       setDataDetail(data);
@@ -71,7 +73,7 @@ function TransactionDetail({ refreshing, onRefresh }: { refreshing: boolean; onR
     try {
       await axiosCatetin.delete(`/transaksi/detail`, {
         headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         data: {
           transaksi_id: transactionId,

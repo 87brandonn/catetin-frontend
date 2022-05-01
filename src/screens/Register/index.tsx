@@ -6,16 +6,17 @@ import * as Facebook from 'expo-facebook';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { KeyboardAvoidingView, Text, TouchableOpacity, View, Image } from 'react-native';
-import { Button, Icon } from 'react-native-elements';
-import Toast from 'react-native-toast-message';
+import { Image, KeyboardAvoidingView, Text, TouchableOpacity, View } from 'react-native';
+import { Icon } from 'react-native-elements';
 import tw from 'twrnc';
 import * as yup from 'yup';
 import { axiosCatetin } from '../../api';
 import CatetinInput from '../../components/molecules/Input';
 import CatetinToast from '../../components/molecules/Toast';
+import { useAppDispatch } from '../../hooks';
 import AppLayout from '../../layouts/AppLayout';
 import { RootStackParamList } from '../../navigation';
+import { setAccessToken } from '../../store/features/authSlice';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -44,24 +45,7 @@ function Register({ navigation: { navigate } }: NativeStackScreenProps<RootStack
   const [loadingGmail, setLoadingGmail] = useState(false);
   const [loadingFacebook, setLoadingFacebook] = useState(false);
 
-  const checkProfile = useCallback(async (token: string | null) => {
-    if (!token) {
-      return undefined;
-    }
-    try {
-      const {
-        data: { data },
-      } = await axiosCatetin.get('/store', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      return data || null;
-    } catch (err: any) {
-      // do nothing
-    }
-    return undefined;
-  }, []);
+  const dispatch = useAppDispatch();
 
   const loginGmail = useCallback(
     async (token: string | undefined) => {
@@ -79,13 +63,8 @@ function Register({ navigation: { navigate } }: NativeStackScreenProps<RootStack
           email: serialized.email,
           name: serialized.name,
         });
+        dispatch(setAccessToken(catetinToken));
         await AsyncStorage.setItem('accessToken', catetinToken);
-        const storeData = await checkProfile(catetinToken);
-        if (storeData.length === 0) {
-          navigate('TokoLanding');
-        } else if (storeData.length > 0) {
-          navigate('Home');
-        }
       } catch (err) {
         console.log(err, 'ERROR GMAIL');
         CatetinToast('error', 'An error occured while authenticating gmail.');
@@ -93,7 +72,7 @@ function Register({ navigation: { navigate } }: NativeStackScreenProps<RootStack
         setLoadingGmail(false);
       }
     },
-    [checkProfile, navigate],
+    [dispatch],
   );
 
   useEffect(() => {
@@ -126,13 +105,8 @@ function Register({ navigation: { navigate } }: NativeStackScreenProps<RootStack
         password,
         email,
       });
+      dispatch(setAccessToken(token));
       await AsyncStorage.setItem('accessToken', token);
-      await axiosCatetin.get('/auth/verify', {
-        headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
-        },
-      });
-      navigate('VerifyEmail');
     } catch (err: any) {
       CatetinToast(
         'error',
@@ -163,13 +137,8 @@ function Register({ navigation: { navigate } }: NativeStackScreenProps<RootStack
           email,
           name,
         });
+        dispatch(setAccessToken(catetinToken));
         await AsyncStorage.setItem('accessToken', catetinToken);
-        const storeData = await checkProfile(catetinToken);
-        if (storeData.length === 0) {
-          navigate('TokoLanding');
-        } else if (storeData.length > 0) {
-          navigate('Home');
-        }
       }
     } catch (err: any) {
       CatetinToast('error', 'An error occured while authenticating facebook.');

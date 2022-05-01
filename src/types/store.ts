@@ -5,4 +5,5 @@ export interface ICatetinStore {
   deleted: boolean;
   id: number;
   updatedAt: Date;
+  UserId: number;
 }

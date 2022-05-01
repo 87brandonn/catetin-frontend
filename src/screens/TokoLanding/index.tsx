@@ -7,12 +7,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import tw from 'twrnc';
 import { axiosCatetin } from '../../api';
 import { RootStackParamList } from '../../navigation';
-import { useAppDispatch } from '../../hooks';
+import { useAppDispatch, useAppSelector } from '../../hooks';
 import { setActiveStore } from '../../store/features/storeSlice';
+import { RootState } from '../../store';
+import { setStore } from '../../store/features/authSlice';
 
 function TokoLanding({ navigation: { navigate } }: NativeStackScreenProps<RootStackParamList, 'TokoLanding'>) {
   const [tokoName, setTokoName] = useState('');
   const [loadingSubmit, setLoadingSubmit] = useState(false);
+
+  const { accessToken } = useAppSelector((state: RootState) => state.auth);
 
   const dispatch = useAppDispatch();
 
@@ -28,12 +32,12 @@ function TokoLanding({ navigation: { navigate } }: NativeStackScreenProps<RootSt
         },
         {
           headers: {
-            Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+            Authorization: `Bearer ${accessToken}`,
           },
         },
       );
       dispatch(setActiveStore(data.id));
-      navigate('Home');
+      dispatch(setStore(data));
     } catch (error) {
       console.log(error);
     } finally {

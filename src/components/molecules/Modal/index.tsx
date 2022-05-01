@@ -1,7 +1,6 @@
 import React from 'react';
-import { View, Modal, Text, TouchableOpacity } from 'react-native';
+import { Modal, Text, TouchableOpacity, View } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import tw from 'twrnc';
 import CatetinScrollView from '../../../layouts/ScrollView';
 
@@ -42,7 +41,7 @@ function CatetinModal({
                 onClose();
               }}
             >
-              <Icon name="chevron-left" />
+              <Icon name="chevron-left" tvParallaxProperties="" />
             </TouchableOpacity>
           </View>
           <View>

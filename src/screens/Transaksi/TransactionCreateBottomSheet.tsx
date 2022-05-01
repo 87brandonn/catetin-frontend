@@ -1,6 +1,5 @@
 import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 import { yupResolver } from '@hookform/resolvers/yup';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator, StackNavigationOptions } from '@react-navigation/stack';
@@ -76,6 +75,8 @@ function TransactionCreateBottomSheet({
   const { editedTransaction } = useAppSelector((state: RootState) => state.transaction);
   const { activeStore } = useAppSelector((state: RootState) => state.store);
 
+  const { accessToken } = useAppSelector((state: RootState) => state.auth);
+
   const {
     control,
     handleSubmit,
@@ -130,7 +131,7 @@ function TransactionCreateBottomSheet({
           data: { data: insertedData },
         } = await axiosCatetin.post(`/transaksi/${activeStore}`, finalData, {
           headers: {
-            Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+            Authorization: `Bearer ${accessToken}`,
           },
         });
         dataTransaksi = insertedData;
@@ -141,7 +142,7 @@ function TransactionCreateBottomSheet({
           },
         } = await axiosCatetin.put('/transaksi', finalData, {
           headers: {
-            Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+            Authorization: `Bearer ${accessToken}`,
           },
         });
         dataTransaksi = updatedData;
@@ -170,7 +171,7 @@ function TransactionCreateBottomSheet({
     try {
       await axiosCatetin.delete(`/transaksi/${watch('transaksi_id')}`, {
         headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
       bottomSheetRef.current?.close();

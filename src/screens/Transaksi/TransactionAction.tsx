@@ -4,7 +4,6 @@ import { Image, Platform, Text, TouchableOpacity, View } from 'react-native';
 import DocumentPicker, { types } from 'react-native-document-picker';
 import { Icon } from 'react-native-elements';
 import tw from 'twrnc';
-import { axiosCatetin } from '../../api';
 import CatetinBottomSheet from '../../components/molecules/BottomSheet';
 import CatetinBottomSheetWrapper from '../../components/molecules/BottomSheet/BottomSheetWrapper';
 import CatetinButton from '../../components/molecules/Button';

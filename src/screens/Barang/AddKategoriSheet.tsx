@@ -1,7 +1,6 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
-import { View, Text } from 'react-native';
+import { Text, View } from 'react-native';
 import tw from 'twrnc';
 import { axiosCatetin } from '../../api';
 import CatetinButton from '../../components/molecules/Button';
@@ -20,6 +19,8 @@ function AddKategoriSheet() {
 
   const { navigate } = useNavigation();
 
+  const { accessToken } = useAppSelector((state: RootState) => state.auth);
+
   const onSubmit = async () => {
     setLoadingSave(true);
     try {
@@ -31,7 +32,7 @@ function AddKategoriSheet() {
         },
         {
           headers: {
-            Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+            Authorization: `Bearer ${accessToken}`,
           },
         },
       );

@@ -64,6 +64,8 @@ function Header({ title = '' }: { title?: string }) {
   const { activeStore } = useAppSelector((state: RootState) => state.store);
   const dispatch = useAppDispatch();
 
+  const { accessToken } = useAppSelector((state: RootState) => state.auth);
+
   const Stack = createStackNavigator();
 
   const fetchProfile = useCallback(async () => {
@@ -73,7 +75,7 @@ function Header({ title = '' }: { title?: string }) {
         data: { data },
       } = await axiosCatetin.get('/auth/profile', {
         headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
       setProfileData(data);
@@ -82,7 +84,7 @@ function Header({ title = '' }: { title?: string }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [accessToken]);
 
   const fetchStore = useCallback(async () => {
     setLoadingStore(true);
@@ -91,7 +93,7 @@ function Header({ title = '' }: { title?: string }) {
         data: { data },
       } = await axiosCatetin.get('/store', {
         headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
       console.log(data);
@@ -101,7 +103,7 @@ function Header({ title = '' }: { title?: string }) {
     } finally {
       setLoadingStore(false);
     }
-  }, []);
+  }, [accessToken]);
 
   useEffect(() => {
     fetchStore();

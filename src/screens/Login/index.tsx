@@ -6,7 +6,7 @@ import * as Facebook from 'expo-facebook';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { ActivityIndicator, KeyboardAvoidingView, Text, TouchableOpacity, View, Image } from 'react-native';
+import { Image, KeyboardAvoidingView, Text, TouchableOpacity, View } from 'react-native';
 import { Icon } from 'react-native-elements';
 import tw from 'twrnc';
 import * as yup from 'yup';
@@ -16,9 +16,7 @@ import CatetinToast from '../../components/molecules/Toast';
 import { useAppDispatch } from '../../hooks';
 import AppLayout from '../../layouts/AppLayout';
 import { RootStackParamList } from '../../navigation';
-import { setActiveStore } from '../../store/features/storeSlice';
-import { User } from '../../types/profil';
-import { ICatetinStore } from '../../types/store';
+import { setAccessToken } from '../../store/features/authSlice';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -76,16 +74,8 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
           email,
           name,
         });
+        dispatch(setAccessToken(catetinToken));
         await AsyncStorage.setItem('accessToken', catetinToken);
-        const data = await getUserInfo(catetinToken);
-        if (data?.profileData?.verified && data?.storeData.length > 0) {
-          dispatch(setActiveStore(data.storeData?.[0].id));
-          navigate('Home');
-        } else if (data?.profileData?.verified === false) {
-          navigate('VerifyEmail');
-        } else if (data?.storeData.length === 0) {
-          navigate('TokoLanding');
-        }
       }
     } catch (err: any) {
       CatetinToast('error', 'An error occured while authenticating facebook.');
@@ -105,16 +95,8 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
         username,
         password,
       });
+      dispatch(setAccessToken(token));
       await AsyncStorage.setItem('accessToken', token);
-      const data = await getUserInfo(token);
-      if (data?.profileData?.verified && data.storeData) {
-        dispatch(setActiveStore(data.storeData?.[0].id));
-        navigate('Home');
-      } else if (data?.profileData?.verified === false) {
-        navigate('VerifyEmail');
-      } else if (data?.storeData.length === 0) {
-        navigate('TokoLanding');
-      }
     } catch (err: any) {
       CatetinToast(
         'error',
@@ -125,70 +107,7 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
     }
   };
 
-  const [loadUser, setLoadUser] = useState(true);
   const [loadingGmail, setLoadingGmail] = useState(false);
-
-  const getUserInfo = useCallback(
-    async (token: string | null): Promise<{ profileData: User; storeData: ICatetinStore[] } | undefined> => {
-      if (!token) {
-        return undefined;
-      }
-      try {
-        const promises = [];
-        promises.push(
-          axiosCatetin.get('/auth/profile', {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }),
-        );
-        promises.push(
-          axiosCatetin.get('/store', {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }),
-        );
-        const [
-          {
-            data: { data: profileData },
-          },
-          {
-            data: { data: storeData },
-          },
-        ] = await Promise.all(promises);
-        return {
-          profileData,
-          storeData,
-        };
-      } catch (err: any) {
-        // do nothing
-      }
-      return undefined;
-    },
-    [],
-  );
-
-  const redirectIfLoggedIn = useCallback(async () => {
-    setLoadUser(true);
-    const accessToken = await AsyncStorage.getItem('accessToken');
-    const data = await getUserInfo(accessToken);
-    if (data?.profileData) {
-      if (data?.profileData?.verified && data?.storeData.length > 0) {
-        dispatch(setActiveStore(data?.storeData?.[0]?.id));
-        navigate('Home');
-      } else if (data?.profileData.verified === false) {
-        navigate('VerifyEmail');
-      } else if (data?.storeData.length === 0) {
-        navigate('TokoLanding');
-      }
-    }
-    setLoadUser(false);
-  }, [dispatch, getUserInfo, navigate]);
-
-  useEffect(() => {
-    redirectIfLoggedIn();
-  }, [redirectIfLoggedIn]);
 
   const loginGmail = useCallback(
     async (token: string | undefined) => {
@@ -206,24 +125,15 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
           email: serialized.email,
           name: serialized.name,
         });
+        dispatch(setAccessToken(catetinToken));
         await AsyncStorage.setItem('accessToken', catetinToken);
-        const data = await getUserInfo(catetinToken);
-        console.log(data);
-        if (data?.profileData?.verified && data?.storeData.length > 0) {
-          dispatch(setActiveStore(data.storeData?.[0]?.id));
-          navigate('Home');
-        } else if (data?.profileData?.verified === false) {
-          navigate('VerifyEmail');
-        } else if (data?.storeData.length === 0) {
-          navigate('TokoLanding');
-        }
       } catch (err) {
         CatetinToast('error', 'An error occured while authenticating gmail.');
       } finally {
         setLoadingGmail(false);
       }
     },
-    [dispatch, getUserInfo, navigate],
+    [dispatch],
   );
 
   useEffect(() => {
@@ -232,12 +142,11 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
       loginGmail(authentication?.accessToken);
     }
   }, [response, loginGmail]);
+
   return (
     <AppLayout header={false} bottom={false}>
       <View style={tw`flex-1 px-4`}>
-        {loadUser ? (
-          <ActivityIndicator />
-        ) : (
+        {
           <KeyboardAvoidingView style={tw`flex flex-1 justify-evenly`} behavior="padding">
             <View style={tw`flex items-center  shadow-xl`}>
               <Image source={require('../../assets/rounded-icon.png')} style={tw`w-[96px] h-[96px]`} />
@@ -338,7 +247,7 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
               </TouchableOpacity>
             </View>
           </KeyboardAvoidingView>
-        )}
+        }
       </View>
     </AppLayout>
   );

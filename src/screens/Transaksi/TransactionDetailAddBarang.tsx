@@ -49,6 +49,8 @@ function TransactionDetailAddBarang(props: {
   const { navigate } = useNavigation();
   const { activeStore } = useAppSelector((state: RootState) => state.store);
 
+  const { accessToken } = useAppSelector((state: RootState) => state.auth);
+
   useEffect(() => {
     if (selectedTransaction !== props.route.params?.id) {
       props.navigation.navigate('Transaction Detail');
@@ -99,7 +101,7 @@ function TransactionDetailAddBarang(props: {
       },
       {
         headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       },
     );

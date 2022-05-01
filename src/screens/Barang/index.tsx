@@ -1,8 +1,8 @@
 import BottomSheet from '@gorhom/bottom-sheet';
 import { yupResolver } from '@hookform/resolvers/yup';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import chunk from 'lodash/chunk';
 import React, { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { ActivityIndicator, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
@@ -16,19 +16,18 @@ import CatetinBottomSheetWrapper from '../../components/molecules/BottomSheet/Bo
 import CatetinButton from '../../components/molecules/Button';
 import CatetinToast from '../../components/molecules/Toast';
 import { useAppSelector } from '../../hooks';
-import chunk from 'lodash/chunk';
 import AppLayout from '../../layouts/AppLayout';
 import CatetinScrollView from '../../layouts/ScrollView';
 import { RootState } from '../../store';
-import { ICatetinBarang, ICatetinBarangWithTransaksi } from '../../types/barang';
+import { ICatetinBarang } from '../../types/barang';
 import { ICatetinItemCategory } from '../../types/itemCategory';
+import { ICatetinTransaksi, ICatetinTransaksiDetail } from '../../types/transaksi';
 import TransactionAction from '../Transaksi/TransactionAction';
 import AddKategoriSheet from './AddKategoriSheet';
 import CreateModal from './BarangBottomSheet';
 import BarangDetailBottomSheet from './BarangDetailBottomSheet';
 import BarangFilterBottomSheet from './BarangFilterBottomSheet';
 import KategoriBarangSheet from './KategoriBarangSheet';
-import { ICatetinTransaksi, ICatetinTransaksiDetail } from '../../types/transaksi';
 
 export interface IFormSchema {
   id: number;
@@ -79,6 +78,8 @@ function Barang() {
   const [loadingFetch, setLoadingFetch] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  const { accessToken } = useAppSelector((state: RootState) => state.auth);
+
   const [params, setParams] = useState<{
     nama_barang: string;
     sort: string | undefined;
@@ -106,7 +107,7 @@ function Barang() {
         } = await axiosCatetin.get(`/barang/${activeStore}/list`, {
           params,
           headers: {
-            Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+            Authorization: `Bearer ${accessToken}`,
           },
         });
         console.log('Barang', data);
@@ -121,7 +122,7 @@ function Barang() {
         }
       }
     },
-    [activeStore, params],
+    [accessToken, activeStore, params],
   );
 
   useEffect(() => {
@@ -166,7 +167,7 @@ function Barang() {
       },
       {
         headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       },
     );
@@ -185,7 +186,7 @@ function Barang() {
       },
       {
         headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       },
     );
@@ -203,7 +204,7 @@ function Barang() {
           category: true,
         },
         headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
       setBarangTransaksi(barangTransaksiData);
@@ -252,7 +253,7 @@ function Barang() {
     try {
       await axiosCatetin.delete(`/barang/${watch('id')}`, {
         headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
       bottomSheetRef?.current?.close();

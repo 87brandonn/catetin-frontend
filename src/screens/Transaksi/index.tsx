@@ -35,6 +35,8 @@ function Transaksi() {
     search: '',
   });
 
+  const { accessToken } = useAppSelector((state: RootState) => state.auth);
+
   const fetchTransaksi = useCallback(
     async (isMounted = true, refreshing = false) => {
       if (refreshing) {
@@ -48,7 +50,7 @@ function Transaksi() {
         } = await axiosCatetin.get(`/transaksi/${activeStore}/list`, {
           params,
           headers: {
-            Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
+            Authorization: `Bearer ${accessToken}`,
           },
         });
         if (isMounted) {

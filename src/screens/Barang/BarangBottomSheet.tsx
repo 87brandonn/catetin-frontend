@@ -110,23 +110,6 @@ function CreateModal({
               .join(', ')}
           />
         </TouchableOpacity>
-
-        {/* <Controller
-          control={control}
-          render={({ field: { onChange, onBlur, value } }) => (
-            <CatetinInput
-              bottomSheet={true}
-              placeholder="Harga"
-              style={tw`border-b border-gray-100 px-4 py-3 rounded`}
-              onChangeText={(value) => {
-                onChange(parseInt(value || '0', 10));
-              }}
-              keyboardType="numeric"
-              value={(value !== 0 && value.toString()) || ''}
-            />
-          )}
-          name="harga"
-        /> */}
       </View>
       <View style={tw`mb-4`}>
         <Text style={tw`mb-1 text-base`}>Harga Barang</Text>

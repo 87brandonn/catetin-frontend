@@ -1,23 +1,22 @@
 import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import _ from 'lodash';
+import chunk from 'lodash/chunk';
+import moment from 'moment';
 import React, { Fragment, useCallback, useState } from 'react';
 import { ActivityIndicator, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { Icon } from 'react-native-elements';
 import tw from 'twrnc';
-import chunk from 'lodash/chunk';
 import { axiosCatetin } from '../../api';
 import CatetinBottomSheet from '../../components/molecules/BottomSheet';
 import CatetinBottomSheetWrapper from '../../components/molecules/BottomSheet/BottomSheetWrapper';
 import CatetinButton from '../../components/molecules/Button';
 import CatetinInput from '../../components/molecules/Input';
 import CatetinToast from '../../components/molecules/Toast';
-import { optionsTransaksi } from '../../static/optionsTransaksi';
-import { ICatetinBarangWithTransaksi } from '../../types/barang';
-import moment from 'moment';
 import { useAppSelector } from '../../hooks';
+import { optionsTransaksi } from '../../static/optionsTransaksi';
 import { RootState } from '../../store';
+import { ICatetinBarangWithTransaksi } from '../../types/barang';
 
 interface ITransactionSortBottomSheet {
   bottomSheetRefFilter: React.RefObject<BottomSheetMethods>;
@@ -45,24 +44,29 @@ function TransactionSortBottomSheet({ bottomSheetRefFilter, onApplyFilter }: ITr
   const [selectedType, setSelectedType] = useState<number[]>([]);
   const [nominal, setNominal] = useState<[number, number]>([0, 0]);
 
-  const fetchBarang = useCallback(async (params = {}) => {
-    setLoadingBarang(true);
-    try {
-      const {
-        data: { data },
-      } = await axiosCatetin.get(`/barang/${activeStore}/list`, {
-        params,
-        headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
-        },
-      });
-      setBarang(data);
-    } catch (err) {
-      CatetinToast('error', 'Terjadi kesalahan. Gagal mengambil data barang.');
-    } finally {
-      setLoadingBarang(false);
-    }
-  }, []);
+  const { accessToken } = useAppSelector((state: RootState) => state.auth);
+
+  const fetchBarang = useCallback(
+    async (params = {}) => {
+      setLoadingBarang(true);
+      try {
+        const {
+          data: { data },
+        } = await axiosCatetin.get(`/barang/${activeStore}/list`, {
+          params,
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+        setBarang(data);
+      } catch (err) {
+        CatetinToast('error', 'Terjadi kesalahan. Gagal mengambil data barang.');
+      } finally {
+        setLoadingBarang(false);
+      }
+    },
+    [accessToken, activeStore],
+  );
 
   const handleApplyFilter = () => {
     const filter = {
