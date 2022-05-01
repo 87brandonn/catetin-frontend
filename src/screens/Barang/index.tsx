@@ -1,6 +1,8 @@
 import BottomSheet from '@gorhom/bottom-sheet';
 import { yupResolver } from '@hookform/resolvers/yup';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
 import React, { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { ActivityIndicator, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
@@ -14,14 +16,19 @@ import CatetinBottomSheetWrapper from '../../components/molecules/BottomSheet/Bo
 import CatetinButton from '../../components/molecules/Button';
 import CatetinToast from '../../components/molecules/Toast';
 import { useAppSelector } from '../../hooks';
+import chunk from 'lodash/chunk';
 import AppLayout from '../../layouts/AppLayout';
 import CatetinScrollView from '../../layouts/ScrollView';
 import { RootState } from '../../store';
 import { ICatetinBarang, ICatetinBarangWithTransaksi } from '../../types/barang';
+import { ICatetinItemCategory } from '../../types/itemCategory';
 import TransactionAction from '../Transaksi/TransactionAction';
+import AddKategoriSheet from './AddKategoriSheet';
 import CreateModal from './BarangBottomSheet';
 import BarangDetailBottomSheet from './BarangDetailBottomSheet';
 import BarangFilterBottomSheet from './BarangFilterBottomSheet';
+import KategoriBarangSheet from './KategoriBarangSheet';
+import { ICatetinTransaksi, ICatetinTransaksiDetail } from '../../types/transaksi';
 
 export interface IFormSchema {
   id: number;
@@ -29,6 +36,7 @@ export interface IFormSchema {
   harga: number;
   stok: number;
   barang_picture: string | null;
+  category: ICatetinItemCategory[];
 }
 
 const schema = yup.object().shape({
@@ -37,6 +45,7 @@ const schema = yup.object().shape({
   harga: yup.number().typeError('Please input number').required('Harga is required'),
   stok: yup.number().required('Stok is required'),
   barang_picture: yup.mixed(),
+  category: yup.mixed(),
 });
 
 function Barang() {
@@ -55,13 +64,18 @@ function Barang() {
       name: '',
       harga: 0,
       barang_picture: null,
+      category: [],
     },
   });
 
   const { activeStore } = useAppSelector((state: RootState) => state.store);
 
   const [loading, setLoading] = useState(false);
-  const [barang, setBarang] = useState<ICatetinBarang[]>([]);
+  const [barang, setBarang] = useState<
+    (ICatetinBarang & {
+      ItemCategories: ICatetinItemCategory[];
+    })[]
+  >([]);
   const [loadingFetch, setLoadingFetch] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -95,6 +109,7 @@ function Barang() {
             Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
           },
         });
+        console.log('Barang', data);
         setBarang(data);
       } catch (err) {
         CatetinToast('error', 'Terjadi kesalahan. Gagal mengambil data barang.');
@@ -115,14 +130,27 @@ function Barang() {
 
   const [loadDetail, setLoadDetail] = useState(true);
   const [loadingDelete, setLoadingDelete] = useState(false);
-  const [barangTransaksi, setBarangTransaksi] = useState<ICatetinBarangWithTransaksi | null>(null);
+  const [barangTransaksi, setBarangTransaksi] = useState<
+    | (ICatetinBarang & {
+        ItemCategories: ICatetinItemCategory[];
+        Transactions: (ICatetinTransaksi & {
+          ItemTransaction: ICatetinTransaksiDetail;
+        })[];
+      })
+    | null
+  >(null);
 
-  const handleEdit = (barang: ICatetinBarang) => {
+  const handleEdit = (
+    barang: ICatetinBarang & {
+      ItemCategories: ICatetinItemCategory[];
+    },
+  ) => {
     setValue('name', barang.name);
     setValue('harga', barang.price);
     setValue('id', barang.id);
     setValue('barang_picture', barang.picture);
     setValue('stok', barang.stock);
+    setValue('category', barang.ItemCategories);
     bottomSheetRef.current?.expand();
   };
 
@@ -134,6 +162,7 @@ function Barang() {
         price: data.harga,
         picture: data.barang_picture,
         stock: data.stok,
+        category: data.category.map((cat) => cat.id),
       },
       {
         headers: {
@@ -152,6 +181,7 @@ function Barang() {
         price: data.harga,
         picture: data.barang_picture,
         stock: data.stok,
+        category: data.category.map((cat) => cat.id),
       },
       {
         headers: {
@@ -170,6 +200,7 @@ function Barang() {
       } = await axiosCatetin.get(`/barang/${singleBarang.id}`, {
         params: {
           transaksi: true,
+          category: true,
         },
         headers: {
           Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
@@ -197,6 +228,7 @@ function Barang() {
         harga: 0,
         stok: 0,
         barang_picture: null,
+        category: [],
       });
       Toast.show({
         type: 'customToast',
@@ -240,21 +272,55 @@ function Barang() {
       setLoadingDelete(false);
     }
   };
+  const Stack = createStackNavigator();
   return (
     <AppLayout headerTitle="Barang">
       <CatetinBottomSheet bottomSheetRef={bottomSheetRef}>
-        <CatetinBottomSheetWrapper single title="Create Barang">
-          <CreateModal
-            control={control}
-            errors={errors}
-            watch={watch}
-            loading={loading}
-            onSave={() => handleSubmit(onSubmit)()}
-            onDelete={() => handleDelete()}
-            title="Create Barang"
-            loadingDelete={loadingDelete}
-          />
-        </CatetinBottomSheetWrapper>
+        <NavigationContainer>
+          <Stack.Navigator
+            screenOptions={{
+              headerShown: false,
+            }}
+          >
+            <Stack.Screen name="Create Barang">
+              {(props) => (
+                <CatetinBottomSheetWrapper {...props} title="Create Barang">
+                  <CreateModal
+                    {...props}
+                    control={control}
+                    errors={errors}
+                    watch={watch}
+                    loading={loading}
+                    onSave={() => handleSubmit(onSubmit)()}
+                    onDelete={() => handleDelete()}
+                    title="Create Barang"
+                    loadingDelete={loadingDelete}
+                  />
+                </CatetinBottomSheetWrapper>
+              )}
+            </Stack.Screen>
+            <Stack.Screen name="Kategori Barang">
+              {(props) => (
+                <CatetinBottomSheetWrapper {...props} title="Kategori Barang" showBack to="Create Barang">
+                  <KategoriBarangSheet
+                    {...props}
+                    data={watch('category')}
+                    onSave={(data) => {
+                      setValue('category', data);
+                    }}
+                  />
+                </CatetinBottomSheetWrapper>
+              )}
+            </Stack.Screen>
+            <Stack.Screen name="Add Category">
+              {(props) => (
+                <CatetinBottomSheetWrapper {...props} title="Add Category" showBack to="Kategori Barang">
+                  <AddKategoriSheet {...props} />
+                </CatetinBottomSheetWrapper>
+              )}
+            </Stack.Screen>
+          </Stack.Navigator>
+        </NavigationContainer>
       </CatetinBottomSheet>
 
       <CatetinBottomSheet bottomSheetRef={bottomSheetRefFilter}>
@@ -293,6 +359,7 @@ function Barang() {
             harga: 0,
             stok: 0,
             barang_picture: null,
+            category: [],
           });
           bottomSheetRef.current?.expand();
         }}
@@ -324,6 +391,7 @@ function Barang() {
                   harga: 0,
                   stok: 0,
                   barang_picture: null,
+                  category: [],
                 });
                 bottomSheetRef.current?.expand();
               }}
@@ -334,15 +402,10 @@ function Barang() {
             style={tw`flex-1 py-3 px-3`}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchBarang(true)} />}
           >
-            {barang.map((singleBarang: ICatetinBarang) => (
+            {barang.map((singleBarang) => (
               <Fragment key={singleBarang.id}>
-                <TouchableOpacity
-                  style={tw`px-3 py-2 mb-2 flex flex-row`}
-                  onPress={() => {
-                    handleViewDetail(singleBarang);
-                  }}
-                >
-                  <View style={tw`self-center mr-3`}>
+                <View style={tw`px-3 py-2 mb-2 flex flex-row`}>
+                  <View style={tw`mr-3`}>
                     <Avatar
                       size={64}
                       source={{
@@ -353,11 +416,27 @@ function Barang() {
                       titleStyle={tw`text-gray-200`}
                     ></Avatar>
                   </View>
-                  <View style={tw`flex-grow-1 flex flex-row justify-between`}>
+                  <View style={tw`flex-grow-1 flex-row justify-between`}>
                     <View>
                       <View>
-                        <Text style={tw`text-lg font-bold`}>{singleBarang.name}</Text>
+                        <Text style={tw`text-[18px] mb-1 font-bold`}>{singleBarang.name}</Text>
                       </View>
+                      {singleBarang.ItemCategories.length > 0 && (
+                        <View>
+                          {chunk(singleBarang.ItemCategories, 2).map((catChunk, index) => (
+                            <View style={tw`flex flex-row mb-1`} key={index}>
+                              {catChunk.map((cat) => (
+                                <View key={cat.id} style={tw`mr-1 bg-gray-200 px-2 py-1 rounded-lg`}>
+                                  <Text style={tw`text-[12px]`}>
+                                    {cat.name.slice(0, 10)}
+                                    {cat.name.length > 10 && '..'}
+                                  </Text>
+                                </View>
+                              ))}
+                            </View>
+                          ))}
+                        </View>
+                      )}
                       <View>
                         <Text style={tw`text-base`}>Stok: {singleBarang.stock}</Text>
                       </View>
@@ -365,17 +444,30 @@ function Barang() {
                         <Text style={tw`text-base`}>IDR {singleBarang.price.toLocaleString()}</Text>
                       </View>
                     </View>
-                    <View style={tw`self-center`}>
+                    <View style={tw`flex flex-row self-center`}>
+                      <TouchableOpacity
+                        onPress={() => {
+                          handleViewDetail(singleBarang);
+                        }}
+                      >
+                        <Icon
+                          name="eyeo"
+                          iconStyle={tw`mr-2`}
+                          type="antdesign"
+                          size={24}
+                          tvParallaxProperties=""
+                        ></Icon>
+                      </TouchableOpacity>
                       <TouchableOpacity
                         onPress={() => {
                           handleEdit(singleBarang);
                         }}
                       >
-                        <Icon name="edit" type="font-awesome-5" size={18} tvParallaxProperties=""></Icon>
+                        <Icon name="update" type="materialcommunity-icon" size={24} tvParallaxProperties=""></Icon>
                       </TouchableOpacity>
                     </View>
                   </View>
-                </TouchableOpacity>
+                </View>
               </Fragment>
             ))}
           </CatetinScrollView>

@@ -7,6 +7,7 @@ import { RefreshControl, Text, TouchableOpacity, View } from 'react-native';
 import { Avatar, Badge } from 'react-native-elements';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import tw from 'twrnc';
+import chunk from 'lodash/chunk';
 import { axiosCatetin } from '../../api';
 import CatetinButton from '../../components/molecules/Button';
 import CatetinToast from '../../components/molecules/Toast';
@@ -175,20 +176,23 @@ function Transaksi() {
                 <Text style={tw`font-500 text-lg`}>IDR {item.nominal?.toLocaleString()}</Text>
                 {(item.notes && <Text style={tw`text-slate-500 text-sm`}>{item.notes}</Text>) || null}
                 {item.Items.length > 0 && (
-                  <View style={tw`flex flex-row mt-1 mb-2`}>
-                    {item.Items.map((item, index) => (
-                      <View style={tw`relative`} key={index}>
-                        <View style={tw`absolute top-[-4px] right-0 z-10`}>
-                          <Badge value={item.ItemTransaction.amount} status="primary"></Badge>
-                        </View>
-                        <Avatar
-                          size={64}
-                          source={{
-                            uri: item.picture || undefined,
-                          }}
-                          avatarStyle={tw`rounded-[12px]`}
-                          containerStyle={tw`mr-3 shadow-lg`}
-                        ></Avatar>
+                  <View style={tw`mt-1 mb-2`}>
+                    {chunk(item.Items, 4).map((itemChunk, index) => (
+                      <View style={tw`flex flex-row mt-1 mb-2`} key={index}>
+                        {itemChunk.map((item) => (
+                          <View style={tw`relative mr-3 ${item.deleted ? 'opacity-20' : 'opacity-100'}`} key={item.id}>
+                            <View style={tw`absolute top-[-4px] right-0 z-10`}>
+                              <Badge value={item.ItemTransaction.amount} status="primary"></Badge>
+                            </View>
+                            <Avatar
+                              size={64}
+                              source={{
+                                uri: item.picture || undefined,
+                              }}
+                              avatarStyle={tw`rounded-[12px]`}
+                            ></Avatar>
+                          </View>
+                        ))}
                       </View>
                     ))}
                   </View>

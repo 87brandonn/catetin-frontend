@@ -4,7 +4,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { NavigationContainer } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { createStackNavigator } from '@react-navigation/stack';
-import moment from 'moment';
+import moment from 'moment-timezone';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Dimensions, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
 import ActionSheet from 'react-native-actionsheet';
@@ -70,9 +70,11 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
   const [dateParams, setDateParams] = useState<{
     start_date: string | undefined;
     end_date: string | undefined;
+    timezone: string;
   }>({
     start_date: undefined,
     end_date: undefined,
+    timezone: moment.tz.guess(),
   });
   const { activeStore } = useAppSelector((state: RootState) => state.store);
 
@@ -91,8 +93,10 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
         },
       });
       setGraphData(data);
-    } catch (err) {
-      CatetinToast('error', `Gagal mengambil data graph`);
+    } catch (err: any) {
+      if (JSON.parse(err.response.data.err)?.name !== 'SequelizeConnectionError') {
+        CatetinToast('error', `Gagal mengambil data graph`);
+      }
     } finally {
       setLoadingGraph(false);
     }
@@ -113,8 +117,10 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
         },
       });
       setMaxOutcome(data);
-    } catch (err) {
-      CatetinToast('error', `Gagal mengambil data total pengeluaran`);
+    } catch (err: any) {
+      if (JSON.parse(err.response.data.err)?.name !== 'SequelizeConnectionError') {
+        CatetinToast('error', `Gagal mengambil data total pengeluaran`);
+      }
     } finally {
       setLoadingMaxOutcome(false);
     }
@@ -135,8 +141,10 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
         },
       });
       setMaxIncome(data);
-    } catch (err) {
-      CatetinToast('error', `Gagal mengambil data pemasukan`);
+    } catch (err: any) {
+      if (JSON.parse(err.response.data.err)?.name !== 'SequelizeConnectionError') {
+        CatetinToast('error', `Gagal mengambil data pemasukan`);
+      }
     } finally {
       setLoadingMaxIncome(false);
     }
@@ -158,8 +166,10 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
       });
       console.log(data);
       setFrequentItem(data);
-    } catch (err) {
-      CatetinToast('error', `Gagal mengambil data barang ter-frequent`);
+    } catch (err: any) {
+      if (JSON.parse(err.response.data.err)?.name !== 'SequelizeConnectionError') {
+        CatetinToast('error', `Gagal mengambil data barang ter-frequent`);
+      }
     } finally {
       setLoadingFrequentItem(false);
     }
@@ -181,8 +191,10 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
       });
       console.log(data);
       setBestItem(data);
-    } catch (err) {
-      CatetinToast('error', `Gagal mengambil data barang terbaik`);
+    } catch (err: any) {
+      if (JSON.parse(err.response.data.err)?.name !== 'SequelizeConnectionError') {
+        CatetinToast('error', `Gagal mengambil data barang terbaik`);
+      }
     } finally {
       setLoadingBestItem(false);
     }
@@ -203,8 +215,10 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
         },
       });
       setImpressionData(data);
-    } catch (err) {
-      CatetinToast('error', `Gagal mengambil data impresi`);
+    } catch (err: any) {
+      if (JSON.parse(err.response.data.err)?.name !== 'SequelizeConnectionError') {
+        CatetinToast('error', `Gagal mengambil data impresi`);
+      }
     } finally {
       setLoadingImpression(false);
     }
@@ -225,8 +239,10 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
         },
       });
       setTotalOutcome(data);
-    } catch (err) {
-      CatetinToast('error', `Gagal mengambil data total pengeluaran`);
+    } catch (err: any) {
+      if (JSON.parse(err.response.data.err)?.name !== 'SequelizeConnectionError') {
+        CatetinToast('error', `Gagal mengambil data total pengeluaran`);
+      }
     } finally {
       setLoadingTotalOutcome(false);
     }
@@ -247,8 +263,10 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
         },
       });
       setTotalIncome(data);
-    } catch (err) {
-      CatetinToast('error', `Gagal mengambil data total pemasukan`);
+    } catch (err: any) {
+      if (JSON.parse(err.response.data.err)?.name !== 'SequelizeConnectionError') {
+        CatetinToast('error', `Gagal mengambil data total pemasukan`);
+      }
     } finally {
       setLoadingTotalIncome(false);
     }
@@ -303,6 +321,10 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     {
       label: 'Semua Waktu',
       value: 'all',
+    },
+    {
+      label: 'Hari ini',
+      value: 'today',
     },
     {
       label: 'Kemarin',
@@ -377,22 +399,26 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
           end_date: undefined,
         };
       } else {
+        let current = moment();
+        if (activePeriode !== 'today') {
+          current.subtract(
+            1,
+            activePeriode === 'yesterday'
+              ? 'days'
+              : activePeriode === 'last_week'
+              ? 'weeks'
+              : activePeriode === 'last_month'
+              ? 'months'
+              : activePeriode === 'last_year'
+              ? 'years'
+              : undefined,
+          );
+        } else {
+          current = current.startOf('days');
+        }
         finalObj = {
-          start_date: moment()
-            .subtract(
-              1,
-              activePeriode === 'yesterday'
-                ? 'days'
-                : activePeriode === 'last_week'
-                ? 'weeks'
-                : activePeriode === 'last_month'
-                ? 'months'
-                : activePeriode === 'last_year'
-                ? 'years'
-                : undefined,
-            )
-            .toISOString(),
-          end_date: moment().toISOString(),
+          start_date: current.toISOString(),
+          end_date: moment().endOf('days').toISOString(),
         };
       }
     } else {
@@ -410,7 +436,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
         };
       }
     }
-    setDateParams(finalObj);
+    setDateParams({ ...finalObj, timezone: moment.tz.guess() });
     bottomSheetRef.current?.close();
   };
 
@@ -423,19 +449,22 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
               {(props) => (
                 <CatetinBottomSheetWrapper {...props} title="Periode">
                   {periodeOptions.map((periode) => (
-                    <TouchableOpacity
-                      style={tw`mb-3 ${
-                        activePeriode === periode.value ? 'bg-blue-500' : ''
-                      } shadow rounded-lg px-3 py-2`}
+                    <View
+                      style={tw`flex flex-row justify-between mb-3 shadow rounded-lg px-3 py-2`}
                       key={periode.label}
-                      onPress={() => {
-                        setActivePeriode(periode.value);
-                      }}
                     >
-                      <Text style={tw`text-lg ${activePeriode === periode.value ? 'text-white' : 'text-black'}`}>
-                        {periode.label}
-                      </Text>
-                    </TouchableOpacity>
+                      <Text style={tw`text-lg`}>{periode.label}</Text>
+                      <Icon
+                        name={`radio-button-${activePeriode === periode.value ? 'on' : 'off'}`}
+                        iconStyle={tw`${activePeriode === periode.value ? 'text-blue-500' : ''}`}
+                        tvParallaxProperties=""
+                        onPress={() => {
+                          setActivePeriode(periode.value);
+                          // bottomSheetRef.current?.close();
+                          // dispatch(setActiveStore(store.id));
+                        }}
+                      />
+                    </View>
                   ))}
                   {activePeriode === 'custom' && (
                     <View style={tw`px-5 mb-5`}>

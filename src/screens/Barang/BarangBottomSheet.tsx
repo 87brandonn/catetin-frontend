@@ -1,13 +1,13 @@
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { useNavigation } from '@react-navigation/native';
 import React from 'react';
 import { Control, Controller, FieldError, UseFormWatch } from 'react-hook-form';
-import { Text, View } from 'react-native';
-import { Avatar, Button, Icon } from 'react-native-elements';
+import { Text, TouchableOpacity, View } from 'react-native';
+import { Button } from 'react-native-elements';
 import tw from 'twrnc';
 import { IFormSchema } from '.';
+import CatetinButton from '../../components/molecules/Button';
 import CatetinImagePicker from '../../components/molecules/ImagePicker';
 import CatetinInput from '../../components/molecules/Input';
-import { handleUploadImage } from '../../utils';
 
 export interface ICreateModalBarang {
   control: Control<IFormSchema, any>;
@@ -33,7 +33,18 @@ export interface ICreateModalBarang {
   title: string;
 }
 
-function CreateModal({ control, errors, loading, onSave, title, onDelete, loadingDelete, watch }: ICreateModalBarang) {
+function CreateModal({
+  control,
+  errors,
+  loading,
+  onSave,
+  title,
+  onDelete,
+  loadingDelete,
+  watch,
+  ...props
+}: ICreateModalBarang) {
+  const { navigate } = useNavigation();
   return (
     <>
       <View style={tw`mb-4`}>
@@ -54,14 +65,14 @@ function CreateModal({ control, errors, loading, onSave, title, onDelete, loadin
         {errors.name && <Text style={tw`text-red-500 mt-1`}>{errors.name.message}</Text>}
       </View>
       <View style={tw`mb-4`}>
-        <Text style={tw`mb-1 text-base`}>Stok</Text>
+        <Text style={tw`text-base mb-1`}>Stok</Text>
         <Controller
           control={control}
           render={({ field: { onChange, onBlur, value } }) => (
             <CatetinInput
               bottomSheet={true}
               placeholder="Stok"
-              style={tw`border-b border-gray-100 px-4 py-3 rounded`}
+              style={tw`border-b border-gray-100 px-4 py-3 rounded mb-1`}
               onChangeText={(value) => {
                 if (Number(value)) {
                   onChange(parseInt(value, 10));
@@ -76,7 +87,46 @@ function CreateModal({ control, errors, loading, onSave, title, onDelete, loadin
           )}
           name="stok"
         />
+        <Text style={tw`mb-1 text-gray-500`}>
+          Note: Jumlah stok tidak dapat dirubah apabila sudah ada minimal 1 transaksi dengan barang ini.
+        </Text>
         {errors.stok && <Text style={tw`text-red-500 mt-1`}>{errors.stok.message}</Text>}
+      </View>
+      <View style={tw`mb-4`}>
+        <Text style={tw`mb-1 text-base`}>Kategori</Text>
+        <TouchableOpacity
+          onPress={() => {
+            navigate('Kategori Barang');
+          }}
+        >
+          <CatetinInput
+            bottomSheet={true}
+            placeholder="Kategori"
+            style={tw`border-b border-gray-100 px-4 py-3 rounded`}
+            pointerEvents="none"
+            keyboardType="numeric"
+            value={watch('category')
+              .map((data) => data.name)
+              .join(', ')}
+          />
+        </TouchableOpacity>
+
+        {/* <Controller
+          control={control}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <CatetinInput
+              bottomSheet={true}
+              placeholder="Harga"
+              style={tw`border-b border-gray-100 px-4 py-3 rounded`}
+              onChangeText={(value) => {
+                onChange(parseInt(value || '0', 10));
+              }}
+              keyboardType="numeric"
+              value={(value !== 0 && value.toString()) || ''}
+            />
+          )}
+          name="harga"
+        /> */}
       </View>
       <View style={tw`mb-4`}>
         <Text style={tw`mb-1 text-base`}>Harga Barang</Text>
@@ -119,10 +169,9 @@ function CreateModal({ control, errors, loading, onSave, title, onDelete, loadin
       </View>
       <View style={tw`pb-[48px]`}>
         <View>
-          <Button
+          <CatetinButton
             title="Save"
-            buttonStyle={tw`bg-blue-500 mb-3`}
-            titleStyle={tw`font-bold`}
+            style={tw`mb-3`}
             onPress={() => {
               onSave();
             }}
@@ -131,10 +180,9 @@ function CreateModal({ control, errors, loading, onSave, title, onDelete, loadin
         </View>
         {watch('id') !== 0 && (
           <View>
-            <Button
+            <CatetinButton
               title="Delete"
-              buttonStyle={tw`bg-red-500`}
-              titleStyle={tw`font-bold`}
+              theme="danger"
               onPress={() => {
                 onDelete();
               }}

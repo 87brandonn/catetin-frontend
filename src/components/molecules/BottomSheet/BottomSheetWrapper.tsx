@@ -78,7 +78,7 @@ function CatetinBottomSheetWrapper({
         <View />
       </View>
       <View style={tw`flex-1`}>{children}</View>
-      <View style={tw`mb-[72px]`} />
+      <View style={tw`mb-[24px]`} />
     </CatetinScrollView>
   );
 }

@@ -16,6 +16,8 @@ import CatetinToast from '../../components/molecules/Toast';
 import { optionsTransaksi } from '../../static/optionsTransaksi';
 import { ICatetinBarangWithTransaksi } from '../../types/barang';
 import moment from 'moment';
+import { useAppSelector } from '../../hooks';
+import { RootState } from '../../store';
 
 interface ITransactionSortBottomSheet {
   bottomSheetRefFilter: React.RefObject<BottomSheetMethods>;
@@ -32,6 +34,8 @@ function TransactionSortBottomSheet({ bottomSheetRefFilter, onApplyFilter }: ITr
   const [rangeNominal, setRangeNominal] = useState(false);
   const [search, setSearch] = useState('');
 
+  const { activeStore } = useAppSelector((state: RootState) => state.store);
+
   const [loadingBarang, setLoadingBarang] = useState(false);
   const [barang, setBarang] = useState<ICatetinBarangWithTransaksi[] | null>(null);
   const [start_date, setStartDate] = useState<Date | undefined>(moment().subtract(1, 'weeks').toDate());
@@ -46,7 +50,7 @@ function TransactionSortBottomSheet({ bottomSheetRefFilter, onApplyFilter }: ITr
     try {
       const {
         data: { data },
-      } = await axiosCatetin.get('/barang', {
+      } = await axiosCatetin.get(`/barang/${activeStore}/list`, {
         params,
         headers: {
           Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,

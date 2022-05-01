@@ -191,7 +191,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
     } finally {
       setLoadingScheduler(false);
     }
-  }, [setValueScheduler]);
+  }, [activeStore, setValueScheduler]);
 
   const fetchProfile = useCallback(async () => {
     setLoading(true);
@@ -203,7 +203,6 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
           Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
         },
       });
-      console.log(data);
       setProfileData(data);
     } catch (err) {
       CatetinToast('error', 'Terjadi kesalahan. Gagal mengambil data profil.');
@@ -214,23 +213,22 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
 
   const handleSaveChanges = async () => {
     setLoadingUpdate(true);
+    const {
+      Profile: { profilePicture = null, displayName = null, id = undefined },
+    } = profileData;
     try {
       await axiosCatetin.put(
         '/auth/profile',
-        { ...profileData?.Profile },
+        { profilePicture, displayName, id },
         {
           headers: {
             Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
           },
         },
       );
-      Toast.show({
-        type: 'customToast',
-        text2: 'Succesfully update profile!',
-        position: 'bottom',
-      });
+      CatetinToast('default', 'Succesfully update profile');
     } catch (err) {
-      console.error(err);
+      CatetinToast('error', 'Failed to update profile');
     } finally {
       setLoadingUpdate(false);
     }
@@ -257,8 +255,6 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
   };
 
   const optionsSchedule = ['Harian', 'Mingguan', 'Bulanan', 'Tahunan'];
-
-  const [selectedSchedule, setSelectedSchedule] = useState('');
 
   const monthOptions = [
     {
@@ -795,6 +791,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
                   handleSaveChanges();
                 }}
                 loading={loadingUpdate}
+                disabled={loading}
               />
             </View>
             <View style={tw`mb-3`}>
