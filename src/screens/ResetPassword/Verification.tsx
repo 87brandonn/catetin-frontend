@@ -1,16 +1,15 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Text, TextInput, View } from 'react-native';
 import tw from 'twrnc';
 import { axiosCatetin } from '../../api';
 import CatetinButton from '../../components/molecules/Button';
 import CatetinToast from '../../components/molecules/Toast';
-import { useAppDispatch, useAppSelector } from '../../hooks';
+import { useAppSelector } from '../../hooks';
 import AppLayout from '../../layouts/AppLayout';
 import { RootState } from '../../store';
-import { setAccessToken, setLoggedIn, setProfile } from '../../store/features/authSlice';
 
-function VerifyEmail() {
+function VerifyResetPassword(props: any) {
   const [value, setValue] = useState({
     1: '',
     2: '',
@@ -29,23 +28,22 @@ function VerifyEmail() {
 
   const { profile } = useAppSelector((state: RootState) => state.auth);
 
+  const navigator = useNavigation();
+
   useEffect(() => {
     refInput?.current?.[1].focus();
   }, [refInput]);
 
-  const dispatch = useAppDispatch();
-
   const handleConfirmInput = async () => {
     try {
-      await axiosCatetin.post(`/auth/verify`, {
+      await axiosCatetin.post(`/auth/reset-password`, {
+        email: profile.email,
         number: parseInt(Object.values(value).join(''), 10),
       });
-      dispatch(
-        setProfile({
-          ...profile,
-          verified: true,
-        }),
-      );
+      navigator.navigate('ResetPassword', {
+        email: props.route?.params?.email,
+        authenticated: props.route?.params?.authenticated,
+      });
     } catch (err: any) {
       CatetinToast(err?.response?.status, 'error', 'Number not valid or might be expired. Please try again');
     }
@@ -56,7 +54,11 @@ function VerifyEmail() {
   const handleResendEmail = async () => {
     setLoadingResend(true);
     try {
-      await axiosCatetin.get('/auth/verify');
+      await axiosCatetin.get('/auth/reset-password', {
+        params: {
+          email: props.route?.params?.email,
+        },
+      });
       CatetinToast(200, 'default', 'Email has been sent');
     } catch (err: any) {
       CatetinToast(err?.response?.status, 'error', 'Internal error occured. Failed getting verification number');
@@ -76,15 +78,14 @@ function VerifyEmail() {
         refInput.current[input + 1].focus();
       }
       if (!Object.values(newValue).some((valueInput) => valueInput === '')) {
-        await axiosCatetin.post(`/auth/verify`, {
+        await axiosCatetin.post(`/auth/reset-password`, {
+          email: props.route?.params?.email,
           number: parseInt(Object.values(newValue).join(''), 10),
         });
-        dispatch(
-          setProfile({
-            ...profile,
-            verified: true,
-          }),
-        );
+        navigator.navigate('ResetPassword', {
+          email: props.route?.params?.email,
+          authenticated: props.route?.params?.authenticated,
+        });
       }
     } catch (err: any) {
       CatetinToast(err?.response?.status, 'error', 'Number not valid or might be expired. Please try again');
@@ -94,7 +95,7 @@ function VerifyEmail() {
   return (
     <AppLayout header={false} bottom={false}>
       <KeyboardAvoidingView behavior="padding" style={tw`px-3 flex-1 justify-center`}>
-        <Text style={tw`text-4xl font-bold text-center`}>Verify Email</Text>
+        <Text style={tw`text-4xl font-bold text-center`}>Verify Reset Password</Text>
         <View style={tw`flex flex-row my-[24px]`}>
           {[1, 2, 3, 4].map((input) => (
             <View style={tw`flex-1`} key={input}>
@@ -128,8 +129,8 @@ function VerifyEmail() {
         </View>
         <Text style={tw`mt-4 mb-1`}>
           We have sent an confirmation email to
-          <Text style={tw`font-medium`}> {profile?.email}</Text>. Please enter unique identifier number that are present
-          on the email.
+          <Text style={tw`font-medium`}> {props.route?.params?.email}</Text>. Please enter unique identifier number that
+          are present on the email.
         </Text>
         <Text style={tw`mb-5`}>
           Don&apos;t receive email?{' '}
@@ -166,10 +167,8 @@ function VerifyEmail() {
                 },
                 {
                   text: 'OK',
-                  onPress: async () => {
-                    dispatch(setAccessToken(null));
-                    await AsyncStorage.removeItem('accessToken');
-                    dispatch(setLoggedIn(false));
+                  onPress: () => {
+                    navigator.goBack();
                   },
                 },
               ]);
@@ -183,4 +182,4 @@ function VerifyEmail() {
   );
 }
 
-export default VerifyEmail;
+export default VerifyResetPassword;

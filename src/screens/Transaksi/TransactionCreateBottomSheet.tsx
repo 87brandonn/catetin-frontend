@@ -7,7 +7,7 @@ import chunk from 'lodash/chunk';
 import moment from 'moment';
 import React, { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Text, TouchableOpacity, View } from 'react-native';
 import tw from 'twrnc';
 import * as yup from 'yup';
 import { axiosCatetin } from '../../api';
@@ -75,8 +75,6 @@ function TransactionCreateBottomSheet({
   const { editedTransaction } = useAppSelector((state: RootState) => state.transaction);
   const { activeStore } = useAppSelector((state: RootState) => state.store);
 
-  const { accessToken } = useAppSelector((state: RootState) => state.auth);
-
   const {
     control,
     handleSubmit,
@@ -129,22 +127,14 @@ function TransactionCreateBottomSheet({
       if (data.transaksi_id === 0) {
         const {
           data: { data: insertedData },
-        } = await axiosCatetin.post(`/transaksi/${activeStore}`, finalData, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
+        } = await axiosCatetin.post(`/transaksi/${activeStore}`, finalData);
         dataTransaksi = insertedData;
       } else {
         const {
           data: {
             data: [updatedData],
           },
-        } = await axiosCatetin.put('/transaksi', finalData, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
+        } = await axiosCatetin.put('/transaksi', finalData);
         dataTransaksi = updatedData;
       }
       bottomSheetRef.current?.close();
@@ -156,11 +146,11 @@ function TransactionCreateBottomSheet({
         tipe: null,
         transaksi_id: 0,
       });
-      CatetinToast('default', `Sukses ${data.transaksi_id === 0 ? 'menambah' : 'memperbarui'} transaksi`);
+      CatetinToast(200, 'default', `Sukses ${data.transaksi_id === 0 ? 'menambah' : 'memperbarui'} transaksi`);
       dispatch(setSelectedTransaction(null));
       onFinishSubmit(dataTransaksi);
     } catch (err: any) {
-      CatetinToast('error', err.response?.data?.message || 'Failed to create transaction');
+      CatetinToast(err?.response?.status, 'error', err.response?.data?.message || 'Failed to create transaction');
     } finally {
       setLoading(false);
     }
@@ -169,14 +159,10 @@ function TransactionCreateBottomSheet({
   const handleDelete = async () => {
     setLoadingDelete(true);
     try {
-      await axiosCatetin.delete(`/transaksi/${watch('transaksi_id')}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      await axiosCatetin.delete(`/transaksi/${watch('transaksi_id')}`);
       bottomSheetRef.current?.close();
       onFinishDelete();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
     } finally {
       setLoadingDelete(false);
@@ -301,7 +287,13 @@ function TransactionCreateBottomSheet({
                         title="Delete"
                         theme="danger"
                         onPress={() => {
-                          handleDelete();
+                          Alert.alert('Confirm Deletion', 'Are you sure want to delete this transaction?', [
+                            {
+                              text: 'Cancel',
+                              style: 'cancel',
+                            },
+                            { text: 'OK', onPress: () => handleDelete() },
+                          ]);
                         }}
                         loading={loadingDelete}
                       />

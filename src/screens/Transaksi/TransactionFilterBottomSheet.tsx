@@ -44,8 +44,6 @@ function TransactionSortBottomSheet({ bottomSheetRefFilter, onApplyFilter }: ITr
   const [selectedType, setSelectedType] = useState<number[]>([]);
   const [nominal, setNominal] = useState<[number, number]>([0, 0]);
 
-  const { accessToken } = useAppSelector((state: RootState) => state.auth);
-
   const fetchBarang = useCallback(
     async (params = {}) => {
       setLoadingBarang(true);
@@ -54,18 +52,15 @@ function TransactionSortBottomSheet({ bottomSheetRefFilter, onApplyFilter }: ITr
           data: { data },
         } = await axiosCatetin.get(`/barang/${activeStore}/list`, {
           params,
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
         });
         setBarang(data);
-      } catch (err) {
-        CatetinToast('error', 'Terjadi kesalahan. Gagal mengambil data barang.');
+      } catch (err: any) {
+        CatetinToast(err?.response?.status, 'error', 'Terjadi kesalahan. Gagal mengambil data barang.');
       } finally {
         setLoadingBarang(false);
       }
     },
-    [accessToken, activeStore],
+    [activeStore],
   );
 
   const handleApplyFilter = () => {

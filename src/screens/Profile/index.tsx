@@ -4,14 +4,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import moment from 'moment';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { ActivityIndicator, Platform, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Switch, Text, TouchableOpacity, View } from 'react-native';
 import ActionSheet from 'react-native-actionsheet';
-import { Avatar, Button, Icon } from 'react-native-elements';
-import ImagePicker from 'react-native-image-crop-picker';
+import { Icon } from 'react-native-elements';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
-import Toast from 'react-native-toast-message';
 import tw from 'twrnc';
 import * as yup from 'yup';
 import { axiosCatetin } from '../../api';
@@ -25,9 +23,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks';
 import AppLayout from '../../layouts/AppLayout';
 import { RootStackParamList } from '../../navigation';
 import { RootState } from '../../store';
-import { setAccessToken, setLoggedIn, setProfile, setStore } from '../../store/features/authSlice';
-import { setActiveStore } from '../../store/features/storeSlice';
-import { setEditedTransaction, setSelectedTransaction } from '../../store/features/transactionSlice';
+import { logout } from '../../store/features/authSlice';
 import { ProfileJoinUser } from '../../types/profil';
 import { getAvatarTitle } from '../../utils';
 
@@ -89,11 +85,13 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
   const [loading, setLoading] = useState(true);
   const [profileData, setProfileData] = useState<ProfileJoinUser | null>(null);
   const [loadingUpdate, setLoadingUpdate] = useState(false);
+  const [loadingUpdatePassword, setLoadingUpdatePassword] = useState(false);
+  const [loadingLogout, setLoadingLogout] = useState(false);
+
   const [loadingScheduler, setLoadingScheduler] = useState(true);
   const [loadingAddScheduler, setLoadingAddScheduler] = useState(false);
 
   const { activeStore } = useAppSelector((state: RootState) => state.store);
-  const { accessToken } = useAppSelector((state: RootState) => state.auth);
 
   const [scheduleLaporan, setScheduleLaporan] = useState<{
     label: string;
@@ -145,11 +143,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
     try {
       const {
         data: { data },
-      } = await axiosCatetin.get(`/scheduler/${activeStore}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      } = await axiosCatetin.get(`/scheduler/${activeStore}`);
       if (!data) {
         setValueScheduler('type', null);
       } else if (data?.month !== null) {
@@ -191,30 +185,26 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
       setValueScheduler('dayOfWeek', data?.dayOfWeek !== null ? data?.dayOfWeek : undefined);
       setValueScheduler('dayOfMonth', data?.dayOfMonth || undefined);
       setValueScheduler('month', data?.month !== null ? data?.month : undefined);
-    } catch (err) {
-      CatetinToast('error', 'Terjadi kesalahan. Gagal mengambil data schedule.');
+    } catch (err: any) {
+      CatetinToast(err?.response?.status, 'error', 'Terjadi kesalahan. Gagal mengambil data schedule.');
     } finally {
       setLoadingScheduler(false);
     }
-  }, [accessToken, activeStore, setValueScheduler]);
+  }, [activeStore, setValueScheduler]);
 
   const fetchProfile = useCallback(async () => {
     setLoading(true);
     try {
       const {
         data: { data },
-      } = await axiosCatetin.get('/auth/profile', {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      } = await axiosCatetin.get('/auth/profile');
       setProfileData(data);
-    } catch (err) {
-      CatetinToast('error', 'Terjadi kesalahan. Gagal mengambil data profil.');
+    } catch (err: any) {
+      CatetinToast(err?.response?.status, 'error', 'Terjadi kesalahan. Gagal mengambil data profil.');
     } finally {
       setLoading(false);
     }
-  }, [accessToken]);
+  }, []);
 
   const handleSaveChanges = async () => {
     setLoadingUpdate(true);
@@ -222,18 +212,10 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
       Profile: { profilePicture = null, displayName = null, id = undefined },
     } = profileData;
     try {
-      await axiosCatetin.put(
-        '/auth/profile',
-        { profilePicture, displayName, id },
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        },
-      );
-      CatetinToast('default', 'Succesfully update profile');
-    } catch (err) {
-      CatetinToast('error', 'Failed to update profile');
+      await axiosCatetin.put('/auth/profile', { profilePicture, displayName, id });
+      CatetinToast(200, 'default', 'Succesfully update profile');
+    } catch (err: any) {
+      CatetinToast(err?.response?.status, 'error', 'Failed to update profile');
     } finally {
       setLoadingUpdate(false);
     }
@@ -247,17 +229,8 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
     fetchScheduler();
   }, [fetchScheduler]);
 
-  const bottomSheetRef = useRef<BottomSheet>(null);
   const bottomSheetLaporanRef = useRef<BottomSheet>(null);
-
-  const onSubmit = (data: IFormSchema) => {
-    reset({
-      new_password: '',
-      current_password: '',
-      confirm_new_password: '',
-    });
-    bottomSheetRef.current?.close();
-  };
+  const bottomSheetManualLaporanRef = useRef<BottomSheet>(null);
 
   const optionsSchedule = ['Harian', 'Mingguan', 'Bulanan', 'Tahunan'];
 
@@ -344,7 +317,6 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
   ];
 
   const onSubmitScheduler = async ({ type, ...data }: any) => {
-    console.log(type);
     setLoadingAddScheduler(true);
     try {
       const matches: any = {
@@ -370,30 +342,41 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
         data[matches[i]] = null;
       }
 
-      await axiosCatetin.post(
-        `/scheduler/${activeStore}`,
-        {
-          id: data.scheduleId || undefined,
-          hour: moment(data.time).hours(),
-          minute: moment(data.time).minutes(),
-          dayOfMonth: data.dayOfMonth,
-          month: data.month,
-          dayOfWeek: data.dayOfWeek,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        },
-      );
+      await axiosCatetin.post(`/scheduler/${activeStore}`, {
+        id: data.scheduleId || undefined,
+        hour: moment(data.time).hours(),
+        minute: moment(data.time).minutes(),
+        dayOfMonth: data.dayOfMonth,
+        month: data.month,
+        dayOfWeek: data.dayOfWeek,
+      });
 
       bottomSheetLaporanRef.current?.close();
-      CatetinToast(undefined, 'Schedule telah di terapkan.');
+      CatetinToast(200, undefined, 'Schedule telah di terapkan.');
       fetchScheduler();
-    } catch (err) {
-      CatetinToast('error', 'Terjadi kesalahan. Gagal melakukan update schedule.');
+    } catch (err: any) {
+      CatetinToast(err?.response?.status, 'error', 'Terjadi kesalahan. Gagal melakukan update schedule.');
     } finally {
       setLoadingAddScheduler(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    setLoadingUpdatePassword(true);
+    try {
+      await axiosCatetin.get(`/auth/reset-password`, {
+        params: {
+          email: profileData?.email,
+        },
+      });
+      navigate('VerifyResetPassword', {
+        email: profileData?.email,
+        authenticated: true,
+      });
+    } catch (err: any) {
+      CatetinToast(err.response?.status, 'error', 'Failed to get password verification number ');
+    } finally {
+      setLoadingUpdatePassword(false);
     }
   };
 
@@ -404,73 +387,72 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
     3: true,
   });
 
+  const [fromDateDownload, setFromDateDownload] = useState(moment().subtract(1, 'weeks').startOf('days').toDate());
+  const [toDateDownload, setToDateDownload] = useState(moment().endOf('days').toDate());
+  const [loadingManual, setLoadingManual] = useState(false);
+
+  const handleDownloadManual = async () => {
+    setLoadingManual(true);
+    try {
+      await axiosCatetin.post(`/transaksi/download`, {
+        start_date: fromDateDownload.toISOString(),
+        end_date: toDateDownload.toISOString(),
+        store_id: activeStore,
+      });
+      CatetinToast(200, 'default', `Laporan keuangan telah dikirim ke email ${profileData?.email}`);
+      bottomSheetManualLaporanRef.current?.close();
+      setFromDateDownload(moment().subtract(1, 'weeks').startOf('days').toDate());
+      setToDateDownload(moment().endOf('days').toDate());
+    } catch (err: any) {
+      console.log(err);
+      CatetinToast(err?.response?.status, 'error', 'Failed to download manual');
+    } finally {
+      setLoadingManual(false);
+    }
+  };
+
   return (
     <AppLayout header={false}>
-      <CatetinBottomSheet bottomSheetRef={bottomSheetRef}>
-        <CatetinBottomSheetWrapper single title="Change Password">
-          <View style={tw`mb-5`}>
-            <Controller
-              control={control}
-              render={({ field: { onChange, value } }) => (
-                <CatetinInput
-                  bottomSheet
-                  placeholder="Current password"
-                  style={tw` py-3 rounded`}
-                  value={value}
-                  onChangeText={onChange}
-                  secureTextEntry
-                ></CatetinInput>
-              )}
-              name="current_password"
-            />
-            {errors.current_password && <Text style={tw`text-red-500 mt-1`}>{errors.current_password.message}</Text>}
+      <CatetinBottomSheet bottomSheetRef={bottomSheetManualLaporanRef}>
+        <CatetinBottomSheetWrapper single title="Unduh Laporan Keuangan" refreshable={false}>
+          <View style={tw`flex-1 flex`}>
+            <View style={tw`flex-1 mb-3 flex`}>
+              <View style={tw`flex-1 mr-3`}>
+                <Text style={tw`text-base font-medium`}>Dari</Text>
+                <DateTimePicker
+                  display="spinner"
+                  value={fromDateDownload}
+                  maximumDate={new Date()}
+                  onChange={(_, date: any) => {
+                    setFromDateDownload(date as Date);
+                  }}
+                />
+              </View>
+              <View style={tw`flex-1`}>
+                <Text style={tw`text-base font-medium`}>Sampai</Text>
+                <DateTimePicker
+                  display="spinner"
+                  value={toDateDownload}
+                  onChange={(_, date: any) => {
+                    setToDateDownload(date as Date);
+                  }}
+                  maximumDate={new Date()}
+                />
+              </View>
+            </View>
+            <View style={tw`flex-1 mb-3`}>
+              <CatetinButton
+                title="Unduh"
+                disabled={loadingManual}
+                onPress={() => {
+                  handleDownloadManual();
+                }}
+              />
+            </View>
           </View>
-          <View style={tw`mb-5`}>
-            <Controller
-              control={control}
-              render={({ field: { onChange, value } }) => (
-                <CatetinInput
-                  bottomSheet
-                  placeholder="New password"
-                  style={tw` py-3 rounded`}
-                  value={value}
-                  onChangeText={onChange}
-                  secureTextEntry
-                ></CatetinInput>
-              )}
-              name="new_password"
-            />
-            {errors.new_password && <Text style={tw`text-red-500 mt-1`}>{errors.new_password.message}</Text>}
-          </View>
-          <View style={tw`mb-5`}>
-            <Controller
-              control={control}
-              render={({ field: { onChange, value } }) => (
-                <CatetinInput
-                  bottomSheet
-                  placeholder="Reenter new password"
-                  style={tw` py-3 rounded`}
-                  value={value}
-                  onChangeText={onChange}
-                  secureTextEntry
-                ></CatetinInput>
-              )}
-              name="confirm_new_password"
-            />
-            {errors.confirm_new_password && (
-              <Text style={tw`text-red-500 mt-1`}>{errors.confirm_new_password.message}</Text>
-            )}
-          </View>
-          <Button
-            title="Save"
-            buttonStyle={tw`bg-blue-500`}
-            titleStyle={tw`font-bold`}
-            onPress={() => {
-              handleSubmit(onSubmit)();
-            }}
-          />
         </CatetinBottomSheetWrapper>
       </CatetinBottomSheet>
+
       <CatetinBottomSheet bottomSheetRef={bottomSheetLaporanRef}>
         <CatetinBottomSheetWrapper single title="Schedule Laporan Keuangan" refreshable={false}>
           <View style={tw`flex-1`}>
@@ -691,138 +673,158 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
         </CatetinBottomSheetWrapper>
       </CatetinBottomSheet>
 
-      {
-        <View style={tw`flex-1 px-4 flex justify-between mt-4`}>
-          <View>
-            <View style={tw`items-center relative mb-4`}>
-              {loading ? (
-                <SkeletonPlaceholder>
-                  <View style={tw`w-[96px] h-[96px] rounded-full`}></View>
-                </SkeletonPlaceholder>
-              ) : (
-                <CatetinImagePicker
-                  data={profileData?.Profile?.profilePicture || ''}
-                  title={getAvatarTitle(profileData)}
-                  onUploadImage={(url) => {
-                    setProfileData(
-                      (data) =>
-                        ({
-                          ...data,
-                          Profile: {
-                            ...data?.Profile,
-                            profilePicture: url,
-                          },
-                        } as ProfileJoinUser),
-                    );
-                  }}
-                >
-                  <View style={tw`flex flex-row justify-center items-center absolute top-0 right-0`}>
-                    <Icon
-                      name="check-circle"
-                      type="font-awesome-5"
-                      tvParallaxProperties=""
-                      iconStyle={tw`text-green-300 mr-1`}
-                    />
-                  </View>
-                </CatetinImagePicker>
-              )}
-            </View>
-            <View style={tw`mb-4`}>
-              {loading ? (
-                <SkeletonPlaceholder>
-                  <View style={tw`flex flex-row justify-center`}>
-                    <View style={tw`w-[200px] h-[10px] rounded text-center`}></View>
-                  </View>
-                </SkeletonPlaceholder>
-              ) : (
-                <CatetinInput
-                  style={tw`text-3xl p-0 font-medium text-center border-0`}
-                  value={profileData?.Profile?.displayName || ''}
-                  onChangeText={(value) => {
-                    setProfileData(
-                      (data) =>
-                        ({
-                          ...data,
-                          Profile: {
-                            ...data?.Profile,
-                            displayName: value,
-                          },
-                        } as ProfileJoinUser),
-                    );
-                  }}
-                  placeholder={'Display Name'}
-                ></CatetinInput>
-              )}
-            </View>
-            <View style={tw`mb-3`}>
-              <Text style={tw`mb-1 text-base`}>Username</Text>
-              {loading ? (
-                <SkeletonPlaceholder>
-                  <View style={tw`w-full h-[10px] rounded`}></View>
-                </SkeletonPlaceholder>
-              ) : (
-                <Text style={tw`font-medium text-lg`}>{profileData?.username}</Text>
-              )}
-            </View>
-            <View style={tw`mb-3`}>
-              <Text style={tw`mb-1 text-base`}>Email</Text>
-              {loading ? (
-                <SkeletonPlaceholder>
-                  <View style={tw`w-full h-[10px] rounded`}></View>
-                </SkeletonPlaceholder>
-              ) : (
-                <Text style={tw`font-medium text-lg`}>{profileData?.email}</Text>
-              )}
-            </View>
-
-            <View style={tw`mb-3`}>
-              <TouchableOpacity
-                onPress={() => {
-                  bottomSheetLaporanRef.current?.expand();
+      <View style={tw`flex-1 px-4 flex justify-between mt-4`}>
+        <View>
+          <View style={tw`items-center relative mb-4`}>
+            {loading ? (
+              <SkeletonPlaceholder>
+                <View style={tw`w-[96px] h-[96px] rounded-full`}></View>
+              </SkeletonPlaceholder>
+            ) : (
+              <CatetinImagePicker
+                data={profileData?.Profile?.profilePicture || ''}
+                title={getAvatarTitle(profileData)}
+                onUploadImage={(url) => {
+                  setProfileData(
+                    (data) =>
+                      ({
+                        ...data,
+                        Profile: {
+                          ...data?.Profile,
+                          profilePicture: url,
+                        },
+                      } as ProfileJoinUser),
+                  );
                 }}
-                style={tw`mb-1 flex flex-row bg-blue-500 items-center px-3 py-2 shadow-lg rounded-lg justify-between`}
               >
-                <Text style={tw`text-base font-bold text-white`}>Schedule Laporan Keuangan</Text>
-                <Icon name="chevron-right" iconStyle={tw`text-white`} tvParallaxProperties="" />
-              </TouchableOpacity>
-            </View>
+                <View style={tw`flex flex-row justify-center items-center absolute top-0 right-0`}>
+                  <Icon
+                    name="check-circle"
+                    type="font-awesome-5"
+                    tvParallaxProperties=""
+                    iconStyle={tw`text-green-300 mr-1`}
+                  />
+                </View>
+              </CatetinImagePicker>
+            )}
+          </View>
+          <View style={tw`mb-4`}>
+            {loading ? (
+              <SkeletonPlaceholder>
+                <View style={tw`flex flex-row justify-center`}>
+                  <View style={tw`w-[200px] h-[10px] rounded text-center`}></View>
+                </View>
+              </SkeletonPlaceholder>
+            ) : (
+              <CatetinInput
+                style={tw`text-3xl p-0 font-medium text-center border-0`}
+                value={profileData?.Profile?.displayName || ''}
+                onChangeText={(value) => {
+                  setProfileData(
+                    (data) =>
+                      ({
+                        ...data,
+                        Profile: {
+                          ...data?.Profile,
+                          displayName: value,
+                        },
+                      } as ProfileJoinUser),
+                  );
+                }}
+                placeholder={'Display Name'}
+              ></CatetinInput>
+            )}
+          </View>
+          <View style={tw`mb-3`}>
+            <Text style={tw`mb-1 text-base`}>Username</Text>
+            {loading ? (
+              <SkeletonPlaceholder>
+                <View style={tw`w-full h-[10px] rounded`}></View>
+              </SkeletonPlaceholder>
+            ) : (
+              <Text style={tw`font-medium text-lg`}>{profileData?.username}</Text>
+            )}
+          </View>
+          <View style={tw`mb-3`}>
+            <Text style={tw`mb-1 text-base`}>Email</Text>
+            {loading ? (
+              <SkeletonPlaceholder>
+                <View style={tw`w-full h-[10px] rounded`}></View>
+              </SkeletonPlaceholder>
+            ) : (
+              <Text style={tw`font-medium text-lg`}>{profileData?.email}</Text>
+            )}
           </View>
 
-          <View style={tw`mb-4`}>
-            <View style={tw`mb-3`}>
-              <CatetinButton
-                title="Save Changes"
-                onPress={() => {
-                  handleSaveChanges();
-                }}
-                loading={loadingUpdate}
-                disabled={loading}
-              />
-            </View>
-            <View style={tw`mb-3`}>
-              <CatetinButton
-                title="Change Password"
-                onPress={() => {
-                  bottomSheetRef.current?.expand();
-                }}
-              />
-            </View>
-            <CatetinButton
-              title="Logout"
-              theme="danger"
-              onPress={async () => {
-                dispatch(setAccessToken(null));
-                dispatch(setProfile(null));
-                dispatch(setActiveStore(null));
-                dispatch(setStore(null));
-                dispatch(setSelectedTransaction(null));
-                dispatch(setEditedTransaction(null));
-                dispatch(setLoggedIn(false));
+          <TouchableOpacity
+            style={tw`mb-3 bg-blue-500 flex flex-row shadow items-center justify-between px-3 py-2 rounded-lg shadow`}
+            onPress={() => {
+              bottomSheetManualLaporanRef.current?.expand();
+            }}
+          >
+            <Text style={tw`text-white text-base font-bold`}>Unduh Laporan Keuangan</Text>
+            <Icon name="download" color="white" type="feather" tvParallaxProperties="" />
+          </TouchableOpacity>
+
+          <View style={tw`mb-3`}>
+            <TouchableOpacity
+              onPress={() => {
+                bottomSheetLaporanRef.current?.expand();
               }}
-            />
+              style={tw`mb-1 flex flex-row bg-blue-500 items-center px-3 py-2 shadow-lg rounded-lg justify-between`}
+            >
+              <Text style={tw`text-base font-bold text-white`}>Schedule Laporan Keuangan</Text>
+              <Icon name="chevron-right" iconStyle={tw`text-white`} tvParallaxProperties="" />
+            </TouchableOpacity>
           </View>
         </View>
-      }
+
+        <View style={tw`mb-4`}>
+          <View style={tw`mb-3`}>
+            <CatetinButton
+              title="Save Changes"
+              onPress={() => {
+                handleSaveChanges();
+              }}
+              loading={loadingUpdate}
+              disabled={loading}
+            />
+          </View>
+          <View style={tw`mb-3`}>
+            <CatetinButton
+              title="Reset Password"
+              onPress={async () => {
+                await handleResetPassword();
+              }}
+              disabled={loadingUpdatePassword}
+            />
+          </View>
+          <CatetinButton
+            title="Logout"
+            disabled={loadingLogout}
+            theme="danger"
+            onPress={async () => {
+              Alert.alert('Confirm Logout', 'Are you sure want to logout? Your unsaved data will be deleted.', [
+                {
+                  text: 'Cancel',
+                  style: 'cancel',
+                },
+                {
+                  text: 'OK',
+                  onPress: async () => {
+                    setLoadingLogout(true);
+                    await axiosCatetin.post(`/auth/logout`, {
+                      refreshToken: await AsyncStorage.getItem('refreshToken'),
+                    });
+                    dispatch(logout());
+                    setLoadingLogout(false);
+                  },
+                },
+              ]);
+            }}
+          />
+        </View>
+      </View>
     </AppLayout>
   );
 }

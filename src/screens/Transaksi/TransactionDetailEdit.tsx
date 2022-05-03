@@ -20,7 +20,6 @@ function TransactionDetailEdit(props: { route: RouteProp<ParamListBase, 'Transac
   } | null>(null);
 
   const { activeStore } = useAppSelector((state: RootState) => state.store);
-  const { accessToken } = useAppSelector((state: RootState) => state.auth);
 
   const [errorAdd, setErrorAdd] = useState<{
     [key: string]: boolean;
@@ -41,9 +40,6 @@ function TransactionDetailEdit(props: { route: RouteProp<ParamListBase, 'Transac
         const {
           data: { data },
         }: { data: { data: ICatetinBarang[] } } = await axiosCatetin.get(`/barang/${activeStore}/list`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
           params: {
             transactionId: selectedTransaction,
             nama_barang: search,
@@ -53,11 +49,11 @@ function TransactionDetailEdit(props: { route: RouteProp<ParamListBase, 'Transac
           setBarang(data?.map((eachBarang) => ({ ...eachBarang, amount: 0 })));
           setLoadingFetch(false);
         }
-      } catch (err) {
-        CatetinToast('error', 'Terjadi kesalahan pada server. Gagal mengambil data barang.');
+      } catch (err: any) {
+        CatetinToast(err?.response?.status, 'error', 'Terjadi kesalahan pada server. Gagal mengambil data barang.');
       }
     },
-    [accessToken, activeStore, selectedTransaction],
+    [activeStore, selectedTransaction],
   );
 
   useEffect(() => {
@@ -77,22 +73,14 @@ function TransactionDetailEdit(props: { route: RouteProp<ParamListBase, 'Transac
       [barang.id]: true,
     }));
     try {
-      await axiosCatetin.post(
-        `/transaksi/detail`,
-        {
-          transaksi_id: transactionId,
-          barang_id: barang.id,
-          amount: barang.amount,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        },
-      );
+      await axiosCatetin.post(`/transaksi/detail`, {
+        transaksi_id: transactionId,
+        barang_id: barang.id,
+        amount: barang.amount,
+      });
       fetchBarang();
-    } catch (err) {
-      CatetinToast('error', 'Terjadi kesalahan pada server. Gagal melakukan update barang.');
+    } catch (err: any) {
+      CatetinToast(err?.response?.status, 'error', 'Terjadi kesalahan pada server. Gagal melakukan update barang.');
     } finally {
       setLoadingAdd((prevState) => ({
         ...prevState,

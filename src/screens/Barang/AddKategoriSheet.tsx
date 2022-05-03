@@ -19,30 +19,20 @@ function AddKategoriSheet() {
 
   const { navigate } = useNavigation();
 
-  const { accessToken } = useAppSelector((state: RootState) => state.auth);
-
   const onSubmit = async () => {
     setLoadingSave(true);
     try {
-      await axiosCatetin.post(
-        `/item-category/${activeStore}`,
-        {
-          name,
-          image: image || undefined,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        },
-      );
-      CatetinToast('default', 'Succesfully add category');
+      await axiosCatetin.post(`/item-category/${activeStore}`, {
+        name,
+        image: image || undefined,
+      });
+      CatetinToast(200, 'default', 'Succesfully add category');
       navigate('Kategori Barang', {
         from: 'add-category',
         success: true,
       });
-    } catch (err) {
-      CatetinToast('error', 'Failed to add category');
+    } catch (err: any) {
+      CatetinToast(err?.response?.status, 'error', 'Failed to add category');
     } finally {
       setLoadingSave(false);
     }

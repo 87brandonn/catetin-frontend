@@ -64,8 +64,6 @@ function Header({ title = '' }: { title?: string }) {
   const { activeStore } = useAppSelector((state: RootState) => state.store);
   const dispatch = useAppDispatch();
 
-  const { accessToken } = useAppSelector((state: RootState) => state.auth);
-
   const Stack = createStackNavigator();
 
   const fetchProfile = useCallback(async () => {
@@ -73,37 +71,28 @@ function Header({ title = '' }: { title?: string }) {
     try {
       const {
         data: { data },
-      } = await axiosCatetin.get('/auth/profile', {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      } = await axiosCatetin.get('/auth/profile');
       setProfileData(data);
-    } catch (err) {
+    } catch (err: any) {
       console.log(err);
     } finally {
       setLoading(false);
     }
-  }, [accessToken]);
+  }, []);
 
   const fetchStore = useCallback(async () => {
     setLoadingStore(true);
     try {
       const {
         data: { data },
-      } = await axiosCatetin.get('/store', {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-      console.log(data);
+      } = await axiosCatetin.get('/store');
       setStoreData(data);
-    } catch (err) {
+    } catch (err: any) {
       console.log(err);
     } finally {
       setLoadingStore(false);
     }
-  }, [accessToken]);
+  }, []);
 
   useEffect(() => {
     fetchStore();
@@ -116,19 +105,15 @@ function Header({ title = '' }: { title?: string }) {
   const onSubmit = async (data: FormData, navigation: any) => {
     setLoadingAddStore(true);
     try {
-      await axiosCatetin.post(`/store`, data, {
-        headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`,
-        },
-      });
+      await axiosCatetin.post(`/store`, data);
       reset({
         name: '',
         picture: '',
       });
       navigation.navigate('Store List');
-      CatetinToast('default', 'Succesfully add store');
-    } catch (err) {
-      CatetinToast('error', 'Internal error occured. Failed to add store');
+      CatetinToast(200, 'default', 'Succesfully add store');
+    } catch (err: any) {
+      CatetinToast(err?.response?.status, 'error', 'Internal error occured. Failed to add store');
     } finally {
       setLoadingAddStore(false);
     }
@@ -153,7 +138,7 @@ function Header({ title = '' }: { title?: string }) {
                     fetchStore();
                   }}
                 >
-                  <View style={tw`mb-3`}>
+                  <View style={tw`flex-1 mb-3`}>
                     {storeData?.map((store) => (
                       <View key={store.id} style={tw`flex flex-row items-center justify-between mb-3`}>
                         <View style={tw`flex flex-row items-center`}>

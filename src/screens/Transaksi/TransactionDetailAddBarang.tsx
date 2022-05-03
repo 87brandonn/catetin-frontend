@@ -49,8 +49,6 @@ function TransactionDetailAddBarang(props: {
   const { navigate } = useNavigation();
   const { activeStore } = useAppSelector((state: RootState) => state.store);
 
-  const { accessToken } = useAppSelector((state: RootState) => state.auth);
-
   useEffect(() => {
     if (selectedTransaction !== props.route.params?.id) {
       props.navigation.navigate('Transaction Detail');
@@ -91,20 +89,12 @@ function TransactionDetailAddBarang(props: {
   };
 
   const onPost = async (data: IFormSchema) => {
-    await axiosCatetin.post(
-      `/barang/${activeStore}`,
-      {
-        name: data.name,
-        price: data.harga,
-        picture: data.barang_picture,
-        stock: data.stok,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      },
-    );
+    await axiosCatetin.post(`/barang/${activeStore}`, {
+      name: data.name,
+      price: data.harga,
+      picture: data.barang_picture,
+      stock: data.stok,
+    });
   };
 
   const onSubmit = async (data: IFormSchema) => {

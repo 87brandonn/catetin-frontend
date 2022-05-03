@@ -46,11 +46,11 @@ function TransactionAction({
         },
         body: form,
       });
-      CatetinToast('default', 'Berhasil menambah data barang');
+      CatetinToast(200, 'default', 'Berhasil menambah data barang');
       bottomSheetRef.current?.close();
     } catch (err: any) {
       if (err?.code !== 'DOCUMENT_PICKER_CANCELED') {
-        CatetinToast('error', 'Failed to upload data');
+        CatetinToast(err?.response?.status, 'error', 'Failed to upload data');
       }
     }
   };

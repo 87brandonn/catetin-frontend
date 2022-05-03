@@ -20,8 +20,6 @@ function KategoriBarangSheet({ onSave, data: categoryData, ...rest }: IKategoriB
   const [data, setData] = useState<ICatetinItemCategory[] | null>(null);
   const [originalData, setOriginalData] = useState<ICatetinItemCategory[] | null>(null);
 
-  const { accessToken } = useAppSelector((state: RootState) => state.auth);
-
   useEffect(() => {
     if (rest.route?.params?.from === 'add-category' && rest.route?.params?.success) {
       fetchCategoryItem();
@@ -39,19 +37,15 @@ function KategoriBarangSheet({ onSave, data: categoryData, ...rest }: IKategoriB
     try {
       const {
         data: { data },
-      } = await axiosCatetin.get(`/item-category/${activeStore}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      } = await axiosCatetin.get(`/item-category/${activeStore}`);
       setData(data);
       setOriginalData(data);
-    } catch (err) {
-      CatetinToast('error', 'Failed to get item category data');
+    } catch (err: any) {
+      CatetinToast(err?.response?.status, 'error', 'Failed to get item category data');
     } finally {
       setLoading(false);
     }
-  }, [accessToken, activeStore]);
+  }, [activeStore]);
 
   const { navigate } = useNavigation();
 

@@ -16,6 +16,9 @@ import HomeScreen from '../screens/Home';
 import Login from '../screens/Login';
 import ProfileScreen from '../screens/Profile';
 import Register from '../screens/Register';
+import ResetPassword from '../screens/ResetPassword';
+import EmailInputResetPassword from '../screens/ResetPassword/EmailInput';
+import VerifyResetPassword from '../screens/ResetPassword/Verification';
 import TokoLanding from '../screens/TokoLanding';
 import Transaksi from '../screens/Transaksi';
 import VerifyEmail from '../screens/VerifyEmail';
@@ -32,6 +35,9 @@ type RootStackParamList = {
   Barang: undefined;
   Transaksi: undefined;
   VerifyEmail: undefined;
+  ResetPassword: undefined;
+  VerifyResetPassword: undefined;
+  EmailInputResetPassword: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -66,23 +72,23 @@ export default function RootNavigation() {
 
   const dispatch = useAppDispatch();
 
+  const getVerifyCode = useCallback(async (accessToken) => {
+    try {
+      await axiosCatetin.get(`/auth/verify`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+    } catch (err: any) {
+      throw new Error(err);
+    }
+  }, []);
+
   const fetchUserProfile = useCallback(async () => {
-    setLoading(true);
     try {
       if (accessToken) {
         const promises = [];
-        promises.push(
-          axiosCatetin.get(`/store`, {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }),
-          axiosCatetin.get(`/auth/profile`, {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }),
-        );
+        promises.push(axiosCatetin.get(`/store`), axiosCatetin.get(`/auth/profile`));
         const [
           {
             data: { data: dataStore },
@@ -91,23 +97,28 @@ export default function RootNavigation() {
             data: { data: dataProfile },
           },
         ] = await Promise.all(promises);
+        if (!dataProfile?.verified) {
+          await getVerifyCode(accessToken);
+        }
         dispatch(setActiveStore(dataStore?.[0]?.id || null));
         dispatch(setProfile(dataProfile));
         dispatch(setStore(dataStore));
         dispatch(setLoggedIn(true));
+        setLoading(false);
       }
-    } catch (err) {
-      CatetinToast('error', 'Failed to authenticate user.');
-    } finally {
-      setLoading(false);
+    } catch (err: any) {
+      CatetinToast(err?.response?.status, 'error', 'Failed to authenticate user.');
     }
-  }, [accessToken, dispatch]);
+  }, [accessToken, dispatch, getVerifyCode]);
 
   useEffect(() => {
     (async () => {
       const token = await AsyncStorage.getItem('accessToken');
+
       if (token) {
         dispatch(setAccessToken(token));
+      } else {
+        setLoading(false);
       }
     })();
   }, [dispatch]);
@@ -139,6 +150,11 @@ export default function RootNavigation() {
                   options={{
                     headerShown: false,
                   }}
+                />
+                <Stack.Screen
+                  name="EmailInputResetPassword"
+                  component={EmailInputResetPassword}
+                  options={{ headerShown: false }}
                 />
               </>
             ) : !profile?.verified ? (
@@ -192,6 +208,22 @@ export default function RootNavigation() {
                 </>
               )
             )}
+            <Stack.Screen
+              name="ResetPassword"
+              component={ResetPassword}
+              options={{
+                headerShown: false,
+              }}
+              navigationKey={loggedIn ? 'user' : 'guest'}
+            />
+            <Stack.Screen
+              name="VerifyResetPassword"
+              component={VerifyResetPassword}
+              options={{
+                headerShown: false,
+              }}
+              navigationKey={loggedIn ? 'user' : 'guest'}
+            />
           </Stack.Navigator>
         </NavigationContainer>
       </PortalProvider>

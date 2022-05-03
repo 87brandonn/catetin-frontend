@@ -58,16 +58,16 @@ function Register({ navigation: { navigate } }: NativeStackScreenProps<RootStack
         });
         const serialized = await userInfo.json();
         const {
-          data: { token: catetinToken },
+          data: { token: catetinToken, refreshToken },
         } = await axiosCatetin.post('/auth/login/gmail', {
           email: serialized.email,
           name: serialized.name,
         });
-        dispatch(setAccessToken(catetinToken));
         await AsyncStorage.setItem('accessToken', catetinToken);
-      } catch (err) {
-        console.log(err, 'ERROR GMAIL');
-        CatetinToast('error', 'An error occured while authenticating gmail.');
+        await AsyncStorage.setItem('refreshToken', refreshToken);
+        dispatch(setAccessToken(catetinToken));
+      } catch (err: any) {
+        CatetinToast(err?.response?.status, 'error', 'An error occured while authenticating gmail.');
       } finally {
         setLoadingGmail(false);
       }
@@ -99,16 +99,18 @@ function Register({ navigation: { navigate } }: NativeStackScreenProps<RootStack
     setLoadingRegister(true);
     try {
       const {
-        data: { token },
+        data: { token, refreshToken },
       } = await axiosCatetin.post('/auth/register', {
         username,
         password,
         email,
       });
-      dispatch(setAccessToken(token));
       await AsyncStorage.setItem('accessToken', token);
+      await AsyncStorage.setItem('refreshToken', refreshToken);
+      dispatch(setAccessToken(token));
     } catch (err: any) {
       CatetinToast(
+        err?.response?.status,
         'error',
         err.response?.data?.message || 'An error occured while authenticating username and password.',
       );
@@ -132,16 +134,17 @@ function Register({ navigation: { navigate } }: NativeStackScreenProps<RootStack
         );
         const { email, name } = await response.json();
         const {
-          data: { token: catetinToken },
+          data: { token: catetinToken, refreshToken },
         } = await axiosCatetin.post('/auth/login/facebook', {
           email,
           name,
         });
-        dispatch(setAccessToken(catetinToken));
         await AsyncStorage.setItem('accessToken', catetinToken);
+        await AsyncStorage.setItem('refreshToken', refreshToken);
+        dispatch(setAccessToken(catetinToken));
       }
     } catch (err: any) {
-      CatetinToast('error', 'An error occured while authenticating facebook.');
+      CatetinToast(err?.response?.status, 'error', 'An error occured while authenticating facebook.');
     } finally {
       setLoadingFacebook(false);
     }

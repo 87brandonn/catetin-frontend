@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import React from 'react';
 import { Control, Controller, FieldError, UseFormWatch } from 'react-hook-form';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Text, TouchableOpacity, View } from 'react-native';
 import { Button } from 'react-native-elements';
 import tw from 'twrnc';
 import { IFormSchema } from '.';
@@ -167,7 +167,13 @@ function CreateModal({
               title="Delete"
               theme="danger"
               onPress={() => {
-                onDelete();
+                Alert.alert('Confirm Deletion', 'Are you sure want to delete this item?', [
+                  {
+                    text: 'Cancel',
+                    style: 'cancel',
+                  },
+                  { text: 'OK', onPress: () => onDelete() },
+                ]);
               }}
               loading={loadingDelete}
             />

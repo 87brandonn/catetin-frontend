@@ -1,7 +1,6 @@
 import { TransitionPresets } from '@react-navigation/stack';
-import { Platform } from 'react-native';
 import ImagePicker, { Image } from 'react-native-image-crop-picker';
-import { Profile, ProfileJoinUser } from '../types/profil';
+import { ProfileJoinUser } from '../types/profil';
 
 export const screenOptions = {
   ...TransitionPresets.SlideFromRightIOS,

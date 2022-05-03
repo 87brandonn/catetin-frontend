@@ -3,10 +3,10 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import chunk from 'lodash/chunk';
-import React, { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { ActivityIndicator, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
-import { Avatar, Icon } from 'react-native-elements';
+import { ActivityIndicator, Image, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
+import { Icon } from 'react-native-elements';
 import Toast from 'react-native-toast-message';
 import tw from 'twrnc';
 import * as yup from 'yup';
@@ -27,6 +27,7 @@ import AddKategoriSheet from './AddKategoriSheet';
 import CreateModal from './BarangBottomSheet';
 import BarangDetailBottomSheet from './BarangDetailBottomSheet';
 import BarangFilterBottomSheet from './BarangFilterBottomSheet';
+import BarangSortBottomSheet from './BarangSortBottomSheet';
 import KategoriBarangSheet from './KategoriBarangSheet';
 
 export interface IFormSchema {
@@ -78,8 +79,6 @@ function Barang() {
   const [loadingFetch, setLoadingFetch] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const { accessToken } = useAppSelector((state: RootState) => state.auth);
-
   const [params, setParams] = useState<{
     nama_barang: string;
     sort: string | undefined;
@@ -106,14 +105,10 @@ function Barang() {
           data: { data },
         } = await axiosCatetin.get(`/barang/${activeStore}/list`, {
           params,
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
         });
-        console.log('Barang', data);
         setBarang(data);
-      } catch (err) {
-        CatetinToast('error', 'Terjadi kesalahan. Gagal mengambil data barang.');
+      } catch (err: any) {
+        CatetinToast(err?.response?.status, 'error', 'Terjadi kesalahan. Gagal mengambil data barang.');
       } finally {
         if (isRefreshing) {
           setRefreshing(false);
@@ -122,7 +117,7 @@ function Barang() {
         }
       }
     },
-    [accessToken, activeStore, params],
+    [activeStore, params],
   );
 
   useEffect(() => {
@@ -156,40 +151,24 @@ function Barang() {
   };
 
   const onPost = async (data: IFormSchema) => {
-    await axiosCatetin.post(
-      `/barang/${activeStore}`,
-      {
-        name: data.name,
-        price: data.harga,
-        picture: data.barang_picture,
-        stock: data.stok,
-        category: data.category.map((cat) => cat.id),
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      },
-    );
+    await axiosCatetin.post(`/barang/${activeStore}`, {
+      name: data.name,
+      price: data.harga,
+      picture: data.barang_picture,
+      stock: data.stok,
+      category: data.category.map((cat) => cat.id),
+    });
   };
 
   const onPatch = async (data: IFormSchema) => {
-    await axiosCatetin.put(
-      '/barang',
-      {
-        id: data.id,
-        name: data.name,
-        price: data.harga,
-        picture: data.barang_picture,
-        stock: data.stok,
-        category: data.category.map((cat) => cat.id),
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      },
-    );
+    await axiosCatetin.put('/barang', {
+      id: data.id,
+      name: data.name,
+      price: data.harga,
+      picture: data.barang_picture,
+      stock: data.stok,
+      category: data.category.map((cat) => cat.id),
+    });
   };
 
   const handleViewDetail = async (singleBarang: ICatetinBarang) => {
@@ -202,9 +181,6 @@ function Barang() {
         params: {
           transaksi: true,
           category: true,
-        },
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
         },
       });
       setBarangTransaksi(barangTransaksiData);
@@ -251,11 +227,7 @@ function Barang() {
   const handleDelete = async () => {
     setLoadingDelete(true);
     try {
-      await axiosCatetin.delete(`/barang/${watch('id')}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      await axiosCatetin.delete(`/barang/${watch('id')}`);
       bottomSheetRef?.current?.close();
       Toast.show({
         type: 'customToast',
@@ -324,27 +296,16 @@ function Barang() {
         </NavigationContainer>
       </CatetinBottomSheet>
 
-      <CatetinBottomSheet bottomSheetRef={bottomSheetRefFilter}>
-        <CatetinBottomSheetWrapper single title="Sort">
-          <BarangFilterBottomSheet
-            onResetSort={(query) => {
-              bottomSheetRefFilter.current?.close();
-              setParams((prevParams) => ({
-                ...prevParams,
-                sort: query,
-              }));
-            }}
-            sortData={params.sort}
-            onApplySort={(query) => {
-              bottomSheetRefFilter.current?.close();
-              setParams((prevParams) => ({
-                ...prevParams,
-                sort: query,
-              }));
-            }}
-          />
-        </CatetinBottomSheetWrapper>
-      </CatetinBottomSheet>
+      <BarangFilterBottomSheet
+        bottomSheetRefFilter={bottomSheetRefFilter}
+        onApplyFilter={(data) => {
+          bottomSheetRefFilter.current?.close();
+          setParams((prevParams) => ({
+            ...prevParams,
+            ...data,
+          }));
+        }}
+      />
 
       <CatetinBottomSheet bottomSheetRef={bottomSheetRefDetail}>
         <CatetinBottomSheetWrapper single title="Detail Barang">
@@ -403,74 +364,98 @@ function Barang() {
             style={tw`flex-1 py-3 px-3`}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchBarang(true)} />}
           >
-            {barang.map((singleBarang) => (
-              <Fragment key={singleBarang.id}>
-                <View style={tw`px-3 py-2 mb-2 flex flex-row`}>
-                  <View style={tw`mr-3`}>
-                    <Avatar
-                      size={64}
-                      source={{
-                        uri: singleBarang?.picture || undefined,
-                      }}
-                      avatarStyle={tw`rounded-[12px]`}
-                      containerStyle={tw`bg-gray-300 rounded-[12px]`}
-                      titleStyle={tw`text-gray-200`}
-                    ></Avatar>
-                  </View>
-                  <View style={tw`flex-grow-1 flex-row justify-between`}>
-                    <View>
-                      <View>
-                        <Text style={tw`text-[18px] mb-1 font-bold`}>{singleBarang.name}</Text>
-                      </View>
-                      {singleBarang.ItemCategories.length > 0 && (
+            <View style={tw`flex-1`}>
+              {chunk(barang, 2).map((singleBarangChunk, index) => (
+                <View key={index} style={tw`flex flex-1 flex-row `}>
+                  {singleBarangChunk.map((singleBarang, indexItem) => (
+                    <View style={tw`w-1/2 ${indexItem === 0 ? 'mr-3' : ''} py-2`} key={singleBarang.id}>
+                      <View style={tw`mr-3`}>
+                        {singleBarang.picture ? (
+                          <View style={tw`shadow-lg`}>
+                            <Image
+                              source={{
+                                uri: singleBarang?.picture || undefined,
+                              }}
+                              style={tw`w-full h-[120px] rounded-lg mb-1`}
+                            ></Image>
+                          </View>
+                        ) : (
+                          <Icon
+                            name="camera"
+                            size={120}
+                            iconStyle={tw`text-gray-300`}
+                            type="feather"
+                            tvParallaxProperties=""
+                          />
+                        )}
+                        <View style={tw`mb-1`}>
+                          <Text style={tw`font-medium`}>{singleBarang.name}</Text>
+                        </View>
                         <View>
-                          {chunk(singleBarang.ItemCategories, 2).map((catChunk, index) => (
-                            <View style={tw`flex flex-row mb-1`} key={index}>
-                              {catChunk.map((cat) => (
-                                <View key={cat.id} style={tw`mr-1 bg-gray-200 px-2 py-1 rounded-lg`}>
-                                  <Text style={tw`text-[12px]`}>
-                                    {cat.name.slice(0, 10)}
-                                    {cat.name.length > 10 && '..'}
-                                  </Text>
+                          {singleBarang.ItemCategories.length > 0 && (
+                            <View>
+                              {chunk(singleBarang.ItemCategories, 2).map((catChunk, index) => (
+                                <View style={tw`flex flex-row mb-1`} key={index}>
+                                  {catChunk.map((cat) => (
+                                    <View key={cat.id} style={tw`mr-1 bg-gray-200 px-2 py-1 rounded-lg`}>
+                                      <Text style={tw`text-[12px]`}>
+                                        {cat.name.slice(0, 5)}
+                                        {cat.name.length > 5 && '..'}
+                                      </Text>
+                                    </View>
+                                  ))}
                                 </View>
                               ))}
                             </View>
-                          ))}
+                          )}
                         </View>
-                      )}
-                      <View>
-                        <Text style={tw`text-base`}>Stok: {singleBarang.stock}</Text>
-                      </View>
-                      <View>
-                        <Text style={tw`text-base`}>IDR {singleBarang.price.toLocaleString()}</Text>
+                        <View>
+                          <Text style={tw``}>
+                            <Text style={tw`font-bold ${singleBarang.stock <= 10 ? 'text-red-500' : ''}`}>
+                              {singleBarang.stock}
+                            </Text>{' '}
+                            pcs tersisa
+                          </Text>
+                        </View>
+                        <View>
+                          <Text style={tw``}>IDR {singleBarang.price.toLocaleString()}</Text>
+                        </View>
+                        <View style={tw`flex flex-row flex-1 mt-1`}>
+                          <TouchableOpacity
+                            style={tw`bg-gray-200 shadow flex-1 rounded px-3 py-1 mr-2`}
+                            onPress={() => {
+                              handleViewDetail(singleBarang);
+                            }}
+                          >
+                            <Icon
+                              name="eyeo"
+                              iconStyle={tw`text-gray-500`}
+                              type="antdesign"
+                              size={24}
+                              tvParallaxProperties=""
+                            ></Icon>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={tw`bg-gray-200 shadow flex-1 rounded px-3 py-1`}
+                            onPress={() => {
+                              handleEdit(singleBarang);
+                            }}
+                          >
+                            <Icon
+                              name="edit"
+                              iconStyle={tw`text-gray-500`}
+                              type="antdesign"
+                              size={24}
+                              tvParallaxProperties=""
+                            ></Icon>
+                          </TouchableOpacity>
+                        </View>
                       </View>
                     </View>
-                    <View style={tw`flex flex-row self-center`}>
-                      <TouchableOpacity
-                        onPress={() => {
-                          handleViewDetail(singleBarang);
-                        }}
-                      >
-                        <Icon
-                          name="eyeo"
-                          iconStyle={tw`mr-2`}
-                          type="antdesign"
-                          size={24}
-                          tvParallaxProperties=""
-                        ></Icon>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() => {
-                          handleEdit(singleBarang);
-                        }}
-                      >
-                        <Icon name="update" type="materialcommunity-icon" size={24} tvParallaxProperties=""></Icon>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
+                  ))}
                 </View>
-              </Fragment>
-            ))}
+              ))}
+            </View>
           </CatetinScrollView>
         )}
       </View>

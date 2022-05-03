@@ -77,8 +77,6 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
   });
   const { activeStore } = useAppSelector((state: RootState) => state.store);
 
-  const { accessToken } = useAppSelector((state: RootState) => state.auth);
-
   const fetchGraphData = useCallback(async () => {
     try {
       setLoadingGraph(true);
@@ -89,24 +87,20 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
           graph: true,
           ...dateParams,
         },
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
       });
       setGraphData(data);
     } catch (err: any) {
       if (JSON.parse(err.response.data.err)?.name !== 'SequelizeConnectionError') {
-        CatetinToast('error', `Gagal mengambil data graph`);
+        CatetinToast(err?.response?.status, 'error', `Gagal mengambil data graph`);
       }
     } finally {
       setLoadingGraph(false);
     }
-  }, [accessToken, activeStore, dateParams]);
+  }, [activeStore, dateParams]);
 
   const fetchMaxOutcome = useCallback(async () => {
     try {
       setLoadingMaxOutcome(true);
-      console.log(accessToken);
       const {
         data: { data },
       } = await axiosCatetin.get(`/transaksi/summary/${activeStore}`, {
@@ -114,19 +108,16 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
           max_outcome: true,
           ...dateParams,
         },
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
       });
       setMaxOutcome(data);
     } catch (err: any) {
       if (JSON.parse(err.response.data.err)?.name !== 'SequelizeConnectionError') {
-        CatetinToast('error', `Gagal mengambil data total pengeluaran`);
+        CatetinToast(err?.response?.status, 'error', `Gagal mengambil data total pengeluaran`);
       }
     } finally {
       setLoadingMaxOutcome(false);
     }
-  }, [accessToken, activeStore, dateParams]);
+  }, [activeStore, dateParams]);
 
   const fetchMaxIncome = useCallback(async () => {
     try {
@@ -138,19 +129,16 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
           max_income: true,
           ...dateParams,
         },
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
       });
       setMaxIncome(data);
     } catch (err: any) {
       if (JSON.parse(err.response.data.err)?.name !== 'SequelizeConnectionError') {
-        CatetinToast('error', `Gagal mengambil data pemasukan`);
+        CatetinToast(err?.response?.status, 'error', `Gagal mengambil data pemasukan`);
       }
     } finally {
       setLoadingMaxIncome(false);
     }
-  }, [accessToken, activeStore, dateParams]);
+  }, [activeStore, dateParams]);
 
   const fetchFrequentItem = useCallback(async () => {
     try {
@@ -162,20 +150,17 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
           frequent_item: true,
           ...dateParams,
         },
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
       });
       console.log(data);
       setFrequentItem(data);
     } catch (err: any) {
       if (JSON.parse(err.response.data.err)?.name !== 'SequelizeConnectionError') {
-        CatetinToast('error', `Gagal mengambil data barang ter-frequent`);
+        CatetinToast(err?.response?.status, 'error', `Gagal mengambil data barang ter-frequent`);
       }
     } finally {
       setLoadingFrequentItem(false);
     }
-  }, [accessToken, activeStore, dateParams]);
+  }, [activeStore, dateParams]);
 
   const fetchBestItem = useCallback(async () => {
     try {
@@ -187,20 +172,17 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
           best_item: true,
           ...dateParams,
         },
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
       });
       console.log(data);
       setBestItem(data);
     } catch (err: any) {
       if (JSON.parse(err.response.data.err)?.name !== 'SequelizeConnectionError') {
-        CatetinToast('error', `Gagal mengambil data barang terbaik`);
+        CatetinToast(err?.response?.status, 'error', `Gagal mengambil data barang terbaik`);
       }
     } finally {
       setLoadingBestItem(false);
     }
-  }, [accessToken, activeStore, dateParams]);
+  }, [activeStore, dateParams]);
 
   const fetchImpression = useCallback(async () => {
     try {
@@ -212,19 +194,16 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
           impression: true,
           ...dateParams,
         },
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
       });
       setImpressionData(data);
     } catch (err: any) {
       if (JSON.parse(err.response.data.err)?.name !== 'SequelizeConnectionError') {
-        CatetinToast('error', `Gagal mengambil data impresi`);
+        CatetinToast(err?.response?.status, 'error', `Gagal mengambil data impresi`);
       }
     } finally {
       setLoadingImpression(false);
     }
-  }, [accessToken, activeStore, dateParams]);
+  }, [activeStore, dateParams]);
 
   const fetchTotalOutcome = useCallback(async () => {
     try {
@@ -236,19 +215,16 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
           total_outcome: true,
           ...dateParams,
         },
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
       });
       setTotalOutcome(data);
     } catch (err: any) {
       if (JSON.parse(err.response.data.err)?.name !== 'SequelizeConnectionError') {
-        CatetinToast('error', `Gagal mengambil data total pengeluaran`);
+        CatetinToast(err?.response?.status, 'error', `Gagal mengambil data total pengeluaran`);
       }
     } finally {
       setLoadingTotalOutcome(false);
     }
-  }, [accessToken, activeStore, dateParams]);
+  }, [activeStore, dateParams]);
 
   const fetchTotalIncome = useCallback(async () => {
     try {
@@ -260,19 +236,16 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
           total_income: true,
           ...dateParams,
         },
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
       });
       setTotalIncome(data);
     } catch (err: any) {
       if (JSON.parse(err.response.data.err)?.name !== 'SequelizeConnectionError') {
-        CatetinToast('error', `Gagal mengambil data total pemasukan`);
+        CatetinToast(err?.response?.status, 'error', `Gagal mengambil data total pemasukan`);
       }
     } finally {
       setLoadingTotalIncome(false);
     }
-  }, [accessToken, activeStore, dateParams]);
+  }, [activeStore, dateParams]);
 
   useEffect(() => {
     fetchGraphData();
@@ -383,7 +356,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
   const handleApplyPeriod = () => {
     if (activePeriode === 'custom') {
       if (activeSubPeriod === 'periode' && !customPeriod.value) {
-        CatetinToast('error', 'Custom Periode harus diisi');
+        CatetinToast(400, 'error', 'Custom Periode harus diisi');
         return;
       }
     }
@@ -401,7 +374,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
           end_date: undefined,
         };
       } else {
-        let current = moment();
+        const current = moment().startOf('days');
         if (activePeriode !== 'today') {
           current.subtract(
             1,
@@ -415,8 +388,6 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
               ? 'years'
               : undefined,
           );
-        } else {
-          current = current.startOf('days');
         }
         finalObj = {
           start_date: current.toISOString(),
@@ -527,7 +498,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
                     onChange={(event: any, date: Date | undefined) =>
                       setCustomDate((prevState) => ({
                         ...prevState,
-                        from: date as Date,
+                        from: moment(date).startOf('days').toDate(),
                       }))
                     }
                     mode="date"
@@ -539,7 +510,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
                     onChange={(event: any, date: Date | undefined) =>
                       setCustomDate((prevState) => ({
                         ...prevState,
-                        until: date as Date,
+                        until: moment(date).endOf('days').toDate(),
                       }))
                     }
                     mode="date"

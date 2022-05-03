@@ -69,16 +69,21 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
         );
         const { email, name } = await response.json();
         const {
-          data: { token: catetinToken },
+          data: { token: catetinToken, refreshToken },
         } = await axiosCatetin.post('/auth/login/facebook', {
           email,
           name,
         });
+        await AsyncStorage.setItem('accessToken', token);
+        await AsyncStorage.setItem('refreshToken', refreshToken);
         dispatch(setAccessToken(catetinToken));
-        await AsyncStorage.setItem('accessToken', catetinToken);
       }
     } catch (err: any) {
-      CatetinToast('error', 'An error occured while authenticating facebook.');
+      CatetinToast(
+        err?.response?.status,
+        'error',
+        err?.response?.data?.message || 'An error occured while authenticating facebook.',
+      );
     } finally {
       setLoadingFacebook(false);
     }
@@ -90,15 +95,17 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
     setLoadingLogin(true);
     try {
       const {
-        data: { token },
+        data: { token, refreshToken },
       } = await axiosCatetin.post('/auth/login', {
         username,
         password,
       });
-      dispatch(setAccessToken(token));
       await AsyncStorage.setItem('accessToken', token);
+      await AsyncStorage.setItem('refreshToken', refreshToken);
+      dispatch(setAccessToken(token));
     } catch (err: any) {
       CatetinToast(
+        err?.response?.status,
         'error',
         err.response?.data?.message || 'An error occured while authenticating username and password.',
       );
@@ -120,15 +127,20 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
         });
         const serialized = await userInfo.json();
         const {
-          data: { token: catetinToken },
+          data: { token: catetinToken, refreshToken },
         } = await axiosCatetin.post('/auth/login/gmail', {
           email: serialized.email,
           name: serialized.name,
         });
-        dispatch(setAccessToken(catetinToken));
         await AsyncStorage.setItem('accessToken', catetinToken);
-      } catch (err) {
-        CatetinToast('error', 'An error occured while authenticating gmail.');
+        await AsyncStorage.setItem('refreshToken', refreshToken);
+        dispatch(setAccessToken(catetinToken));
+      } catch (err: any) {
+        CatetinToast(
+          err?.response?.status,
+          'error',
+          err?.response?.data?.message || 'An error occured while authenticating gmail.',
+        );
       } finally {
         setLoadingGmail(false);
       }
@@ -185,7 +197,14 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
                 />
               </View>
               <View>
-                <Text style={tw`text-right text-blue-500 font-bold`}>Forgot Password?</Text>
+                <Text
+                  style={tw`text-right text-blue-500 font-bold`}
+                  onPress={() => {
+                    navigate('EmailInputResetPassword');
+                  }}
+                >
+                  Forgot Password?
+                </Text>
               </View>
             </View>
             <View>

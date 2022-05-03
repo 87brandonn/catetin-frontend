@@ -8,8 +8,8 @@ const initialState: StoreState = {
   activeStore: undefined,
 };
 
-export const authSlice = createSlice({
-  name: 'counter',
+export const storeSlice = createSlice({
+  name: 'store',
   initialState,
   reducers: {
     setActiveStore: (state: StoreState, action: PayloadAction<any>) => {
@@ -18,6 +18,6 @@ export const authSlice = createSlice({
   },
 });
 
-export const { setActiveStore } = authSlice.actions;
+export const { setActiveStore } = storeSlice.actions;
 
-export default authSlice.reducer;
+export default storeSlice.reducer;

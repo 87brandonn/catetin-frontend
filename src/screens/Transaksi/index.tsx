@@ -35,8 +35,6 @@ function Transaksi() {
     search: '',
   });
 
-  const { accessToken } = useAppSelector((state: RootState) => state.auth);
-
   const fetchTransaksi = useCallback(
     async (isMounted = true, refreshing = false) => {
       if (refreshing) {
@@ -49,15 +47,12 @@ function Transaksi() {
           data: { data },
         } = await axiosCatetin.get(`/transaksi/${activeStore}/list`, {
           params,
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
         });
         if (isMounted) {
           setTransaksi(data);
         }
-      } catch (err) {
-        CatetinToast('error', 'Terjadi kesalahan. Gagal mengambil data transaksi.');
+      } catch (err: any) {
+        CatetinToast(err?.response?.status, 'error', 'Terjadi kesalahan. Gagal mengambil data transaksi.');
         console.log(err);
       } finally {
         if (refreshing) {
@@ -108,7 +103,6 @@ function Transaksi() {
       <TransactionFilterBottomSheet
         bottomSheetRefFilter={bottomSheetRefFilter}
         onApplyFilter={(data) => {
-          console.log(data);
           bottomSheetRefFilter.current?.close();
           setParams((prevParams) => ({
             ...prevParams,

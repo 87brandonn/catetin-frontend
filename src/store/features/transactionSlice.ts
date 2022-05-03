@@ -11,7 +11,7 @@ const initialState: TransactionState = {
   editedTransaction: null,
 };
 
-export const authSlice = createSlice({
+export const transactionSlice = createSlice({
   name: 'transaction',
   initialState,
   reducers: {
@@ -24,6 +24,6 @@ export const authSlice = createSlice({
   },
 });
 
-export const { setSelectedTransaction, setEditedTransaction } = authSlice.actions;
+export const { setSelectedTransaction, setEditedTransaction } = transactionSlice.actions;
 
-export default authSlice.reducer;
+export default transactionSlice.reducer;

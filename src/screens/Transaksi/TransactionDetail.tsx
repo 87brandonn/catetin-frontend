@@ -22,8 +22,6 @@ function TransactionDetail({ refreshing, onRefresh }: { refreshing: boolean; onR
   const { selectedTransaction } = useAppSelector((state: RootState) => state.transaction);
   const dispatch = useAppDispatch();
 
-  const { accessToken } = useAppSelector((state: RootState) => state.auth);
-
   const fetchTransaksiDetail = async (id: number, refreshing = false) => {
     if (refreshing) {
       onRefresh(true);
@@ -33,13 +31,9 @@ function TransactionDetail({ refreshing, onRefresh }: { refreshing: boolean; onR
     try {
       const {
         data: { data },
-      } = await axiosCatetin.get(`/transaksi/${id}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      } = await axiosCatetin.get(`/transaksi/${id}`);
       setDataDetail(data);
-    } catch (err) {
+    } catch (err: any) {
       console.log(err);
     } finally {
       if (refreshing) {
@@ -72,18 +66,15 @@ function TransactionDetail({ refreshing, onRefresh }: { refreshing: boolean; onR
     setLoadingDelete(true);
     try {
       await axiosCatetin.delete(`/transaksi/detail`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
         data: {
           transaksi_id: transactionId,
           barang_id: itemId,
         },
       });
-      CatetinToast('default', 'Berhasil menghapus detail transaksi');
+      CatetinToast(200, 'default', 'Berhasil menghapus detail transaksi');
       fetchTransaksiDetail(selectedTransaction as number);
-    } catch (err) {
-      CatetinToast('error', 'Failed to delete transaction detail');
+    } catch (err: any) {
+      CatetinToast(err?.response?.status, 'error', 'Failed to delete transaction detail');
     } finally {
       setLoadingDelete(false);
     }

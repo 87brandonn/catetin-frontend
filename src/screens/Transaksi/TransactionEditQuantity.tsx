@@ -26,8 +26,6 @@ function TransactionEditQuantity(props: {
 
   const navigation = useNavigation();
 
-  const { accessToken } = useAppSelector((state: RootState) => state.auth);
-
   useEffect(() => {
     if (selectedTransaction !== props.route.params?.id) {
       props.navigation.navigate('Transaction Detail');
@@ -42,26 +40,18 @@ function TransactionEditQuantity(props: {
   const handleEditBarang = async () => {
     setLoadingSave(true);
     try {
-      await axiosCatetin.put(
-        '/transaksi/detail',
-        {
-          transaksi_id: selectedTransaction,
-          barang_id: itemData?.id,
-          amount: itemData?.ItemTransaction.amount,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        },
-      );
+      await axiosCatetin.put('/transaksi/detail', {
+        transaksi_id: selectedTransaction,
+        barang_id: itemData?.id,
+        amount: itemData?.ItemTransaction.amount,
+      });
       Toast.show({
         type: 'customToast',
         text2: `Berhasil melakukan update jumlah`,
         position: 'bottom',
       });
       navigation.navigate('Transaction Detail');
-    } catch (err) {
+    } catch (err: any) {
       console.log(err);
       Toast.show({
         type: 'customToast',
