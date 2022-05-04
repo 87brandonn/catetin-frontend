@@ -22,9 +22,12 @@ axiosCatetin.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    console.log(error.response.status === 403 && originalRequest.url === `/auth/token`);
+
     if (error.response.status === 403 && originalRequest.url === `/auth/token`) {
       await axiosCatetin.post(`/auth/logout`, {
         refreshToken: await AsyncStorage.getItem('refreshToken'),
+        device_token_id: await AsyncStorage.getItem('deviceId'),
       });
       store.dispatch(logout());
 

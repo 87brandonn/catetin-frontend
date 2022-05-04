@@ -414,7 +414,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
   };
 
   return (
-    <AppLayout headerTitle="Home">
+    <AppLayout headerTitle="Home" customStyle={tw``}>
       <CatetinBottomSheet bottomSheetRef={bottomSheetRef}>
         <NavigationContainer independent={true}>
           <Stack.Navigator>
@@ -901,8 +901,6 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
             <Text style={tw`text-sm text-slate-500`}>Note: Transaksi dengan nominal pemasukan terbesar</Text>
           </View>
         </View>
-
-        <View style={tw`mb-[48px]`}></View>
       </CatetinScrollView>
     </AppLayout>
   );

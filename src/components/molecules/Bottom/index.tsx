@@ -35,7 +35,7 @@ function Bottom() {
     console.log(route.name);
   }, [route]);
   return (
-    <View style={{ ...tw`bg-neutral-50 flex flex-row pt-3 pb-[40px] border-t border-slate-100` }}>
+    <View style={{ ...tw`bg-neutral-50 flex flex-row pt-3 pb-3 border-t border-slate-100` }}>
       {bottomNavs.map((nav, index) => (
         <TouchableOpacity
           style={tw`flex-1 items-center`}

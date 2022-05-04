@@ -412,7 +412,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
   };
 
   return (
-    <AppLayout header={false}>
+    <AppLayout header={false} edges={['left', 'right']}>
       <CatetinBottomSheet bottomSheetRef={bottomSheetManualLaporanRef}>
         <CatetinBottomSheetWrapper single title="Unduh Laporan Keuangan" refreshable={false}>
           <View style={tw`flex-1 flex`}>
@@ -673,7 +673,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
         </CatetinBottomSheetWrapper>
       </CatetinBottomSheet>
 
-      <View style={tw`flex-1 px-4 flex justify-between mt-4`}>
+      <View style={tw`flex-1 px-4 mt-4 flex justify-between`}>
         <View>
           <View style={tw`items-center relative mb-4`}>
             {loading ? (
@@ -813,11 +813,18 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
                   text: 'OK',
                   onPress: async () => {
                     setLoadingLogout(true);
-                    await axiosCatetin.post(`/auth/logout`, {
-                      refreshToken: await AsyncStorage.getItem('refreshToken'),
-                    });
-                    dispatch(logout());
-                    setLoadingLogout(false);
+                    try {
+                      await axiosCatetin.post(`/auth/logout`, {
+                        refreshToken: await AsyncStorage.getItem('refreshToken'),
+                        device_token_id: await AsyncStorage.getItem('deviceId'),
+                        user_id: profileData?.id,
+                      });
+                      dispatch(logout());
+                    } catch (err) {
+                      console.error(err);
+                    } finally {
+                      setLoadingLogout(false);
+                    }
                   },
                 },
               ]);

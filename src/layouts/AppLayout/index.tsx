@@ -1,8 +1,7 @@
 import React from 'react';
-import { View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { TextStyle, View } from 'react-native';
 import tw from 'twrnc';
-import Bottom from '../../components/molecules/Bottom';
+import SafeAreaView from 'react-native-safe-area-view';
 import Header from '../../components/molecules/Header';
 
 interface IAppLayout {
@@ -10,14 +9,19 @@ interface IAppLayout {
   header?: boolean;
   bottom?: boolean;
   headerTitle?: string;
+  customStyle?: TextStyle;
 }
 
-function AppLayout({ children, header = true, bottom = true, headerTitle = '' }: IAppLayout) {
+function AppLayout({ children, header = true, headerTitle = '', customStyle }: IAppLayout) {
   return (
-    <SafeAreaView style={tw`bg-white flex-1`} edges={['right', 'left', 'top']}>
+    <SafeAreaView
+      forceInset={{
+        top: 'always',
+      }}
+      style={{ ...tw`bg-white flex-1`, ...customStyle }}
+    >
       {header && <Header title={headerTitle} />}
-      <View style={tw`flex-grow-1`}>{children}</View>
-      {bottom && <Bottom />}
+      <View style={tw`flex-1`}>{children}</View>
     </SafeAreaView>
   );
 }

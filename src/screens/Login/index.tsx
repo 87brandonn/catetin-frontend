@@ -13,9 +13,10 @@ import * as yup from 'yup';
 import { axiosCatetin } from '../../api';
 import CatetinInput from '../../components/molecules/Input';
 import CatetinToast from '../../components/molecules/Toast';
-import { useAppDispatch } from '../../hooks';
+import { useAppDispatch, useAppSelector } from '../../hooks';
 import AppLayout from '../../layouts/AppLayout';
 import { RootStackParamList } from '../../navigation';
+import { RootState } from '../../store';
 import { setAccessToken } from '../../store/features/authSlice';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -73,6 +74,7 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
         } = await axiosCatetin.post('/auth/login/facebook', {
           email,
           name,
+          device_token_id: await AsyncStorage.getItem('deviceId'),
         });
         await AsyncStorage.setItem('accessToken', token);
         await AsyncStorage.setItem('refreshToken', refreshToken);
@@ -99,6 +101,7 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
       } = await axiosCatetin.post('/auth/login', {
         username,
         password,
+        device_token_id: await AsyncStorage.getItem('deviceId'),
       });
       await AsyncStorage.setItem('accessToken', token);
       await AsyncStorage.setItem('refreshToken', refreshToken);
@@ -131,6 +134,7 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
         } = await axiosCatetin.post('/auth/login/gmail', {
           email: serialized.email,
           name: serialized.name,
+          device_token_id: await AsyncStorage.getItem('deviceId'),
         });
         await AsyncStorage.setItem('accessToken', catetinToken);
         await AsyncStorage.setItem('refreshToken', refreshToken);

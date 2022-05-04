@@ -56,7 +56,7 @@ function TransactionAction({
   };
   const bottomSheetRef = useRef<BottomSheet>(null);
   return (
-    <View style={tw`pb-2 px-3 flex flex-row justify-between items-center`}>
+    <View style={tw`pb-2 pt-2 px-3 flex flex-row justify-between items-center`}>
       {showImport && (
         <CatetinBottomSheet bottomSheetRef={bottomSheetRef}>
           <CatetinBottomSheetWrapper title="Import Data" single>

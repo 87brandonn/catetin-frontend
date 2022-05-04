@@ -1,12 +1,15 @@
 import { PortalProvider } from '@gorhom/portal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useState } from 'react';
-import { ImageBackground, Text, View } from 'react-native';
-import { Icon } from 'react-native-elements';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import Toast, { ToastConfig } from 'react-native-toast-message';
+import { createStackNavigator } from '@react-navigation/stack';
+import * as Device from 'expo-device';
+import * as Notifications from 'expo-notifications';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { ImageBackground, Platform } from 'react-native';
+import { initialWindowMetrics, SafeAreaProvider } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 import tw from 'twrnc';
 import { axiosCatetin } from '../api';
 import CatetinToast from '../components/molecules/Toast';
@@ -25,6 +28,16 @@ import VerifyEmail from '../screens/VerifyEmail';
 import { RootState } from '../store';
 import { setAccessToken, setLoggedIn, setProfile, setStore } from '../store/features/authSlice';
 import { setActiveStore } from '../store/features/storeSlice';
+import TabBar from './TabBar';
+import { toastConfig } from './ToastConfig';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+  }),
+});
 
 type RootStackParamList = {
   Home: undefined;
@@ -40,30 +53,37 @@ type RootStackParamList = {
   EmailInputResetPassword: undefined;
 };
 
+const ProfileScreenWrapperStack = createStackNavigator();
 const Stack = createNativeStackNavigator<RootStackParamList>();
+const Tab = createBottomTabNavigator();
 
-const toastConfig: ToastConfig = {
-  customToast: ({ text2 }) => (
-    <View style={tw`bg-zinc-700 flex-1 flex-row items-center w-[90%] rounded-lg px-4 py-3`}>
-      <View>
-        <Icon name="alert-circle" type="feather" tvParallaxProperties="" iconStyle={tw`text-zinc-600`}></Icon>
-      </View>
-      <View>
-        <Text style={tw`text-white ml-3`}>{text2}</Text>
-      </View>
-    </View>
-  ),
-  customErrorToast: ({ text2 }) => (
-    <View style={tw`bg-red-500 flex-1 flex-row items-center w-[90%] rounded-lg px-4 py-3`}>
-      <View>
-        <Icon name="alert-circle" type="feather" tvParallaxProperties="" iconStyle={tw`text-white`}></Icon>
-      </View>
-      <View>
-        <Text style={tw`text-white ml-3`}>{text2}</Text>
-      </View>
-    </View>
-  ),
-};
+function ProfileScreenNavigator() {
+  return (
+    <ProfileScreenWrapperStack.Navigator>
+      <ProfileScreenWrapperStack.Screen
+        name="ProfileScreen"
+        component={ProfileScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="ResetPassword"
+        component={ResetPassword}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="VerifyResetPassword"
+        component={VerifyResetPassword}
+        options={{
+          headerShown: false,
+        }}
+      />
+    </ProfileScreenWrapperStack.Navigator>
+  );
+}
 
 export default function RootNavigation() {
   const [loading, setLoading] = useState(true);
@@ -71,6 +91,10 @@ export default function RootNavigation() {
   const { accessToken, store, profile, loggedIn } = useAppSelector((state: RootState) => state.auth);
 
   const dispatch = useAppDispatch();
+  const notificationListener = useRef<any>();
+  const responseListener = useRef<any>();
+
+  const [notification, setNotification] = useState<Notifications.Notification | boolean>(false);
 
   const getVerifyCode = useCallback(async (accessToken) => {
     try {
@@ -87,8 +111,10 @@ export default function RootNavigation() {
   const fetchUserProfile = useCallback(async () => {
     try {
       if (accessToken) {
+        console.log(accessToken);
         const promises = [];
         promises.push(axiosCatetin.get(`/store`), axiosCatetin.get(`/auth/profile`));
+        console.log('masok');
         const [
           {
             data: { data: dataStore },
@@ -107,6 +133,7 @@ export default function RootNavigation() {
         setLoading(false);
       }
     } catch (err: any) {
+      setLoading(false);
       CatetinToast(err?.response?.status, 'error', 'Failed to authenticate user.');
     }
   }, [accessToken, dispatch, getVerifyCode]);
@@ -127,37 +154,83 @@ export default function RootNavigation() {
     fetchUserProfile();
   }, [fetchUserProfile]);
 
+  useEffect(() => {
+    registerForPushNotificationsAsync().then(async (token) => {
+      try {
+        const {
+          data: {
+            data: { id },
+          },
+        } = await axiosCatetin.post(`/push-notification/register`, {
+          token,
+        });
+        await AsyncStorage.setItem('deviceId', id.toString());
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
+    // This listener is fired whenever a notification is received while the app is foregrounded
+    notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
+      setNotification(notification);
+    });
+
+    // This listener is fired whenever a user taps on or interacts with a notification (works when app is foregrounded, backgrounded, or killed)
+    responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
+      console.log(response);
+    });
+
+    return () => {
+      Notifications.removeNotificationSubscription(notificationListener.current);
+      Notifications.removeNotificationSubscription(responseListener.current);
+    };
+  }, [dispatch]);
+
   if (loading) {
     return <ImageBackground source={require('../assets/splash.png')} style={tw`w-full h-full`} />;
   }
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
       <PortalProvider>
         <NavigationContainer>
-          <Stack.Navigator>
-            {!loggedIn ? (
-              <>
-                <Stack.Screen
-                  name="Login"
-                  component={Login}
-                  options={{
-                    headerShown: false,
-                  }}
-                />
-                <Stack.Screen
-                  name="Register"
-                  component={Register}
-                  options={{
-                    headerShown: false,
-                  }}
-                />
-                <Stack.Screen
-                  name="EmailInputResetPassword"
-                  component={EmailInputResetPassword}
-                  options={{ headerShown: false }}
-                />
-              </>
-            ) : !profile?.verified ? (
+          {!loggedIn ? (
+            <Stack.Navigator>
+              <Stack.Screen
+                name="Login"
+                component={Login}
+                options={{
+                  headerShown: false,
+                }}
+              />
+              <Stack.Screen
+                name="Register"
+                component={Register}
+                options={{
+                  headerShown: false,
+                }}
+              />
+              <Stack.Screen
+                name="EmailInputResetPassword"
+                component={EmailInputResetPassword}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="ResetPassword"
+                component={ResetPassword}
+                options={{
+                  headerShown: false,
+                }}
+              />
+              <Stack.Screen
+                name="VerifyResetPassword"
+                component={VerifyResetPassword}
+                options={{
+                  headerShown: false,
+                }}
+              />
+            </Stack.Navigator>
+          ) : !profile?.verified ? (
+            <Stack.Navigator>
               <Stack.Screen
                 name="VerifyEmail"
                 component={VerifyEmail}
@@ -165,7 +238,9 @@ export default function RootNavigation() {
                   headerShown: false,
                 }}
               />
-            ) : !store || store.length === 0 ? (
+            </Stack.Navigator>
+          ) : !store || store.length === 0 ? (
+            <Stack.Navigator>
               <Stack.Screen
                 name="TokoLanding"
                 component={TokoLanding}
@@ -173,63 +248,81 @@ export default function RootNavigation() {
                   headerShown: false,
                 }}
               />
-            ) : (
-              store &&
-              profile && (
-                <>
-                  <Stack.Screen
-                    name="Home"
-                    component={HomeScreen}
-                    options={{
-                      headerShown: false,
-                    }}
-                  />
-                  <Stack.Screen
-                    name="Profile"
-                    component={ProfileScreen}
-                    options={{
-                      headerShown: false,
-                    }}
-                  />
-                  <Stack.Screen
-                    name="Barang"
-                    component={Barang}
-                    options={{
-                      headerShown: false,
-                    }}
-                  />
-                  <Stack.Screen
-                    name="Transaksi"
-                    component={Transaksi}
-                    options={{
-                      headerShown: false,
-                    }}
-                  />
-                </>
-              )
-            )}
-            <Stack.Screen
-              name="ResetPassword"
-              component={ResetPassword}
-              options={{
-                headerShown: false,
-              }}
-              navigationKey={loggedIn ? 'user' : 'guest'}
-            />
-            <Stack.Screen
-              name="VerifyResetPassword"
-              component={VerifyResetPassword}
-              options={{
-                headerShown: false,
-              }}
-              navigationKey={loggedIn ? 'user' : 'guest'}
-            />
-          </Stack.Navigator>
+            </Stack.Navigator>
+          ) : (
+            store &&
+            profile && (
+              <Tab.Navigator tabBar={TabBar}>
+                <Tab.Screen
+                  name="Home"
+                  component={HomeScreen}
+                  options={{
+                    headerShown: false,
+                  }}
+                />
+                <Tab.Screen
+                  name="Transaksi"
+                  component={Transaksi}
+                  options={{
+                    headerShown: false,
+                  }}
+                />
+                <Tab.Screen
+                  name="Barang"
+                  component={Barang}
+                  options={{
+                    headerShown: false,
+                  }}
+                />
+                <Tab.Screen
+                  name="Profile"
+                  component={ProfileScreenNavigator}
+                  options={{
+                    headerShown: false,
+                  }}
+                />
+              </Tab.Navigator>
+            )
+          )}
         </NavigationContainer>
       </PortalProvider>
       <Toast config={toastConfig} />
     </SafeAreaProvider>
   );
+}
+
+async function registerForPushNotificationsAsync() {
+  let token;
+  if (Device.isDevice) {
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+    if (finalStatus !== 'granted') {
+      alert('Failed to get push token for push notification!');
+      return;
+    }
+    token = (
+      await Notifications.getExpoPushTokenAsync({
+        experienceId: '@87brandonn/catetin',
+      })
+    ).data;
+  } else {
+    alert('Must use physical device for Push Notifications');
+  }
+
+  if (Platform.OS === 'android') {
+    Notifications.setNotificationChannelAsync('default', {
+      name: 'default',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#FF231F7C',
+    });
+  }
+
+  return token;
 }
 
 export { RootStackParamList };
