@@ -7,7 +7,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ImageBackground, Platform } from 'react-native';
+import { Dimensions, ImageBackground, Platform } from 'react-native';
 import { initialWindowMetrics, SafeAreaProvider } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import tw from 'twrnc';
@@ -56,6 +56,10 @@ type RootStackParamList = {
 const ProfileScreenWrapperStack = createStackNavigator();
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator();
+
+const IPHONE12_H = 844;
+const IPHONE12_Max = 926;
+const IPHONE12_Mini = 780;
 
 function ProfileScreenNavigator() {
   return (
@@ -111,10 +115,8 @@ export default function RootNavigation() {
   const fetchUserProfile = useCallback(async () => {
     try {
       if (accessToken) {
-        console.log(accessToken);
         const promises = [];
         promises.push(axiosCatetin.get(`/store`), axiosCatetin.get(`/auth/profile`));
-        console.log('masok');
         const [
           {
             data: { data: dataStore },
@@ -150,6 +152,7 @@ export default function RootNavigation() {
     })();
   }, [dispatch]);
 
+  const { height: D_HEIGHT, width: D_WIDTH } = Dimensions.get('window');
   useEffect(() => {
     fetchUserProfile();
   }, [fetchUserProfile]);

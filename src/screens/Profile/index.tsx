@@ -817,7 +817,6 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
                       await axiosCatetin.post(`/auth/logout`, {
                         refreshToken: await AsyncStorage.getItem('refreshToken'),
                         device_token_id: await AsyncStorage.getItem('deviceId'),
-                        user_id: profileData?.id,
                       });
                       dispatch(logout());
                     } catch (err) {

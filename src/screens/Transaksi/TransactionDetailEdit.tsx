@@ -28,6 +28,8 @@ function TransactionDetailEdit(props: { route: RouteProp<ParamListBase, 'Transac
   const [barang, setBarang] = useState<
     (ICatetinBarang & {
       amount: number;
+      customPrice: number;
+      notes: string;
     })[]
   >([]);
 
@@ -46,7 +48,9 @@ function TransactionDetailEdit(props: { route: RouteProp<ParamListBase, 'Transac
           },
         });
         if (isMounted) {
-          setBarang(data?.map((eachBarang) => ({ ...eachBarang, amount: 0 })));
+          setBarang(
+            data?.map((eachBarang) => ({ ...eachBarang, amount: 0, customPrice: eachBarang.price, notes: '' })),
+          );
           setLoadingFetch(false);
         }
       } catch (err: any) {
@@ -65,6 +69,8 @@ function TransactionDetailEdit(props: { route: RouteProp<ParamListBase, 'Transac
   const handleAddBarang = async (
     barang: ICatetinBarang & {
       amount: number;
+      customPrice: number;
+      notes: string;
     },
     transactionId: number | null,
   ) => {
@@ -77,8 +83,10 @@ function TransactionDetailEdit(props: { route: RouteProp<ParamListBase, 'Transac
         transaksi_id: transactionId,
         barang_id: barang.id,
         amount: barang.amount,
+        price: barang.customPrice,
+        notes: barang.notes,
       });
-      fetchBarang();
+      setBarang((prevBarang) => prevBarang.filter((eachBarang) => eachBarang.id !== barang.id));
     } catch (err: any) {
       CatetinToast(err?.response?.status, 'error', 'Terjadi kesalahan pada server. Gagal melakukan update barang.');
     } finally {
@@ -137,9 +145,23 @@ function TransactionDetailEdit(props: { route: RouteProp<ParamListBase, 'Transac
               containerStyle={tw`bg-gray-300 rounded-[12px] mb-1`}
               key={eachBarang.picture}
             ></Avatar>
-            <Text style={tw`text-base`}>{eachBarang.name}</Text>
-            <Text style={tw`text-base`}>IDR {eachBarang.price.toLocaleString()}</Text>
-            <Text style={tw`text-base mb-1`}>Stok: {eachBarang.stock.toLocaleString()}</Text>
+            <Text style={tw`text-base font-medium`}>{eachBarang.name}</Text>
+            <View style={tw`flex flex-row items-center`}>
+              <Text style={tw`text-base mr-1`}>IDR</Text>
+              <CatetinInput
+                style={tw`py-1 px-3 font-medium ${props.route.params?.type === '3' ? 'text-gray-400' : ''}`}
+                pointerEvents={props.route.params?.type === '3' ? 'none' : 'auto'}
+                value={eachBarang?.customPrice !== 0 ? eachBarang?.customPrice.toString() : ''}
+                keyboardType="numeric"
+                onChangeText={(value) => {
+                  const updatedBarang = Array.from(barang);
+                  updatedBarang[index].customPrice = parseInt(value || '0', 10);
+                  setBarang(updatedBarang);
+                }}
+              ></CatetinInput>
+            </View>
+
+            <Text style={tw`text-base mb-1`}>Stok: {eachBarang.stock.toLocaleString('id-ID')}</Text>
             <CatetinInput
               bottomSheet
               style={tw`bg-gray-100 px-3 py-2 rounded-lg mb-2 border-0`}
@@ -164,6 +186,17 @@ function TransactionDetailEdit(props: { route: RouteProp<ParamListBase, 'Transac
               }}
             />
             {errorAdd?.[index] && <Text style={tw`text-red-500 mb-2`}>Jumlah melebihi stok yang tersedia</Text>}
+            <CatetinInput
+              bottomSheet
+              style={tw`bg-gray-100 px-3 py-2 rounded-lg mb-2 border-0`}
+              placeholder="Notes"
+              value={eachBarang.notes}
+              onChangeText={(value) => {
+                const updatedBarang = Array.from(barang);
+                updatedBarang[index].notes = value;
+                setBarang(updatedBarang);
+              }}
+            />
             <Button
               title="Add"
               buttonStyle={tw`bg-blue-500`}

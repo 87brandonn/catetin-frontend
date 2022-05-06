@@ -3,7 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 import moment from 'moment';
 import 'moment/min/locales';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Text, View } from 'react-native';
 import { Avatar, Button } from 'react-native-elements';
 import tw from 'twrnc';
 import { axiosCatetin } from '../../api';
@@ -23,6 +23,7 @@ function TransactionDetail({ refreshing, onRefresh }: { refreshing: boolean; onR
   const dispatch = useAppDispatch();
 
   const fetchTransaksiDetail = async (id: number, refreshing = false) => {
+    console.log(id);
     if (refreshing) {
       onRefresh(true);
     } else {
@@ -97,7 +98,7 @@ function TransactionDetail({ refreshing, onRefresh }: { refreshing: boolean; onR
         {optionsTransaksi.find((opt) => opt.value === parseInt(dataDetail?.type || '0', 10))?.label}
       </Text>
       <Text style={tw`text-base text-lg font-medium`}>Nominal:</Text>
-      <Text style={tw`text-base`}>IDR {dataDetail?.nominal.toLocaleString()}</Text>
+      <Text style={tw`text-base`}>IDR {dataDetail?.nominal.toLocaleString('id-ID')}</Text>
       <Text style={tw`text-base text-lg font-medium`}>Deskripsi:</Text>
       <Text style={tw`text-base mb-2`}>{dataDetail?.notes || '-'}</Text>
       <CatetinButton
@@ -110,16 +111,16 @@ function TransactionDetail({ refreshing, onRefresh }: { refreshing: boolean; onR
       {(dataDetail?.type === '3' || dataDetail?.type === '4') && (
         <View>
           <CatetinButton
-            title="Update Detail Transaksi"
+            title="Tambah Barang"
             onPress={() => {
               navigate('Transaction Detail Edit', {
                 id: dataDetail.id,
                 type: dataDetail.type,
               });
             }}
-            customStyle={'mb-1'}
+            customStyle={'mb-2'}
           />
-          <Text style={tw` text-lg font-medium`}>Detail:</Text>
+          {dataDetail.Items.length > 0 && <Text style={tw`text-base text-lg font-medium`}>List Barang:</Text>}
           {dataDetail.Items.map((item) => (
             <View
               style={tw`bg-white ${item.deleted ? '' : ''} shadow-lg rounded-[12px] relative px-4 py-2 mb-3`}
@@ -135,8 +136,10 @@ function TransactionDetail({ refreshing, onRefresh }: { refreshing: boolean; onR
                 containerStyle={tw`bg-gray-300 rounded-[12px] mb-1`}
               ></Avatar>
               <Text style={tw`text-base text-lg`}>{item.name}</Text>
-              <Text style={tw`text-base`}>Jumlah : {item.ItemTransaction.amount}</Text>
-              <Text style={tw`text-base mb-1`}>IDR {item.ItemTransaction.total.toLocaleString()}</Text>
+              <Text style={tw`text-base`}>Jumlah: {item.ItemTransaction.amount}</Text>
+              <Text style={tw`text-base`}>Harga: {item.ItemTransaction.price?.toLocaleString('id-ID')}</Text>
+              <Text style={tw`text-base`}>Total: IDR {item.ItemTransaction.total.toLocaleString('id-ID')}</Text>
+              <Text style={tw`text-base mb-1`}>Notes: {item.ItemTransaction.notes || '-'}</Text>
               <CatetinButton
                 title="Edit"
                 onPress={() => {
@@ -153,7 +156,25 @@ function TransactionDetail({ refreshing, onRefresh }: { refreshing: boolean; onR
                 title="Delete"
                 theme="danger"
                 onPress={() => {
-                  handleDeleteTransactionDetail(item.ItemTransaction.ItemId, item.ItemTransaction.TransactionId);
+                  Alert.alert(
+                    'Confirm Delete',
+                    'Are you sure want to delete this item correlated with this transaction? This action can not be restored',
+                    [
+                      {
+                        text: 'Cancel',
+                        style: 'cancel',
+                      },
+                      {
+                        text: 'OK',
+                        onPress: async () => {
+                          handleDeleteTransactionDetail(
+                            item.ItemTransaction.ItemId,
+                            item.ItemTransaction.TransactionId,
+                          );
+                        },
+                      },
+                    ],
+                  );
                 }}
                 disabled={loadingDelete}
               ></CatetinButton>

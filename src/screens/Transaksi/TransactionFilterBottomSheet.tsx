@@ -188,6 +188,7 @@ function TransactionSortBottomSheet({ bottomSheetRefFilter, onApplyFilter }: ITr
                 onChange={(_: any, date: Date | undefined) => {
                   setStartDate(date as Date);
                 }}
+                maximumDate={new Date()}
                 mode="date"
               />
             </View>
@@ -200,6 +201,7 @@ function TransactionSortBottomSheet({ bottomSheetRefFilter, onApplyFilter }: ITr
                   onChange={(_: any, date: Date | undefined) => {
                     setEndDate(date as Date);
                   }}
+                  maximumDate={new Date()}
                 />
               </View>
             )}
@@ -268,7 +270,7 @@ function TransactionSortBottomSheet({ bottomSheetRefFilter, onApplyFilter }: ITr
                     </View>
                     <View>
                       <Text style={tw`text-base`}>
-                        {singleBarang.stock}pcs @IDR {singleBarang.price.toLocaleString()}
+                        {singleBarang.stock}pcs @IDR {singleBarang.price.toLocaleString('id-ID')}
                       </Text>
                     </View>
                   </TouchableOpacity>

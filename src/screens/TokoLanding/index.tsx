@@ -74,7 +74,7 @@ function TokoLanding() {
         <CatetinButton
           title="Lanjutkan"
           style={tw`mb-3`}
-          disabled={loadingSubmit}
+          disabled={loadingSubmit || !tokoName}
           onPress={() => {
             onSubmit();
           }}

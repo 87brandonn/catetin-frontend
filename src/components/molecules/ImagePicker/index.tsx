@@ -6,7 +6,7 @@ import tw from 'twrnc';
 import { handleUploadImage } from '../../../utils';
 
 interface ICatetinImagePicker {
-  data: string | undefined;
+  data: string | undefined | null;
   onUploadImage?: (data: string) => void;
   containerStyle?: StyleProp<ViewStyle>;
   avatarStyle?: ImageStyle | undefined;

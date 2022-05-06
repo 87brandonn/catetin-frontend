@@ -55,7 +55,7 @@ function BarangDetailBottomSheet({ data, loading }: IBarangDetailBottomSheet) {
             <Text style={tw`text-lg font-medium`}>Nama Barang</Text>
             <Text style={tw`text-base`}>{data?.name}</Text>
             <Text style={tw`text-lg font-medium`}>Harga</Text>
-            <Text style={tw`text-base`}>IDR {data?.price.toLocaleString()}</Text>
+            <Text style={tw`text-base`}>IDR {data?.price.toLocaleString('id-ID')}</Text>
             <Text style={tw`text-lg font-medium`}>Stok</Text>
             <Text style={tw`text-base`}>{data?.stock}</Text>
             <Text style={tw`text-lg font-medium`}>Kategori</Text>
@@ -69,11 +69,18 @@ function BarangDetailBottomSheet({ data, loading }: IBarangDetailBottomSheet) {
                   <Text style={tw`text-lg font-medium mb-1`}>Histori transaksi: </Text>
                   {data?.Transactions.map((transaksi) => (
                     <View style={tw`bg-white relative shadow-lg px-4 py-2 rounded-[12px] mb-4`} key={transaksi.id}>
-                      {transaksi.deleted && <Text style={tw`text-red-500 font-medium mb-1`}>Transaksi tidak tersedia.</Text>}
+                      {transaksi.deleted && (
+                        <Text style={tw`text-red-500 font-medium mb-1`}>Transaksi tidak tersedia.</Text>
+                      )}
                       <View style={tw`${transaksi.deleted ? 'opacity-30' : 'opacity-100'} `}>
                         <Text style={tw`text-lg font-bold`}>{transaksi.title}</Text>
                         <Text style={tw`text-base`}>Jumlah: {transaksi.ItemTransaction.amount}</Text>
-                        <Text style={tw`text-base`}>Total: IDR {transaksi.ItemTransaction.total.toLocaleString()}</Text>
+                        <Text style={tw`text-base`}>
+                          Harga: {transaksi.ItemTransaction.price.toLocaleString('id-ID')}
+                        </Text>
+                        <Text style={tw`text-base`}>
+                          Total: IDR {transaksi.ItemTransaction.total.toLocaleString('id-ID')}
+                        </Text>
                         <Text style={tw`text-base`}>Notes: {transaksi.notes || '-'}</Text>
                         <Text style={tw`text-3 text-gray-400 mt-2`}>
                           {moment(transaksi.transaction_date).fromNow()}

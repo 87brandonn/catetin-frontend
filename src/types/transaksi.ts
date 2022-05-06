@@ -13,11 +13,13 @@ export interface ICatetinTransaksi {
 }
 export interface ICatetinTransaksiDetail {
   amount: number;
+  price: number;
   deleted: boolean;
   createdAt: Date;
   updatedAt: Date;
   ItemId: number;
-  total : number;
+  notes: string;
+  total: number;
   TransactionId: number;
 }
 export type ICatetinTransaksiWithDetail = ICatetinTransaksi & {

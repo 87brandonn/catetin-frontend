@@ -8,6 +8,7 @@ import tw from 'twrnc';
 import { axiosCatetin } from '../../api';
 import CatetinButton from '../../components/molecules/Button';
 import CatetinInput from '../../components/molecules/Input';
+import CatetinToast from '../../components/molecules/Toast';
 import { useAppSelector } from '../../hooks';
 import { RootState } from '../../store';
 import { ICatetinBarangWithTransaksiDetail } from '../../types/barang';
@@ -44,20 +45,13 @@ function TransactionEditQuantity(props: {
         transaksi_id: selectedTransaction,
         barang_id: itemData?.id,
         amount: itemData?.ItemTransaction.amount,
+        price: itemData?.ItemTransaction.price,
+        notes: itemData?.ItemTransaction.notes,
       });
-      Toast.show({
-        type: 'customToast',
-        text2: `Berhasil melakukan update jumlah`,
-        position: 'bottom',
-      });
+      CatetinToast(200, 'default', 'Berhasil melakukan update detail');
       navigation.navigate('Transaction Detail');
     } catch (err: any) {
-      console.log(err);
-      Toast.show({
-        type: 'customToast',
-        text2: `Gagal melakukan update jumlah barang`,
-        position: 'bottom',
-      });
+      CatetinToast(err?.response?.status, 'error', 'Gagal melakukan update detail');
     } finally {
       setLoadingSave(false);
     }
@@ -76,7 +70,32 @@ function TransactionEditQuantity(props: {
           key={itemData?.picture}
         ></Avatar>
       </View>
-      <View style={tw`mb-4`}>
+      <View style={tw`mb-2`}>
+        <Text style={tw`text-base font-medium`}>Harga</Text>
+        <CatetinInput
+          value={(itemData?.ItemTransaction.price !== 0 && itemData?.ItemTransaction.price?.toString()) || ''}
+          onChangeText={(text) => {
+            setItemData(
+              (prevState) =>
+                ({
+                  ...prevState,
+                  ItemTransaction: {
+                    ...(prevState?.ItemTransaction || {}),
+                    price: parseInt(text || '0', 10),
+                  },
+                } as ICatetinBarangWithTransaksiDetail),
+            );
+          }}
+          style={tw`${props.route.params.type === '3' ? 'text-gray-500' : ''} mb-1`}
+          keyboardType={'numeric'}
+          pointerEvents={props.route.params.type === '3' ? 'none' : 'auto'}
+          placeholder="Jumlah"
+          bottomSheet={true}
+        ></CatetinInput>
+        <Text style={tw`text-gray-500`}>
+          Note: Harga tidak dapat diubah apabila jenis transaksi adalah penjualan barang.
+        </Text>
+        <Text style={tw`text-base font-medium mt-2`}>Jumlah</Text>
         <CatetinInput
           value={(itemData?.ItemTransaction.amount !== 0 && itemData?.ItemTransaction.amount.toString()) || ''}
           onChangeText={(text) => {
@@ -103,16 +122,34 @@ function TransactionEditQuantity(props: {
             );
           }}
           keyboardType="numeric"
-          style={tw`border-0 border-b`}
           placeholder="Jumlah"
           bottomSheet={true}
         ></CatetinInput>
+        {error && (
+          <View style={tw`mt-2`}>
+            <Text style={tw`text-red-500`}>Jumlah barang pada transaksi ini melebihi stok yang tersedia</Text>
+          </View>
+        )}
+        <Text style={tw`text-base font-medium mt-2`}>Notes</Text>
+        <CatetinInput
+          value={itemData?.ItemTransaction.notes}
+          onChangeText={(text) => {
+            setItemData(
+              (prevState) =>
+                ({
+                  ...prevState,
+                  ItemTransaction: {
+                    ...(prevState?.ItemTransaction || {}),
+                    notes: text,
+                  },
+                } as ICatetinBarangWithTransaksiDetail),
+            );
+          }}
+          placeholder="Notes"
+          bottomSheet={true}
+        ></CatetinInput>
       </View>
-      {error && (
-        <View style={tw`mb-4`}>
-          <Text style={tw`text-red-500`}>Jumlah barang pada transaksi ini melebihi stok yang tersedia</Text>
-        </View>
-      )}
+
       <View>
         <CatetinButton
           title="Save"

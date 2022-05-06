@@ -1,5 +1,5 @@
 import BottomSheet from '@gorhom/bottom-sheet';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import chunk from 'lodash/chunk';
 import moment from 'moment';
 import 'moment/min/locales';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -7,7 +7,6 @@ import { RefreshControl, Text, TouchableOpacity, View } from 'react-native';
 import { Avatar, Badge } from 'react-native-elements';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import tw from 'twrnc';
-import chunk from 'lodash/chunk';
 import { axiosCatetin } from '../../api';
 import CatetinButton from '../../components/molecules/Button';
 import CatetinToast from '../../components/molecules/Toast';
@@ -161,7 +160,6 @@ function Transaksi() {
               style={tw`shadow-lg bg-white rounded-[12px] px-3 py-2 mb-2 flex flex-row justify-between`}
               key={item.id}
               onPress={() => {
-                bottomSheetRefDetail.current?.close();
                 dispatch(setEditedTransaction(null));
                 dispatch(setSelectedTransaction(item.id));
                 bottomSheetRefDetail.current?.expand();
@@ -169,8 +167,8 @@ function Transaksi() {
             >
               <View>
                 <Text style={tw`font-bold text-xl`}>{item.title}</Text>
-                <Text style={tw`font-500 text-lg`}>IDR {item.nominal?.toLocaleString()}</Text>
                 {(item.notes && <Text style={tw`text-slate-500 text-sm`}>{item.notes}</Text>) || null}
+                <Text style={tw`font-500 text-lg`}>IDR {item.nominal?.toLocaleString('id-ID')}</Text>
                 {item.Items.length > 0 && (
                   <View style={tw`mt-1 mb-2`}>
                     {chunk(item.Items, 4).map((itemChunk, index) => (

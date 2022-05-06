@@ -82,7 +82,7 @@ function CreateModal({
               }}
               keyboardType="numeric"
               value={(value !== 0 && value.toString()) || ''}
-              disabled={watch('id') !== 0}
+              disabled={watch('id') !== 0 && watch('transactions').length > 0}
             />
           )}
           name="stok"

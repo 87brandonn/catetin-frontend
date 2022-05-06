@@ -1,6 +1,6 @@
 export interface ICatetinStore {
   name: string;
-  picture: string;
+  picture: string | null;
   createdAt: Date;
   deleted: boolean;
   id: number;

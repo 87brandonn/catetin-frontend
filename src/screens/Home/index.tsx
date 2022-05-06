@@ -325,10 +325,8 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
 
   const [activePeriode, setActivePeriode] = useState('all');
   const Stack = createStackNavigator();
-  const defaultFrom = new Date();
-  const defaultTo = new Date();
-  defaultFrom.setUTCHours(0, 0, 0, 0);
-  defaultTo.setUTCHours(23, 59, 59, 999);
+  const defaultFrom = moment().startOf('days').subtract(1, 'days').toDate();
+  const defaultTo = moment().endOf('days').toDate();
   const [customDate, setCustomDate] = useState<{ from: Date; until: Date }>({
     from: defaultFrom,
     until: defaultTo,
@@ -397,15 +395,16 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     } else {
       if (activeSubPeriod === 'tanggal') {
         finalObj = {
-          start_date: moment(customDate.from).toISOString(),
-          end_date: moment(customDate.until).toISOString(),
+          start_date: moment(customDate.from).startOf('days').toISOString(),
+          end_date: moment(customDate.until).endOf('days').toISOString(),
         };
       } else if (activeSubPeriod === 'periode') {
         finalObj = {
           start_date: moment()
+            .startOf('days')
             .subtract(customPeriod.value as any, customPeriod.date as any)
             .toISOString(),
-          end_date: moment().toISOString(),
+          end_date: moment().endOf('days').toISOString(),
         };
       }
     }
@@ -619,7 +618,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
           ) : (
             <LineChart
               data={{
-                labels: graphData?.map((data) => moment(data.date).format('DD MMMM YYYY')) || [],
+                labels: graphData?.map((data) => moment(data.date).format('DD-MM-YY')) || [],
                 datasets: [
                   {
                     data: graphData?.map((data) => parseInt(data.data.outcome?.[0].sum_nominal || '0', 10)) || [],
@@ -630,6 +629,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
                     color: (opacity = 1) => 'rgb(96,165,250)',
                   },
                 ],
+                legend: ['Pengeluaran', 'Pemasukan'],
               }}
               formatYLabel={(yValue) => abbrNum(yValue, 0)}
               width={Dimensions.get('window').width}
@@ -677,7 +677,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
                   tvParallaxProperties=""
                 />
                 <Text style={tw`text-3xl font-bold ${impressionData?.profit ? 'text-blue-500' : 'text-red-500'}`}>
-                  IDR {impressionData?.value.toLocaleString()}
+                  IDR {impressionData?.value.toLocaleString('id-ID')}
                 </Text>
               </View>
             )}
@@ -689,7 +689,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
                 <View style={{ width: '75%', height: 20, borderRadius: 4 }} />
               </SkeletonPlaceholder>
             ) : (
-              <Text style={tw`text-3xl font-bold`}>IDR {totalIncome.toLocaleString()}</Text>
+              <Text style={tw`text-3xl font-bold`}>IDR {totalIncome.toLocaleString('id-ID')}</Text>
             )}
             <Text style={tw`text-sm text-slate-500`}>Note: Sudah termasuk penjualan barang dan pemasukan lain</Text>
           </View>
@@ -700,7 +700,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
                 <View style={{ width: '75%', height: 20, borderRadius: 4 }} />
               </SkeletonPlaceholder>
             ) : (
-              <Text style={tw`text-3xl font-bold`}>IDR {totalOutcome.toLocaleString()}</Text>
+              <Text style={tw`text-3xl font-bold`}>IDR {totalOutcome.toLocaleString('id-ID')}</Text>
             )}
             <Text style={tw`text-sm text-slate-500`}>Note: Sudah termasuk pembelian barang dan pengeluaran lain</Text>
           </View>
@@ -739,7 +739,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
                       </View>
                       <View>
                         <Text style={tw`text-base`}>
-                          Pemasukan: IDR {parseInt(item?.total_nominal_transactions, 10).toLocaleString()}
+                          Pemasukan: IDR {parseInt(item?.total_nominal_transactions, 10).toLocaleString('id-ID')}
                         </Text>
                       </View>
                     </View>
@@ -786,7 +786,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
                       </View>
                       <View>
                         <Text style={tw`text-base`}>
-                          Terjual: {parseInt(item?.total_amount_transactions, 10).toLocaleString()}
+                          Terjual: {parseInt(item?.total_amount_transactions, 10).toLocaleString('id-ID')}
                         </Text>
                       </View>
                     </View>
@@ -817,7 +817,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
                   <Text style={tw`self-center text-xl font-bold text-blue-500 mr-3`}>{index + 1}</Text>
                   <View>
                     <Text style={tw`font-bold text-xl`}>{transaksi?.title}</Text>
-                    <Text style={tw`font-500 text-lg`}>IDR {transaksi?.nominal?.toLocaleString()}</Text>
+                    <Text style={tw`font-500 text-lg`}>IDR {transaksi?.nominal?.toLocaleString('id-ID')}</Text>
                     {(transaksi?.notes && <Text style={tw`text-slate-500 text-sm`}>{transaksi?.notes}</Text>) || null}
                     {(transaksi?.Items || [])?.length > 0 && (
                       <View style={tw`flex flex-row mt-1 mb-2`}>
@@ -868,7 +868,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
                   <Text style={tw`self-center text-xl font-bold text-blue-500 mr-3`}>{index + 1}</Text>
                   <View>
                     <Text style={tw`font-bold text-xl`}>{transaksi?.title}</Text>
-                    <Text style={tw`font-500 text-lg`}>IDR {transaksi?.nominal?.toLocaleString()}</Text>
+                    <Text style={tw`font-500 text-lg`}>IDR {transaksi?.nominal?.toLocaleString('id-ID')}</Text>
                     {(transaksi?.notes && <Text style={tw`text-slate-500 text-sm`}>{transaksi?.notes}</Text>) || null}
                     {(transaksi?.Items || [])?.length > 0 && (
                       <View style={tw`flex flex-row mt-1 mb-2`}>

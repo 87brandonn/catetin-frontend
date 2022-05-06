@@ -11,6 +11,7 @@ import tw from 'twrnc';
 import * as yup from 'yup';
 import { axiosCatetin } from '../../api';
 import CatetinButton from '../../components/molecules/Button';
+import CatetinImagePicker from '../../components/molecules/ImagePicker';
 import CatetinInput from '../../components/molecules/Input';
 import { useAppSelector } from '../../hooks';
 import { RootState } from '../../store';
@@ -118,6 +119,7 @@ function TransactionDetailAddBarang(props: {
         id: selectedTransaction,
       });
     } catch (err: any) {
+      console.error(err);
       Toast.show({
         type: 'customToast',
         text2: err.response?.data?.message,
@@ -134,18 +136,16 @@ function TransactionDetailAddBarang(props: {
         <Controller
           control={control}
           render={({ field: { onChange, value } }) => (
-            <Avatar
+            <CatetinImagePicker
               size={300}
-              source={{
-                uri: value || undefined,
+              rounded={false}
+              data={value}
+              onUploadImage={(data) => {
+                onChange(data);
               }}
-              onPress={async () => {
-                const url = await handleOpenProfileImage();
-                onChange(url);
-              }}
-              avatarStyle={tw`rounded-[8px]`}
+              avatarStyle={tw`rounded-[12px]`}
               containerStyle={tw`bg-gray-300 rounded-[12px] mb-4`}
-            ></Avatar>
+            ></CatetinImagePicker>
           )}
           name="barang_picture"
         />

@@ -1,6 +1,6 @@
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import React from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, Platform, Text, TouchableOpacity, View } from 'react-native';
 import { Icon } from 'react-native-elements';
 import tw from 'twrnc';
 
@@ -27,9 +27,22 @@ const bottomNavs = [
   },
 ];
 
+const IPHONE12_H = 844;
+const IPHONE12_Max = 926;
+const IPHONE12_Mini = 780;
+const { height: D_HEIGHT, width: D_WIDTH } = Dimensions.get('window');
+
 function TabBar({ state, descriptors, navigation }: BottomTabBarProps): React.ReactNode {
   return (
-    <View style={{ ...tw`bg-neutral-50 flex-row py-4 border-t border-slate-100` }}>
+    <View
+      style={{
+        ...tw`bg-neutral-50 flex-row border-t border-slate-100 pt-4 ${
+          Platform.OS === 'ios' && (D_HEIGHT === IPHONE12_H || D_HEIGHT === IPHONE12_Max || D_HEIGHT === IPHONE12_Mini)
+            ? 'pb-[28]'
+            : 'pb-4'
+        }`,
+      }}
+    >
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
         const show = options.tabBarStyle?.display !== 'none';

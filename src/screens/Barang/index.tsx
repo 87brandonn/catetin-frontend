@@ -37,6 +37,7 @@ export interface IFormSchema {
   stok: number;
   barang_picture: string | null;
   category: ICatetinItemCategory[];
+  transactions: ICatetinTransaksi[];
 }
 
 const schema = yup.object().shape({
@@ -46,6 +47,7 @@ const schema = yup.object().shape({
   stok: yup.number().required('Stok is required'),
   barang_picture: yup.mixed(),
   category: yup.mixed(),
+  transactions: yup.mixed(),
 });
 
 function Barang() {
@@ -65,15 +67,23 @@ function Barang() {
       harga: 0,
       barang_picture: null,
       category: [],
+      transactions: [],
     },
   });
 
   const { activeStore } = useAppSelector((state: RootState) => state.store);
 
   const [loading, setLoading] = useState(false);
+  const [originalBarang, setOriginalBarang] = useState<
+    (ICatetinBarang & {
+      ItemCategories: ICatetinItemCategory[];
+      Transactions: ICatetinTransaksi[];
+    })[]
+  >([]);
   const [barang, setBarang] = useState<
     (ICatetinBarang & {
       ItemCategories: ICatetinItemCategory[];
+      Transactions: ICatetinTransaksi[];
     })[]
   >([]);
   const [loadingFetch, setLoadingFetch] = useState(true);
@@ -106,6 +116,7 @@ function Barang() {
         } = await axiosCatetin.get(`/barang/${activeStore}/list`, {
           params,
         });
+        setOriginalBarang(data);
         setBarang(data);
       } catch (err: any) {
         CatetinToast(err?.response?.status, 'error', 'Terjadi kesalahan. Gagal mengambil data barang.');
@@ -139,6 +150,7 @@ function Barang() {
   const handleEdit = (
     barang: ICatetinBarang & {
       ItemCategories: ICatetinItemCategory[];
+      Transactions: ICatetinTransaksi[];
     },
   ) => {
     setValue('name', barang.name);
@@ -147,6 +159,7 @@ function Barang() {
     setValue('barang_picture', barang.picture);
     setValue('stok', barang.stock);
     setValue('category', barang.ItemCategories);
+    setValue('transactions', barang.Transactions);
     bottomSheetRef.current?.expand();
   };
 
@@ -341,7 +354,7 @@ function Barang() {
       <View style={tw`flex-1`}>
         {loadingFetch ? (
           <ActivityIndicator />
-        ) : barang?.length === 0 ? (
+        ) : originalBarang?.length === 0 ? (
           <View style={tw`flex-1 justify-center items-center`}>
             <Text style={tw`font-semibold text-2xl mb-1`}>Tidak ada barang</Text>
             <CatetinButton
@@ -358,6 +371,10 @@ function Barang() {
                 bottomSheetRef.current?.expand();
               }}
             />
+          </View>
+        ) : barang?.length === 0 ? (
+          <View style={tw`flex-1 justify-center items-center`}>
+            <Text style={tw`font-semibold text-2xl mb-1`}>Barang tidak ditemukan</Text>
           </View>
         ) : (
           <CatetinScrollView
@@ -418,7 +435,7 @@ function Barang() {
                           </Text>
                         </View>
                         <View>
-                          <Text style={tw``}>IDR {singleBarang.price.toLocaleString()}</Text>
+                          <Text style={tw``}>IDR {singleBarang.price.toLocaleString('id-ID')}</Text>
                         </View>
                         <View style={tw`flex flex-row flex-1 mt-1`}>
                           <TouchableOpacity

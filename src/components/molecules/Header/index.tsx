@@ -26,13 +26,15 @@ import CatetinToast from '../Toast';
 
 interface FormData {
   name: string;
-  picture: string;
+  picture: string | null;
+  storeId: number;
 }
 
 const schema = yup
   .object({
     name: yup.string().required('Nama toko is required'),
-    picture: yup.string(),
+    picture: yup.mixed(),
+    storeId: yup.number(),
   })
   .required();
 
@@ -53,11 +55,12 @@ function Header({ title = '' }: { title?: string }) {
     watch,
     setValue,
     reset,
-  } = useForm({
+  } = useForm<FormData>({
     resolver: yupResolver(schema),
     defaultValues: {
       name: '',
-      picture: '',
+      picture: null,
+      storeId: 0,
     },
   });
 
@@ -103,15 +106,17 @@ function Header({ title = '' }: { title?: string }) {
   }, [fetchProfile]);
 
   const onSubmit = async (data: FormData, navigation: any) => {
+    const { storeId, ...rest } = data;
     setLoadingAddStore(true);
     try {
-      await axiosCatetin.post(`/store`, data);
+      await axiosCatetin.post(`/store`, { ...rest, id: storeId === 0 ? undefined : storeId });
       reset({
         name: '',
-        picture: '',
+        picture: null,
+        storeId: 0,
       });
       navigation.navigate('Store List');
-      CatetinToast(200, 'default', 'Succesfully add store');
+      CatetinToast(200, 'default', `Succesfully ${storeId === 0 ? 'add' : 'edit'} store`);
     } catch (err: any) {
       CatetinToast(err?.response?.status, 'error', 'Internal error occured. Failed to add store');
     } finally {
@@ -132,6 +137,11 @@ function Header({ title = '' }: { title?: string }) {
                   rightTitle="Add"
                   showRight
                   onPressRight={() => {
+                    reset({
+                      name: '',
+                      picture: null,
+                      storeId: 0,
+                    });
                     props.navigation.navigate('Add Store');
                   }}
                   onRefresh={() => {
@@ -148,7 +158,20 @@ function Header({ title = '' }: { title?: string }) {
                             data={store.picture}
                             pressable={false}
                           />
-                          <Text style={tw`text-lg font-medium ml-3`}>{store.name}</Text>
+                          <View style={tw`ml-3`}>
+                            <Text style={tw`text-lg font-medium `}>{store.name}</Text>
+                            <Text
+                              style={tw`underline font-medium text-blue-500 `}
+                              onPress={() => {
+                                setValue('storeId', store.id);
+                                setValue('name', store.name);
+                                setValue('picture', store.picture);
+                                props.navigation.navigate('Add Store');
+                              }}
+                            >
+                              Edit
+                            </Text>
+                          </View>
                         </View>
                         <Icon
                           name={`radio-button-${activeStore === store.id ? 'on' : 'off'}`}

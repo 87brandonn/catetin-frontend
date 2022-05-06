@@ -46,7 +46,7 @@ function TransactionDetailBottomSheet({ bottomSheetRefDetail }: ITransactionDeta
           </Stack.Screen>
           <Stack.Screen name="Transaction Edit Quantity">
             {(props) => (
-              <CatetinBottomSheetWrapper {...props} title="Jumlah Barang" showBack to="Transaction Detail">
+              <CatetinBottomSheetWrapper {...props} title="Edit Barang" showBack to="Transaction Detail">
                 <TransactionEditQuantity {...props} />
               </CatetinBottomSheetWrapper>
             )}
