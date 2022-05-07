@@ -1,7 +1,7 @@
 import BottomSheet from '@gorhom/bottom-sheet';
 import chunk from 'lodash/chunk';
 import moment from 'moment';
-import 'moment/min/locales';
+import 'moment/locale/id';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { RefreshControl, Text, TouchableOpacity, View } from 'react-native';
 import { Avatar, Badge } from 'react-native-elements';
@@ -20,6 +20,7 @@ import TransactionAction from './TransactionAction';
 import TransactionCreateBottomSheet from './TransactionCreateBottomSheet';
 import TransactionDetailBottomSheet from './TransactionDetailBottomSheet';
 import TransactionFilterBottomSheet from './TransactionFilterBottomSheet';
+moment.locale('id');
 
 function Transaksi() {
   const dispatch = useAppDispatch();
@@ -192,9 +193,7 @@ function Transaksi() {
                   </View>
                 )}
                 <View>
-                  <Text style={tw`text-3`}>
-                    {moment(item.transaction_date).locale('id').format('dddd, DD MMMM YYYY')}
-                  </Text>
+                  <Text style={tw`text-3`}>{moment(item.transaction_date).format('dddd, DD MMMM YYYY')}</Text>
                 </View>
               </View>
             </TouchableOpacity>

@@ -1,4 +1,5 @@
 import moment from 'moment';
+import 'moment/locale/id';
 import React, { Fragment, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { Avatar } from 'react-native-elements';
@@ -7,7 +8,7 @@ import tw from 'twrnc';
 import { ICatetinBarang } from '../../types/barang';
 import { ICatetinItemCategory } from '../../types/itemCategory';
 import { ICatetinTransaksi, ICatetinTransaksiDetail } from '../../types/transaksi';
-
+moment.locale('id');
 interface IBarangDetailBottomSheet {
   data:
     | (ICatetinBarang & {
@@ -92,13 +93,9 @@ function BarangDetailBottomSheet({ data, loading }: IBarangDetailBottomSheet) {
               )}
             </View>
             <Text style={tw`text-lg font-medium`}>Tanggal Dibuat</Text>
-            <Text style={tw`text-base`}>
-              {moment(data?.createdAt).locale('id').format('dddd, DD MMMM YYYY @ HH:mm')}
-            </Text>
+            <Text style={tw`text-base`}>{moment(data?.createdAt).format('dddd, DD MMMM YYYY @ HH:mm')}</Text>
             <Text style={tw`text-lg font-medium`}>Terakhir Diperbarui</Text>
-            <Text style={tw`text-base`}>
-              {moment(data?.updatedAt).locale('id').format('dddd, DD MMMM YYYY @ HH:mm')}
-            </Text>
+            <Text style={tw`text-base`}>{moment(data?.updatedAt).format('dddd, DD MMMM YYYY @ HH:mm')}</Text>
           </View>
         </>
       )}

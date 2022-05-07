@@ -16,7 +16,7 @@
           "file": "sentry-expo/upload-sourcemaps",
           "config": {
             "organization": "catetin",
-            "project": "React Native",
+            "project": "react-native",
             "authToken": "29a37f8ecba84ed8a93ea673a11270ffeca0dcbf58f848b2ad13734f3288ad06"
           }
         }

@@ -3,7 +3,8 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { NavigationContainer } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { createStackNavigator } from '@react-navigation/stack';
-import moment from 'moment-timezone';
+import moment from 'moment';
+import 'moment/locale/id';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Dimensions, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
 import ActionSheet from 'react-native-actionsheet';
@@ -24,6 +25,8 @@ import { RootState } from '../../store';
 import { ICatetinBarang } from '../../types/barang';
 import { ICatetinTransaksiWithDetail } from '../../types/transaksi';
 import { abbrNum } from '../../utils';
+
+moment.locale('id');
 
 function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootStackParamList, 'Home'>) {
   const [refreshing, setRefreshing] = useState(false);
@@ -73,7 +76,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
   }>({
     start_date: undefined,
     end_date: undefined,
-    timezone: moment.tz.guess(),
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   });
   const { activeStore } = useAppSelector((state: RootState) => state.store);
 
@@ -408,7 +411,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
         };
       }
     }
-    setDateParams({ ...finalObj, timezone: moment.tz.guess() });
+    setDateParams({ ...finalObj, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone });
     bottomSheetRef.current?.close();
   };
 
@@ -839,9 +842,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
                       </View>
                     )}
                     <View>
-                      <Text style={tw`text-3`}>
-                        {moment(transaksi?.transaction_date).locale('id').format('dddd, DD MMMM YYYY')}
-                      </Text>
+                      <Text style={tw`text-3`}>{moment(transaksi?.transaction_date).format('dddd, DD MMMM YYYY')}</Text>
                     </View>
                   </View>
                 </View>
@@ -890,9 +891,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
                       </View>
                     )}
                     <View>
-                      <Text style={tw`text-3`}>
-                        {moment(transaksi?.transaction_date).locale('id').format('dddd, DD MMMM YYYY')}
-                      </Text>
+                      <Text style={tw`text-3`}>{moment(transaksi?.transaction_date).format('dddd, DD MMMM YYYY')}</Text>
                     </View>
                   </View>
                 </View>

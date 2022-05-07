@@ -1,10 +1,9 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import moment from 'moment';
-import 'moment/min/locales';
+import 'moment/locale/id';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Text, View } from 'react-native';
-import { Avatar, Button } from 'react-native-elements';
+import { Avatar } from 'react-native-elements';
 import tw from 'twrnc';
 import { axiosCatetin } from '../../api';
 import CatetinButton from '../../components/molecules/Button';
@@ -14,6 +13,7 @@ import { optionsTransaksi } from '../../static/optionsTransaksi';
 import { RootState } from '../../store';
 import { setEditedTransaction } from '../../store/features/transactionSlice';
 import { ICatetinTransaksiWithDetail } from '../../types/transaksi';
+moment.locale('id');
 
 function TransactionDetail({ refreshing, onRefresh }: { refreshing: boolean; onRefresh: (refresh: boolean) => void }) {
   const [loadingDetail, setLoadingDetail] = useState(true);
@@ -88,9 +88,7 @@ function TransactionDetail({ refreshing, onRefresh }: { refreshing: boolean; onR
       <Text style={tw`text-base text-lg font-medium`}>Nama:</Text>
       <Text style={tw`text-base`}>{dataDetail?.title}</Text>
       <Text style={tw`text-base text-lg font-medium`}>Tanggal:</Text>
-      <Text style={tw`text-base`}>
-        {moment(dataDetail?.transaction_date).locale('id').format('dddd, DD MMMM YYYY')}
-      </Text>
+      <Text style={tw`text-base`}>{moment(dataDetail?.transaction_date).format('dddd, DD MMMM YYYY')}</Text>
       <Text style={tw`text-base text-lg font-medium`}>Waktu:</Text>
       <Text style={tw`text-base`}>{moment(dataDetail?.transaction_date).format('HH:mm')}</Text>
       <Text style={tw`text-base text-lg font-medium `}>Tipe:</Text>
