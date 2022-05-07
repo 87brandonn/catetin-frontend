@@ -193,7 +193,7 @@ export default function RootNavigation() {
     return <ImageBackground source={require('../assets/splash.png')} style={tw`w-full h-full`} />;
   }
   return (
-    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+    <>
       <PortalProvider>
         <NavigationContainer>
           {!loggedIn ? (
@@ -290,7 +290,7 @@ export default function RootNavigation() {
         </NavigationContainer>
       </PortalProvider>
       <Toast config={toastConfig} />
-    </SafeAreaProvider>
+    </>
   );
 }
 

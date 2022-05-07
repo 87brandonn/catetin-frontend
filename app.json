@@ -10,6 +10,19 @@
       "resizeMode": "contain",
       "backgroundColor": "#2461FF"
     },
+    "hooks": {
+      "postPublish": [
+        {
+          "file": "sentry-expo/upload-sourcemaps",
+          "config": {
+            "organization": "catetin",
+            "project": "React Native",
+            "authToken": "29a37f8ecba84ed8a93ea673a11270ffeca0dcbf58f848b2ad13734f3288ad06"
+          }
+        }
+      ]
+    },
+    "backgroundColor" : "#2461FF",
     "updates": {
       "fallbackToCacheTimeout": 0
     },
@@ -48,7 +61,8 @@
         {
           "userTrackingPermission": false
         }
-      ]
+      ],
+      ["sentry-expo"]
     ]
   }
 }
