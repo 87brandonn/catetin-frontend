@@ -135,7 +135,7 @@ function VerifyResetPassword(props: any) {
         <Text style={tw`mb-5`}>
           Don&apos;t receive email?{' '}
           {loadingResend ? (
-            <ActivityIndicator size={8} style={tw`ml-2`} />
+            <ActivityIndicator color="#2461FF" size={8} style={tw`ml-2`} />
           ) : (
             <Text
               style={tw`text-blue-500 font-bold`}

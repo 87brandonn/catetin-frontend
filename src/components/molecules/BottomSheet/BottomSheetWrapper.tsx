@@ -4,6 +4,7 @@ import React from 'react';
 import { RefreshControl, Text, View } from 'react-native';
 import { Icon } from 'react-native-elements';
 import tw from 'twrnc';
+import CatetinScrollView from '../../../layouts/ScrollView';
 
 interface ICatetinBottomSheetWrapper {
   children: React.ReactNode;
@@ -42,8 +43,8 @@ function CatetinBottomSheetWrapper({
   }
 
   return (
-    <BottomSheetScrollView
-      style={tw`px-4`}
+    <CatetinScrollView
+      style={tw`flex-1 bg-white px-4`}
       showsHorizontalScrollIndicator={false}
       showsVerticalScrollIndicator={false}
       refreshControl={
@@ -75,11 +76,10 @@ function CatetinBottomSheetWrapper({
             </TouchableOpacity>
           </View>
         )}
-
         <View />
       </View>
       <View style={tw`flex-1`}>{children}</View>
-    </BottomSheetScrollView>
+    </CatetinScrollView>
   );
 }
 

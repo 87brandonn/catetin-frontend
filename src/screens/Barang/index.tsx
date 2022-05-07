@@ -353,7 +353,7 @@ function Barang() {
 
       <View style={tw`flex-1`}>
         {loadingFetch ? (
-          <ActivityIndicator />
+          <ActivityIndicator color="#2461FF" />
         ) : originalBarang?.length === 0 ? (
           <View style={tw`flex-1 justify-center items-center`}>
             <Text style={tw`font-semibold text-2xl mb-1`}>Tidak ada barang</Text>

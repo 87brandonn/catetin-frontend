@@ -1,6 +1,5 @@
-import BottomSheet from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetBackdrop, BottomSheetModal } from '@gorhom/bottom-sheet';
 import { yupResolver } from '@hookform/resolvers/yup';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createStackNavigator, StackNavigationOptions, StackNavigationProp } from '@react-navigation/stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -232,6 +231,7 @@ function Header({ title = '' }: { title?: string }) {
           </Stack.Navigator>
         </NavigationContainer>
       </CatetinBottomSheet>
+
       <View>
         <Text style={tw`text-3xl font-bold`}>{title}</Text>
       </View>

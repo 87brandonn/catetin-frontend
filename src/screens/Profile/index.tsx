@@ -1,7 +1,6 @@
 import BottomSheet from '@gorhom/bottom-sheet';
 import { yupResolver } from '@hookform/resolvers/yup';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import moment from 'moment';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -9,6 +8,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { Alert, Switch, Text, TouchableOpacity, View } from 'react-native';
 import ActionSheet from 'react-native-actionsheet';
 import { Icon } from 'react-native-elements';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import tw from 'twrnc';
 import * as yup from 'yup';
@@ -411,31 +411,65 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
     }
   };
 
+  const [showFromManual, setShowFromManual] = useState(false);
+  const [showUntilManual, setShowUntilManual] = useState(false);
+  const [showAutomaticTime, setShowAutomaticTime] = useState(false);
+
   return (
     <AppLayout header={false}>
-      <CatetinBottomSheet bottomSheetRef={bottomSheetManualLaporanRef}>
+      <CatetinBottomSheet bottomSheetRef={bottomSheetManualLaporanRef} snapPoints={['45%']}>
         <CatetinBottomSheetWrapper single title="Unduh Laporan Keuangan" refreshable={false}>
           <View style={tw`flex-1 flex`}>
             <View style={tw`flex-1 mb-3 flex`}>
-              <View style={tw`flex-1 mr-3`}>
+              <View style={tw`flex-1 mb-3`}>
                 <Text style={tw`text-base font-medium`}>Dari</Text>
-                <DateTimePicker
-                  display="spinner"
-                  value={fromDateDownload}
-                  maximumDate={new Date()}
-                  onChange={(_, date: any) => {
-                    setFromDateDownload(date || new Date());
+                <TouchableOpacity
+                  onPress={() => {
+                    setShowFromManual(true);
                   }}
+                >
+                  <CatetinInput
+                    bottomSheet
+                    placeholder="Tanggal Dari"
+                    pointerEvents="none"
+                    value={moment(fromDateDownload).format('DD MMMM YYYY')}
+                  ></CatetinInput>
+                </TouchableOpacity>
+                <DateTimePickerModal
+                  isVisible={showFromManual}
+                  mode="date"
+                  onCancel={() => setShowFromManual(false)}
+                  onConfirm={(date) => {
+                    setFromDateDownload(date || new Date());
+                    setShowFromManual(false);
+                  }}
+                  date={fromDateDownload}
+                  maximumDate={new Date()}
                 />
               </View>
               <View style={tw`flex-1`}>
                 <Text style={tw`text-base font-medium`}>Sampai</Text>
-                <DateTimePicker
-                  display="spinner"
-                  value={toDateDownload}
-                  onChange={(_, date: any) => {
-                    setToDateDownload(date || new Date());
+                <TouchableOpacity
+                  onPress={() => {
+                    setShowUntilManual(true);
                   }}
+                >
+                  <CatetinInput
+                    bottomSheet
+                    placeholder="Tanggal Sampai"
+                    pointerEvents="none"
+                    value={moment(toDateDownload).format('DD MMMM YYYY')}
+                  ></CatetinInput>
+                </TouchableOpacity>
+                <DateTimePickerModal
+                  isVisible={showUntilManual}
+                  mode="date"
+                  onCancel={() => setShowUntilManual(false)}
+                  onConfirm={(date) => {
+                    setToDateDownload(date || new Date());
+                    setShowUntilManual(false);
+                  }}
+                  date={toDateDownload}
                   maximumDate={new Date()}
                 />
               </View>
@@ -457,16 +491,17 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
         <CatetinBottomSheetWrapper single title="Schedule Laporan Keuangan" refreshable={false}>
           <View style={tw`flex-1`}>
             {optionsSchedule.map((opt, index: number) => (
-              <TouchableOpacity
-                style={tw`px-3 mb-3 py-2 rounded-lg ${watchScheduler('type')?.value === index ? 'bg-blue-500' : ''}`}
-                key={opt}
-                onPress={() => {
-                  setValueScheduler('type', { label: opt, value: index });
-                  clearErrors('type');
-                }}
-              >
-                <Text style={tw`text-base ${watchScheduler('type')?.value === index ? 'text-white' : ''}`}>{opt}</Text>
-              </TouchableOpacity>
+              <View style={tw`px-3 mb-3 py-2 rounded-lg flex justify-between flex-row`} key={opt}>
+                <Text style={tw`text-base`}>{opt}</Text>
+                <Icon
+                  name={`radio-button-${watchScheduler('type')?.value === index ? 'on' : 'off'}`}
+                  iconStyle={tw`${watchScheduler('type')?.value === index ? 'text-blue-500' : ''}`}
+                  tvParallaxProperties=""
+                  onPress={() => {
+                    setValueScheduler('type', { label: opt, value: index });
+                  }}
+                />
+              </View>
             ))}
 
             {errorsScheduler.type && (
@@ -633,14 +668,30 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
                 <View style={tw`flex flex-row mb-3`}>
                   <View style={tw`flex-grow-1 flex-1`}>
                     <Text style={tw`mb-1`}>Waktu</Text>
-                    <DateTimePicker
-                      value={moment(watchScheduler('time')).toDate()}
-                      onChange={(_: any, date: any) => {
-                        setValueScheduler('time', moment(date || new Date()).toDate());
+                    <TouchableOpacity
+                      onPress={() => {
+                        setShowAutomaticTime(true);
                       }}
+                    >
+                      <CatetinInput
+                        bottomSheet
+                        placeholder="Waktu"
+                        pointerEvents="none"
+                        value={moment(watchScheduler('time')).format('HH:mm')}
+                      ></CatetinInput>
+                    </TouchableOpacity>
+                    <DateTimePickerModal
+                      isVisible={showAutomaticTime}
                       mode="time"
-                      display="spinner"
+                      onCancel={() => setShowAutomaticTime(false)}
+                      onConfirm={(date) => {
+                        setValueScheduler('time', moment(date || new Date()).toDate());
+                        setShowAutomaticTime(false);
+                      }}
+                      style={tw`bg-red-400`}
+                      date={moment(watchScheduler('time')).toDate()}
                     />
+
                     <Text style={tw`mt-3 text-red-500`}>{errorsScheduler.time?.message}</Text>
                   </View>
                   {watchScheduler('type') && watchScheduler('type')!.value !== 0 && (

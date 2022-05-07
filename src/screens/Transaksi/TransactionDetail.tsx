@@ -82,7 +82,7 @@ function TransactionDetail({ refreshing, onRefresh }: { refreshing: boolean; onR
   };
 
   return loadingDetail ? (
-    <ActivityIndicator />
+    <ActivityIndicator color="#2461FF" />
   ) : (
     <>
       <Text style={tw`text-base text-lg font-medium`}>Nama:</Text>

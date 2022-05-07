@@ -132,7 +132,7 @@ function TransactionDetailEdit(props: { route: RouteProp<ParamListBase, 'Transac
       </View>
 
       {loadingFetch ? (
-        <ActivityIndicator />
+        <ActivityIndicator color="#2461FF" />
       ) : (
         barang?.map((eachBarang, index) => (
           <View style={tw`px-4 py-2 shadow-lg bg-white rounded-[8px] mb-3`} key={eachBarang.id}>

@@ -204,7 +204,7 @@ function BarangFilterBottomSheet({ bottomSheetRefFilter, onApplyFilter }: IBaran
               ))}
             </View>
             {loadingCategory ? (
-              <ActivityIndicator />
+              <ActivityIndicator color="#2461FF" />
             ) : category?.length === 0 ? (
               <View style={tw`flex-1 bg-gray-400 py-3 px-4 rounded-lg shadow`}>
                 <Text style={tw`text-slate-100 text-base`}>Tidak ada category</Text>

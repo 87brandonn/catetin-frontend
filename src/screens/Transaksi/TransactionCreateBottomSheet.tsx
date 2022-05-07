@@ -1,6 +1,5 @@
 import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 import { yupResolver } from '@hookform/resolvers/yup';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator, StackNavigationOptions } from '@react-navigation/stack';
 import chunk from 'lodash/chunk';
@@ -8,6 +7,7 @@ import moment from 'moment';
 import React, { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Alert, Text, TouchableOpacity, View } from 'react-native';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import tw from 'twrnc';
 import * as yup from 'yup';
 import { axiosCatetin } from '../../api';
@@ -169,6 +169,8 @@ function TransactionCreateBottomSheet({
     }
   };
 
+  const [showDate, setShowDate] = useState(false);
+
   return (
     <CatetinBottomSheet bottomSheetRef={bottomSheetRef}>
       <NavigationContainer independent={true}>
@@ -195,26 +197,28 @@ function TransactionCreateBottomSheet({
                   </View>
                   <View style={tw`mb-4 flex-1`}>
                     <Text style={tw`mb-1 text-base`}>Tanggal Transaksi</Text>
-                    <DateTimePicker
-                      value={watch('tanggal')}
-                      onChange={(_: any, date: Date | undefined) => setValue('tanggal', date || new Date())}
-                      style={tw`mb-1`}
-                    />
-                    <DateTimePicker
-                      mode="time"
-                      display="spinner"
-                      value={watch('tanggal')}
-                      onChange={(_: any, date: Date | undefined) => {
-                        setValue(
-                          'tanggal',
-                          moment(watch('tanggal'))
-                            .set({
-                              hour: moment(date).hour(),
-                              minute: moment(date).minute(),
-                            })
-                            .toDate(),
-                        );
+                    <TouchableOpacity
+                      onPress={() => {
+                        setShowDate(true);
                       }}
+                    >
+                      <CatetinInput
+                        bottomSheet
+                        placeholder="Tanggal Transaksi"
+                        pointerEvents="none"
+                        value={moment(watch('tanggal')).format('DD MMMM YYYY HH:mm')}
+                      ></CatetinInput>
+                    </TouchableOpacity>
+                    <DateTimePickerModal
+                      isVisible={showDate}
+                      mode="datetime"
+                      onCancel={() => setShowDate(false)}
+                      onConfirm={(date) => {
+                        setValue('tanggal', date || new Date());
+                        setShowDate(false);
+                      }}
+                      date={moment(watch('tanggal')).toDate()}
+                      maximumDate={new Date()}
                     />
                   </View>
                   <View style={tw`mb-4 flex-1`}>

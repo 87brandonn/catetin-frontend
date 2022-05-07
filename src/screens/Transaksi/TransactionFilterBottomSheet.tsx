@@ -1,11 +1,11 @@
 import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import _ from 'lodash';
 import chunk from 'lodash/chunk';
 import moment from 'moment';
 import React, { Fragment, useCallback, useState } from 'react';
 import { ActivityIndicator, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { Icon } from 'react-native-elements';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import tw from 'twrnc';
 import { axiosCatetin } from '../../api';
 import CatetinBottomSheet from '../../components/molecules/BottomSheet';
@@ -91,6 +91,9 @@ function TransactionSortBottomSheet({ bottomSheetRefFilter, onApplyFilter }: ITr
       items: undefined,
     });
   };
+
+  const [showFrom, setShowFrom] = useState(false);
+  const [showUntil, setShowUntil] = useState(false);
 
   return (
     <CatetinBottomSheet bottomSheetRef={bottomSheetRefFilter}>
@@ -183,24 +186,54 @@ function TransactionSortBottomSheet({ bottomSheetRefFilter, onApplyFilter }: ITr
             </View>
             <View style={tw`flex-1`}>
               <Text style={tw`text-base`}>Dari</Text>
-              <DateTimePicker
-                value={start_date || new Date()}
-                onChange={(_: any, date: Date | undefined) => {
-                  setStartDate(date as Date);
+              <TouchableOpacity
+                onPress={() => {
+                  setShowFrom(true);
                 }}
-                maximumDate={new Date()}
+              >
+                <CatetinInput
+                  bottomSheet
+                  placeholder="Dari"
+                  pointerEvents="none"
+                  value={moment(start_date).format('DD MMMM YYYY')}
+                ></CatetinInput>
+              </TouchableOpacity>
+              <DateTimePickerModal
+                isVisible={showFrom}
                 mode="date"
+                onCancel={() => setShowFrom(false)}
+                onConfirm={(date) => {
+                  setStartDate(date as Date);
+                  setShowFrom(false);
+                }}
+                date={moment(start_date).toDate()}
+                maximumDate={new Date()}
               />
             </View>
             {range && (
-              <View style={tw`flex-1`}>
+              <View style={tw`flex-1 mt-2`}>
                 <Text style={tw`text-base`}>Sampai</Text>
-                <DateTimePicker
-                  value={end_date || new Date()}
-                  mode="date"
-                  onChange={(_: any, date: Date | undefined) => {
-                    setEndDate(date as Date);
+                <TouchableOpacity
+                  onPress={() => {
+                    setShowUntil(true);
                   }}
+                >
+                  <CatetinInput
+                    bottomSheet
+                    placeholder="Sampai"
+                    pointerEvents="none"
+                    value={moment(end_date).format('DD MMMM YYYY')}
+                  ></CatetinInput>
+                </TouchableOpacity>
+                <DateTimePickerModal
+                  isVisible={showUntil}
+                  mode="date"
+                  onCancel={() => setShowUntil(false)}
+                  onConfirm={(date) => {
+                    setEndDate(date as Date);
+                    setShowUntil(false);
+                  }}
+                  date={moment(end_date).toDate()}
                   maximumDate={new Date()}
                 />
               </View>
@@ -249,7 +282,7 @@ function TransactionSortBottomSheet({ bottomSheetRefFilter, onApplyFilter }: ITr
               ))}
             </View>
             {loadingBarang ? (
-              <ActivityIndicator />
+              <ActivityIndicator color="#2461FF" />
             ) : barang?.length === 0 ? (
               <View style={tw`flex-1 bg-gray-400 py-3 px-4 rounded-lg shadow`}>
                 <Text style={tw`text-slate-100 text-base`}>Tidak ada barang</Text>

@@ -58,7 +58,7 @@ function KategoriBarangSheet({ onSave, data: categoryData, ...rest }: IKategoriB
   return (
     <View>
       {loading ? (
-        <ActivityIndicator />
+        <ActivityIndicator color="#2461FF" />
       ) : (
         <View>
           <View style={tw`flex flex-row items-center mb-3`}>

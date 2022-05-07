@@ -1,8 +1,9 @@
 import BottomSheet from '@gorhom/bottom-sheet';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { NavigationContainer } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { createStackNavigator } from '@react-navigation/stack';
+import 'intl';
+import 'intl/locale-data/jsonp/en';
 import moment from 'moment';
 import 'moment/locale/id';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -10,10 +11,9 @@ import { Dimensions, RefreshControl, Text, TouchableOpacity, View } from 'react-
 import ActionSheet from 'react-native-actionsheet';
 import { LineChart } from 'react-native-chart-kit';
 import { Avatar, Badge, Button, Icon } from 'react-native-elements';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import tw from 'twrnc';
-import 'intl';
-import 'intl/locale-data/jsonp/en';
 import { axiosCatetin } from '../../api';
 import CatetinBottomSheet from '../../components/molecules/BottomSheet';
 import CatetinBottomSheetWrapper from '../../components/molecules/BottomSheet/BottomSheetWrapper';
@@ -417,6 +417,9 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     bottomSheetRef.current?.close();
   };
 
+  const [showFrom, setShowFrom] = useState(false);
+  const [showUntil, setShowUntil] = useState(false);
+
   return (
     <AppLayout headerTitle="Home" customStyle={tw``}>
       <CatetinBottomSheet bottomSheetRef={bottomSheetRef}>
@@ -427,7 +430,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
                 <CatetinBottomSheetWrapper {...props} title="Periode">
                   {periodeOptions.map((periode) => (
                     <View
-                      style={tw`flex flex-row justify-between mb-3 shadow rounded-lg px-3 py-2`}
+                      style={tw`flex flex-row justify-between mb-3 rounded-lg px-3 py-2`}
                       key={periode.label}
                     >
                       <Text style={tw`text-lg`}>{periode.label}</Text>
@@ -497,28 +500,58 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
               {(props) => (
                 <CatetinBottomSheetWrapper {...props} title="Custom Tanggal" showBack to="Periode">
                   <Text style={tw`text-lg font-500`}>Dari</Text>
-                  <DateTimePicker
-                    value={customDate.from}
-                    onChange={(event: any, date: Date | undefined) =>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setShowFrom(true);
+                    }}
+                  >
+                    <CatetinInput
+                      bottomSheet
+                      placeholder="Dari"
+                      pointerEvents="none"
+                      value={moment(customDate.from).format('DD MMMM YYYY')}
+                    ></CatetinInput>
+                  </TouchableOpacity>
+                  <DateTimePickerModal
+                    isVisible={showFrom}
+                    mode="date"
+                    onCancel={() => setShowFrom(false)}
+                    onConfirm={(date) => {
                       setCustomDate((prevState) => ({
                         ...prevState,
                         from: moment(date).startOf('days').toDate(),
-                      }))
-                    }
-                    mode="date"
-                    display="spinner"
+                      }));
+                      setShowFrom(false);
+                    }}
+                    date={moment(customDate.from).toDate()}
+                    maximumDate={new Date()}
                   />
-                  <Text style={tw`text-lg font-500`}>Sampai</Text>
-                  <DateTimePicker
-                    value={customDate.until}
-                    onChange={(event: any, date: Date | undefined) =>
+                  <Text style={tw`text-lg font-500 mt-3`}>Sampai</Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setShowUntil(true);
+                    }}
+                  >
+                    <CatetinInput
+                      bottomSheet
+                      placeholder="Sampai"
+                      pointerEvents="none"
+                      value={moment(customDate.until).format('DD MMMM YYYY')}
+                    ></CatetinInput>
+                  </TouchableOpacity>
+                  <DateTimePickerModal
+                    isVisible={showUntil}
+                    mode="date"
+                    onCancel={() => setShowUntil(false)}
+                    onConfirm={(date) => {
                       setCustomDate((prevState) => ({
                         ...prevState,
                         until: moment(date).endOf('days').toDate(),
-                      }))
-                    }
-                    mode="date"
-                    display="spinner"
+                      }));
+                      setShowUntil(false);
+                    }}
+                    date={moment(customDate.until).toDate()}
+                    maximumDate={new Date()}
                   />
                 </CatetinBottomSheetWrapper>
               )}

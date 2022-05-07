@@ -6,7 +6,7 @@ import * as Facebook from 'expo-facebook';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Image, KeyboardAvoidingView, Text, TouchableOpacity, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, Text, TouchableOpacity, View } from 'react-native';
 import { Icon } from 'react-native-elements';
 import tw from 'twrnc';
 import * as yup from 'yup';
@@ -157,7 +157,10 @@ function Register({ navigation: { navigate } }: NativeStackScreenProps<RootStack
   return (
     <AppLayout bottom={false} header={false}>
       <View style={tw`flex-1 px-4`}>
-        <KeyboardAvoidingView behavior="padding" style={tw`flex-1 justify-evenly flex`}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={tw`flex-1 justify-evenly flex`}
+        >
           <View style={tw`flex items-center shadow-xl`}>
             <Image source={require('../../assets/rounded-icon.png')} style={tw`w-[96px] h-[96px]`} />
           </View>

@@ -10,6 +10,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#2461FF"
     },
+    "userInterfaceStyle": "automatic",
     "hooks": {
       "postPublish": [
         {

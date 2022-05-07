@@ -32,7 +32,7 @@ function BarangDetailBottomSheet({ data, loading }: IBarangDetailBottomSheet) {
         onRequestClose={() => setViewBarangMode(false)}
       />
       {loading ? (
-        <ActivityIndicator />
+        <ActivityIndicator color="#2461FF" />
       ) : (
         <>
           <View style={tw`self-center mb-4`}>
