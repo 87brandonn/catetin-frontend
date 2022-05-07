@@ -7,13 +7,13 @@ import moment from 'moment';
 import React, { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Alert, Text, TouchableOpacity, View } from 'react-native';
-import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import tw from 'twrnc';
 import * as yup from 'yup';
 import { axiosCatetin } from '../../api';
 import CatetinBottomSheet from '../../components/molecules/BottomSheet';
 import CatetinBottomSheetWrapper from '../../components/molecules/BottomSheet/BottomSheetWrapper';
 import CatetinButton from '../../components/molecules/Button';
+import CatetinDateTimePicker from '../../components/molecules/DateTimePicker';
 import CatetinInput from '../../components/molecules/Input';
 import CatetinToast from '../../components/molecules/Toast';
 import { useAppDispatch, useAppSelector } from '../../hooks';
@@ -197,29 +197,15 @@ function TransactionCreateBottomSheet({
                   </View>
                   <View style={tw`mb-4 flex-1`}>
                     <Text style={tw`mb-1 text-base`}>Tanggal Transaksi</Text>
-                    <TouchableOpacity
-                      onPress={() => {
-                        setShowDate(true);
+                    <CatetinDateTimePicker
+                      value={watch('tanggal')}
+                      onChange={(value) => {
+                        setValue('tanggal', value);
                       }}
-                    >
-                      <CatetinInput
-                        bottomSheet
-                        placeholder="Tanggal Transaksi"
-                        pointerEvents="none"
-                        value={moment(watch('tanggal')).format('DD MMMM YYYY HH:mm')}
-                      ></CatetinInput>
-                    </TouchableOpacity>
-                    <DateTimePickerModal
-                      isVisible={showDate}
                       mode="datetime"
-                      onCancel={() => setShowDate(false)}
-                      onConfirm={(date) => {
-                        setValue('tanggal', date || new Date());
-                        setShowDate(false);
-                      }}
-                      date={moment(watch('tanggal')).toDate()}
-                      maximumDate={new Date()}
-                    />
+                      format="DD MMMM YYYY HH:mm"
+                      maximumDate
+                    ></CatetinDateTimePicker>
                   </View>
                   <View style={tw`mb-4 flex-1`}>
                     <Text style={tw`mb-1 text-base`}>Tipe Transaksi</Text>

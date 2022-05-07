@@ -8,7 +8,6 @@ import { Controller, useForm } from 'react-hook-form';
 import { Alert, Switch, Text, TouchableOpacity, View } from 'react-native';
 import ActionSheet from 'react-native-actionsheet';
 import { Icon } from 'react-native-elements';
-import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import tw from 'twrnc';
 import * as yup from 'yup';
@@ -16,6 +15,7 @@ import { axiosCatetin } from '../../api';
 import CatetinBottomSheet from '../../components/molecules/BottomSheet';
 import CatetinBottomSheetWrapper from '../../components/molecules/BottomSheet/BottomSheetWrapper';
 import CatetinButton from '../../components/molecules/Button';
+import CatetinDateTimePicker from '../../components/molecules/DateTimePicker';
 import CatetinImagePicker from '../../components/molecules/ImagePicker';
 import CatetinInput from '../../components/molecules/Input';
 import CatetinToast from '../../components/molecules/Toast';
@@ -423,55 +423,23 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
             <View style={tw`flex-1 mb-3 flex`}>
               <View style={tw`flex-1 mb-3`}>
                 <Text style={tw`text-base font-medium`}>Dari</Text>
-                <TouchableOpacity
-                  onPress={() => {
-                    setShowFromManual(true);
+                <CatetinDateTimePicker
+                  value={fromDateDownload}
+                  onChange={(value) => {
+                    setFromDateDownload(value);
                   }}
-                >
-                  <CatetinInput
-                    bottomSheet
-                    placeholder="Tanggal Dari"
-                    pointerEvents="none"
-                    value={moment(fromDateDownload).format('DD MMMM YYYY')}
-                  ></CatetinInput>
-                </TouchableOpacity>
-                <DateTimePickerModal
-                  isVisible={showFromManual}
-                  mode="date"
-                  onCancel={() => setShowFromManual(false)}
-                  onConfirm={(date) => {
-                    setFromDateDownload(date || new Date());
-                    setShowFromManual(false);
-                  }}
-                  date={fromDateDownload}
-                  maximumDate={new Date()}
-                />
+                  maximumDate
+                ></CatetinDateTimePicker>
               </View>
               <View style={tw`flex-1`}>
                 <Text style={tw`text-base font-medium`}>Sampai</Text>
-                <TouchableOpacity
-                  onPress={() => {
-                    setShowUntilManual(true);
+                <CatetinDateTimePicker
+                  value={toDateDownload}
+                  onChange={(value) => {
+                    setToDateDownload(value);
                   }}
-                >
-                  <CatetinInput
-                    bottomSheet
-                    placeholder="Tanggal Sampai"
-                    pointerEvents="none"
-                    value={moment(toDateDownload).format('DD MMMM YYYY')}
-                  ></CatetinInput>
-                </TouchableOpacity>
-                <DateTimePickerModal
-                  isVisible={showUntilManual}
-                  mode="date"
-                  onCancel={() => setShowUntilManual(false)}
-                  onConfirm={(date) => {
-                    setToDateDownload(date || new Date());
-                    setShowUntilManual(false);
-                  }}
-                  date={toDateDownload}
-                  maximumDate={new Date()}
-                />
+                  maximumDate
+                ></CatetinDateTimePicker>
               </View>
             </View>
             <View style={tw`flex-1 mb-3`}>
@@ -668,30 +636,14 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
                 <View style={tw`flex flex-row mb-3`}>
                   <View style={tw`flex-grow-1 flex-1`}>
                     <Text style={tw`mb-1`}>Waktu</Text>
-                    <TouchableOpacity
-                      onPress={() => {
-                        setShowAutomaticTime(true);
+                    <CatetinDateTimePicker
+                      value={watchScheduler('time')}
+                      onChange={(value) => {
+                        setValueScheduler('time', moment(value).toDate());
                       }}
-                    >
-                      <CatetinInput
-                        bottomSheet
-                        placeholder="Waktu"
-                        pointerEvents="none"
-                        value={moment(watchScheduler('time')).format('HH:mm')}
-                      ></CatetinInput>
-                    </TouchableOpacity>
-                    <DateTimePickerModal
-                      isVisible={showAutomaticTime}
                       mode="time"
-                      onCancel={() => setShowAutomaticTime(false)}
-                      onConfirm={(date) => {
-                        setValueScheduler('time', moment(date || new Date()).toDate());
-                        setShowAutomaticTime(false);
-                      }}
-                      style={tw`bg-red-400`}
-                      date={moment(watchScheduler('time')).toDate()}
-                    />
-
+                      format="HH:mm"
+                    ></CatetinDateTimePicker>
                     <Text style={tw`mt-3 text-red-500`}>{errorsScheduler.time?.message}</Text>
                   </View>
                   {watchScheduler('type') && watchScheduler('type')!.value !== 0 && (

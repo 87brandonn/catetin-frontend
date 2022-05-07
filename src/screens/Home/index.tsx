@@ -11,12 +11,12 @@ import { Dimensions, RefreshControl, Text, TouchableOpacity, View } from 'react-
 import ActionSheet from 'react-native-actionsheet';
 import { LineChart } from 'react-native-chart-kit';
 import { Avatar, Badge, Button, Icon } from 'react-native-elements';
-import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import tw from 'twrnc';
 import { axiosCatetin } from '../../api';
 import CatetinBottomSheet from '../../components/molecules/BottomSheet';
 import CatetinBottomSheetWrapper from '../../components/molecules/BottomSheet/BottomSheetWrapper';
+import CatetinDateTimePicker from '../../components/molecules/DateTimePicker';
 import CatetinInput from '../../components/molecules/Input';
 import CatetinToast from '../../components/molecules/Toast';
 import { useAppSelector } from '../../hooks';
@@ -429,10 +429,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
               {(props) => (
                 <CatetinBottomSheetWrapper {...props} title="Periode">
                   {periodeOptions.map((periode) => (
-                    <View
-                      style={tw`flex flex-row justify-between mb-3 rounded-lg px-3 py-2`}
-                      key={periode.label}
-                    >
+                    <View style={tw`flex flex-row justify-between mb-3 rounded-lg px-3 py-2`} key={periode.label}>
                       <Text style={tw`text-lg`}>{periode.label}</Text>
                       <Icon
                         name={`radio-button-${activePeriode === periode.value ? 'on' : 'off'}`}
@@ -500,59 +497,27 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
               {(props) => (
                 <CatetinBottomSheetWrapper {...props} title="Custom Tanggal" showBack to="Periode">
                   <Text style={tw`text-lg font-500`}>Dari</Text>
-                  <TouchableOpacity
-                    onPress={() => {
-                      setShowFrom(true);
-                    }}
-                  >
-                    <CatetinInput
-                      bottomSheet
-                      placeholder="Dari"
-                      pointerEvents="none"
-                      value={moment(customDate.from).format('DD MMMM YYYY')}
-                    ></CatetinInput>
-                  </TouchableOpacity>
-                  <DateTimePickerModal
-                    isVisible={showFrom}
-                    mode="date"
-                    onCancel={() => setShowFrom(false)}
-                    onConfirm={(date) => {
+                  <CatetinDateTimePicker
+                    value={customDate.from}
+                    onChange={(value) => {
                       setCustomDate((prevState) => ({
                         ...prevState,
-                        from: moment(date).startOf('days').toDate(),
+                        from: moment(value).startOf('days').toDate(),
                       }));
-                      setShowFrom(false);
                     }}
-                    date={moment(customDate.from).toDate()}
-                    maximumDate={new Date()}
-                  />
+                    maximumDate
+                  ></CatetinDateTimePicker>
                   <Text style={tw`text-lg font-500 mt-3`}>Sampai</Text>
-                  <TouchableOpacity
-                    onPress={() => {
-                      setShowUntil(true);
-                    }}
-                  >
-                    <CatetinInput
-                      bottomSheet
-                      placeholder="Sampai"
-                      pointerEvents="none"
-                      value={moment(customDate.until).format('DD MMMM YYYY')}
-                    ></CatetinInput>
-                  </TouchableOpacity>
-                  <DateTimePickerModal
-                    isVisible={showUntil}
-                    mode="date"
-                    onCancel={() => setShowUntil(false)}
-                    onConfirm={(date) => {
+                  <CatetinDateTimePicker
+                    value={customDate.until}
+                    onChange={(value) => {
                       setCustomDate((prevState) => ({
                         ...prevState,
-                        until: moment(date).endOf('days').toDate(),
+                        until: moment(value).startOf('days').toDate(),
                       }));
-                      setShowUntil(false);
                     }}
-                    date={moment(customDate.until).toDate()}
-                    maximumDate={new Date()}
-                  />
+                    maximumDate
+                  ></CatetinDateTimePicker>
                 </CatetinBottomSheetWrapper>
               )}
             </Stack.Screen>

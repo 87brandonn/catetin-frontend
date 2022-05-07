@@ -11,6 +11,7 @@ import { axiosCatetin } from '../../api';
 import CatetinBottomSheet from '../../components/molecules/BottomSheet';
 import CatetinBottomSheetWrapper from '../../components/molecules/BottomSheet/BottomSheetWrapper';
 import CatetinButton from '../../components/molecules/Button';
+import CatetinDateTimePicker from '../../components/molecules/DateTimePicker';
 import CatetinInput from '../../components/molecules/Input';
 import CatetinToast from '../../components/molecules/Toast';
 import { useAppSelector } from '../../hooks';
@@ -37,8 +38,8 @@ function TransactionSortBottomSheet({ bottomSheetRefFilter, onApplyFilter }: ITr
 
   const [loadingBarang, setLoadingBarang] = useState(false);
   const [barang, setBarang] = useState<ICatetinBarangWithTransaksi[] | null>(null);
-  const [start_date, setStartDate] = useState<Date | undefined>(moment().subtract(1, 'weeks').toDate());
-  const [end_date, setEndDate] = useState<Date | undefined>(moment().endOf('days').toDate());
+  const [start_date, setStartDate] = useState<Date>(moment().subtract(1, 'weeks').toDate());
+  const [end_date, setEndDate] = useState<Date>(moment().endOf('days').toDate());
 
   const [selectedBarang, setSelectedBarang] = useState<ICatetinBarangWithTransaksi[]>([]);
   const [selectedType, setSelectedType] = useState<number[]>([]);
@@ -186,56 +187,24 @@ function TransactionSortBottomSheet({ bottomSheetRefFilter, onApplyFilter }: ITr
             </View>
             <View style={tw`flex-1`}>
               <Text style={tw`text-base`}>Dari</Text>
-              <TouchableOpacity
-                onPress={() => {
-                  setShowFrom(true);
+              <CatetinDateTimePicker
+                value={start_date}
+                onChange={(value) => {
+                  setStartDate(value);
                 }}
-              >
-                <CatetinInput
-                  bottomSheet
-                  placeholder="Dari"
-                  pointerEvents="none"
-                  value={moment(start_date).format('DD MMMM YYYY')}
-                ></CatetinInput>
-              </TouchableOpacity>
-              <DateTimePickerModal
-                isVisible={showFrom}
-                mode="date"
-                onCancel={() => setShowFrom(false)}
-                onConfirm={(date) => {
-                  setStartDate(date as Date);
-                  setShowFrom(false);
-                }}
-                date={moment(start_date).toDate()}
-                maximumDate={new Date()}
-              />
+                maximumDate
+              ></CatetinDateTimePicker>
             </View>
             {range && (
               <View style={tw`flex-1 mt-2`}>
                 <Text style={tw`text-base`}>Sampai</Text>
-                <TouchableOpacity
-                  onPress={() => {
-                    setShowUntil(true);
+                <CatetinDateTimePicker
+                  value={end_date}
+                  onChange={(value) => {
+                    setEndDate(value);
                   }}
-                >
-                  <CatetinInput
-                    bottomSheet
-                    placeholder="Sampai"
-                    pointerEvents="none"
-                    value={moment(end_date).format('DD MMMM YYYY')}
-                  ></CatetinInput>
-                </TouchableOpacity>
-                <DateTimePickerModal
-                  isVisible={showUntil}
-                  mode="date"
-                  onCancel={() => setShowUntil(false)}
-                  onConfirm={(date) => {
-                    setEndDate(date as Date);
-                    setShowUntil(false);
-                  }}
-                  date={moment(end_date).toDate()}
-                  maximumDate={new Date()}
-                />
+                  maximumDate
+                ></CatetinDateTimePicker>
               </View>
             )}
           </View>
