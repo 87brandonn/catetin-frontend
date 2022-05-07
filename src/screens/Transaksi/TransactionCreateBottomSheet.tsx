@@ -196,9 +196,25 @@ function TransactionCreateBottomSheet({
                   <View style={tw`mb-4 flex-1`}>
                     <Text style={tw`mb-1 text-base`}>Tanggal Transaksi</Text>
                     <DateTimePicker
-                      mode="datetime"
                       value={watch('tanggal')}
-                      onChange={(event, date) => setValue('tanggal', date as Date)}
+                      onChange={(_: any, date: Date | undefined) => setValue('tanggal', date || new Date())}
+                      style={tw`mb-1`}
+                    />
+                    <DateTimePicker
+                      mode="time"
+                      display="spinner"
+                      value={watch('tanggal')}
+                      onChange={(_: any, date: Date | undefined) => {
+                        setValue(
+                          'tanggal',
+                          moment(watch('tanggal'))
+                            .set({
+                              hour: moment(date).hour(),
+                              minute: moment(date).minute(),
+                            })
+                            .toDate(),
+                        );
+                      }}
                     />
                   </View>
                   <View style={tw`mb-4 flex-1`}>

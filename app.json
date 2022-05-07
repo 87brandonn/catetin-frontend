@@ -22,7 +22,7 @@
         }
       ]
     },
-    "backgroundColor" : "#2461FF",
+    "backgroundColor": "#2461FF",
     "updates": {
       "fallbackToCacheTimeout": 0
     },
@@ -32,6 +32,7 @@
       "bundleIdentifier": "com.brandonpardede.catetinapp"
     },
     "android": {
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
@@ -46,9 +47,9 @@
       "favicon": "./assets/favicon.png"
     },
     "scheme": "com.brandonpardede.catetinapp",
-    "facebookScheme" : "fb709036773596885",
-    "facebookAppId" : "709036773596885",
-    "facebookDisplayName" : "Brandon Pardede",
+    "facebookScheme": "fb709036773596885",
+    "facebookAppId": "709036773596885",
+    "facebookDisplayName": "Brandon Pardede",
     "plugins": [
       [
         "expo-image-picker",

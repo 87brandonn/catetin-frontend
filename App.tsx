@@ -1,6 +1,8 @@
 import RootNavigation from './src/navigation';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Provider } from 'react-redux';
 import { store } from './src/store';
+import tw from 'twrnc';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Sentry from 'sentry-expo';
 
@@ -17,7 +19,9 @@ export default function App() {
   return (
     <Provider store={store}>
       <SafeAreaProvider>
-        <RootNavigation />
+        <GestureHandlerRootView style={tw`flex-1`}>
+          <RootNavigation />
+        </GestureHandlerRootView>
       </SafeAreaProvider>
     </Provider>
   );

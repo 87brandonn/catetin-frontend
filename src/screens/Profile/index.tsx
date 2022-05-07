@@ -39,7 +39,7 @@ export interface IFormScheduleSchema {
     value: number;
   } | null;
   scheduleId: number;
-  time: string;
+  time: Date;
   dayOfWeek: number;
   dayOfMonth: number;
   month: number;
@@ -131,7 +131,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
     defaultValues: {
       scheduleId: 0,
       type: null,
-      time: new Date().toISOString(),
+      time: new Date(),
       dayOfWeek: undefined,
       dayOfMonth: undefined,
       month: undefined,
@@ -180,7 +180,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
         3: !!data?.month || false,
       });
 
-      setValueScheduler('time', `${defaultDate}`);
+      setValueScheduler('time', defaultDate);
       setValueScheduler('scheduleId', data?.id || 0);
       setValueScheduler('dayOfWeek', data?.dayOfWeek !== null ? data?.dayOfWeek : undefined);
       setValueScheduler('dayOfMonth', data?.dayOfMonth || undefined);
@@ -412,7 +412,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
   };
 
   return (
-    <AppLayout header={false} edges={['left', 'right']}>
+    <AppLayout header={false}>
       <CatetinBottomSheet bottomSheetRef={bottomSheetManualLaporanRef}>
         <CatetinBottomSheetWrapper single title="Unduh Laporan Keuangan" refreshable={false}>
           <View style={tw`flex-1 flex`}>
@@ -424,7 +424,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
                   value={fromDateDownload}
                   maximumDate={new Date()}
                   onChange={(_, date: any) => {
-                    setFromDateDownload(date as Date);
+                    setFromDateDownload(date || new Date());
                   }}
                 />
               </View>
@@ -434,7 +434,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
                   display="spinner"
                   value={toDateDownload}
                   onChange={(_, date: any) => {
-                    setToDateDownload(date as Date);
+                    setToDateDownload(date || new Date());
                   }}
                   maximumDate={new Date()}
                 />
@@ -636,7 +636,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
                     <DateTimePicker
                       value={moment(watchScheduler('time')).toDate()}
                       onChange={(_: any, date: any) => {
-                        setValueScheduler('time', moment(date).toISOString());
+                        setValueScheduler('time', moment(date || new Date()).toDate());
                       }}
                       mode="time"
                       display="spinner"

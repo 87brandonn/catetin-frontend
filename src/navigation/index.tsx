@@ -8,7 +8,6 @@ import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Dimensions, ImageBackground, Platform } from 'react-native';
-import { initialWindowMetrics, SafeAreaProvider } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import tw from 'twrnc';
 import { axiosCatetin } from '../api';
@@ -307,11 +306,7 @@ async function registerForPushNotificationsAsync() {
       alert('Failed to get push token for push notification!');
       return;
     }
-    token = (
-      await Notifications.getExpoPushTokenAsync({
-        experienceId: '@87brandonn/catetin',
-      })
-    ).data;
+    token = (await Notifications.getExpoPushTokenAsync()).data;
   } else {
     alert('Must use physical device for Push Notifications');
   }

@@ -12,6 +12,8 @@ import { LineChart } from 'react-native-chart-kit';
 import { Avatar, Badge, Button, Icon } from 'react-native-elements';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import tw from 'twrnc';
+import 'intl';
+import 'intl/locale-data/jsonp/en';
 import { axiosCatetin } from '../../api';
 import CatetinBottomSheet from '../../components/molecules/BottomSheet';
 import CatetinBottomSheetWrapper from '../../components/molecules/BottomSheet/BottomSheetWrapper';
@@ -76,7 +78,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
   }>({
     start_date: undefined,
     end_date: undefined,
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    timezone: new Intl.DateTimeFormat().resolvedOptions().timeZone,
   });
   const { activeStore } = useAppSelector((state: RootState) => state.store);
 
@@ -411,7 +413,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
         };
       }
     }
-    setDateParams({ ...finalObj, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone });
+    setDateParams({ ...finalObj, timezone: new Intl.DateTimeFormat().resolvedOptions().timeZone });
     bottomSheetRef.current?.close();
   };
 

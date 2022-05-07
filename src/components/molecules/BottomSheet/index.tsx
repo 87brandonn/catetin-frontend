@@ -20,7 +20,7 @@ function CatetinBottomSheet({ children, bottomSheetRef, snapPoints = ['50%', '75
         ref={bottomSheetRef}
         index={-1}
         snapPoints={snapPoints}
-        backgroundStyle={tw`bg-white shadow-lg`}
+        backgroundStyle={tw`shadow-lg`}
         enablePanDownToClose
         backdropComponent={renderBackdrop}
         keyboardBlurBehavior="restore"

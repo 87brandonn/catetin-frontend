@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "526435415154",
+    "project_id": "catetin-76e27",
+    "storage_bucket": "catetin-76e27.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:526435415154:android:2040a693df5f6d3f757eeb",
+        "android_client_info": {
+          "package_name": "com.brandonpardede.catetinapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "526435415154-b6ekbcooi5q6m8jaerk92uasmseog7ua.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZ0mDEX7pl0P7ovUW9zjI4o8GY0rLyOho"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "526435415154-b6ekbcooi5q6m8jaerk92uasmseog7ua.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
