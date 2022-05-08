@@ -5,6 +5,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import 'intl';
 import 'intl/locale-data/jsonp/en';
 import moment from 'moment';
+import chunk from 'lodash/chunk';
 import 'moment/locale/id';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Dimensions, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
@@ -156,7 +157,6 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
           ...dateParams,
         },
       });
-      console.log(data);
       setFrequentItem(data);
     } catch (err: any) {
       if (JSON.parse(err.response.data.err)?.name !== 'SequelizeConnectionError') {
@@ -417,8 +417,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     bottomSheetRef.current?.close();
   };
 
-  const [showFrom, setShowFrom] = useState(false);
-  const [showUntil, setShowUntil] = useState(false);
+  const { profile } = useAppSelector((state: RootState) => state.auth);
 
   return (
     <AppLayout headerTitle="Home" customStyle={tw``}>
@@ -445,8 +444,8 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
                     <View style={tw`px-5 mb-5`}>
                       <TouchableOpacity
                         style={tw` px-3 py-2 ${
-                          activeSubPeriod === 'tanggal' ? 'bg-zinc-200' : ''
-                        } shadow rounded-lg mb-3 flex flex-row justify-between items-center`}
+                          activeSubPeriod === 'tanggal' ? 'bg-zinc-200 shadow' : ''
+                        } rounded-lg mb-3 flex flex-row justify-between items-center`}
                         onPress={() => {
                           props.navigation.navigate('Tanggal');
                           setActiveSubPeriod('tanggal');
@@ -463,7 +462,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={tw` px-3 py-2 ${
-                          activeSubPeriod === 'periode' ? 'bg-zinc-200' : ''
+                          activeSubPeriod === 'periode' ? 'bg-zinc-200 shadow' : ''
                         } rounded-lg flex flex-row justify-between items-center`}
                         onPress={() => {
                           setActiveSubPeriod('periode');
@@ -591,7 +590,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
         }
       >
         <View style={tw`px-3`}>
-          <Text style={tw`text-3xl`}>Hi, Brandon</Text>
+          <Text style={tw`text-3xl`}>Hi, {profile?.Profile?.displayName}</Text>
           <Text style={tw`text-base mb-1`}>Ringkasan laporan keuangan kamu</Text>
           <View style={tw`flex-row items-center mb-3`}>
             <Text style={tw`text-base mb-1`}>Periode:</Text>
@@ -621,7 +620,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
           ) : (
             <LineChart
               data={{
-                labels: graphData?.map((data) => moment(data.date).format('DD-MM-YY')) || [],
+                labels: graphData?.map((data) => moment(data.date).format('D-M-YY')) || [],
                 datasets: [
                   {
                     data: graphData?.map((data) => parseInt(data.data.outcome?.[0].sum_nominal || '0', 10)) || [],
@@ -815,37 +814,46 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
                 <Text style={tw`text-white`}>Tidak ada data transaksi pada periode ini.</Text>
               </View>
             ) : (
-              maxOutcome?.map((transaksi, index) => (
-                <View style={tw`shadow-lg bg-white rounded-[12px] px-3 py-2 mb-2 flex flex-row`} key={transaksi.id}>
+              maxOutcome?.map((item, index) => (
+                <TouchableOpacity
+                  style={tw`shadow-lg bg-white rounded-[12px] px-3 py-2 mb-2 flex flex-row justify-between`}
+                  key={item.id}
+                >
                   <Text style={tw`self-center text-xl font-bold text-blue-500 mr-3`}>{index + 1}</Text>
-                  <View>
-                    <Text style={tw`font-bold text-xl`}>{transaksi?.title}</Text>
-                    <Text style={tw`font-500 text-lg`}>IDR {transaksi?.nominal?.toLocaleString('id-ID')}</Text>
-                    {(transaksi?.notes && <Text style={tw`text-slate-500 text-sm`}>{transaksi?.notes}</Text>) || null}
-                    {(transaksi?.Items || [])?.length > 0 && (
-                      <View style={tw`flex flex-row mt-1 mb-2`}>
-                        {transaksi?.Items.map((item, index) => (
-                          <View style={tw`relative`} key={index}>
-                            <View style={tw`absolute top-[-4px] right-0 z-10`}>
-                              <Badge value={item.ItemTransaction.amount} status="primary"></Badge>
-                            </View>
-                            <Avatar
-                              size={64}
-                              source={{
-                                uri: item.picture || undefined,
-                              }}
-                              avatarStyle={tw`rounded-[12px]`}
-                              containerStyle={tw`mr-3 shadow-lg`}
-                            ></Avatar>
+                  <View style={tw`flex-grow-1`}>
+                    <Text style={tw`font-bold text-xl`}>{item.title}</Text>
+                    {(item.notes && <Text style={tw`text-slate-500 text-sm`}>{item.notes}</Text>) || null}
+                    <Text style={tw`font-500 text-lg`}>IDR {item.nominal?.toLocaleString('id-ID')}</Text>
+                    {item.Items.length > 0 && (
+                      <View style={tw`mt-1 mb-2`}>
+                        {chunk(item.Items, 4).map((itemChunk, index) => (
+                          <View style={tw`flex flex-row mt-1 mb-2`} key={index}>
+                            {itemChunk.map((item) => (
+                              <View
+                                style={tw`relative mr-3 ${item.deleted ? 'opacity-20' : 'opacity-100'}`}
+                                key={item.id}
+                              >
+                                <View style={tw`absolute top-[-4px] right-0 z-10`}>
+                                  <Badge value={item.ItemTransaction.amount} status="primary"></Badge>
+                                </View>
+                                <Avatar
+                                  size={64}
+                                  source={{
+                                    uri: item.picture || undefined,
+                                  }}
+                                  avatarStyle={tw`rounded-[12px]`}
+                                ></Avatar>
+                              </View>
+                            ))}
                           </View>
                         ))}
                       </View>
                     )}
                     <View>
-                      <Text style={tw`text-3`}>{moment(transaksi?.transaction_date).format('dddd, DD MMMM YYYY')}</Text>
+                      <Text style={tw`text-3`}>{moment(item.transaction_date).format('dddd, DD MMMM YYYY')}</Text>
                     </View>
                   </View>
-                </View>
+                </TouchableOpacity>
               ))
             )}
             <Text style={tw`text-sm text-slate-500`}>Note: Transaksi dengan nominal pengeluaran terbesar</Text>
@@ -864,37 +872,46 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
                 <Text style={tw`text-white`}>Tidak ada data transaksi pada periode ini.</Text>
               </View>
             ) : (
-              maxIncome?.map((transaksi, index) => (
-                <View style={tw`shadow-lg bg-white rounded-[12px] px-3 py-2 mb-2 flex flex-row`} key={transaksi.id}>
+              maxIncome?.map((item, index) => (
+                <TouchableOpacity
+                  style={tw`shadow-lg bg-white rounded-[12px] px-3 py-2 mb-2 flex flex-row justify-between`}
+                  key={item.id}
+                >
                   <Text style={tw`self-center text-xl font-bold text-blue-500 mr-3`}>{index + 1}</Text>
-                  <View>
-                    <Text style={tw`font-bold text-xl`}>{transaksi?.title}</Text>
-                    <Text style={tw`font-500 text-lg`}>IDR {transaksi?.nominal?.toLocaleString('id-ID')}</Text>
-                    {(transaksi?.notes && <Text style={tw`text-slate-500 text-sm`}>{transaksi?.notes}</Text>) || null}
-                    {(transaksi?.Items || [])?.length > 0 && (
-                      <View style={tw`flex flex-row mt-1 mb-2`}>
-                        {transaksi?.Items.map((item, index) => (
-                          <View style={tw`relative`} key={index}>
-                            <View style={tw`absolute top-[-4px] right-0 z-10`}>
-                              <Badge value={item.ItemTransaction.amount} status="primary"></Badge>
-                            </View>
-                            <Avatar
-                              size={64}
-                              source={{
-                                uri: item.picture || undefined,
-                              }}
-                              avatarStyle={tw`rounded-[12px]`}
-                              containerStyle={tw`mr-3 shadow-lg`}
-                            ></Avatar>
+                  <View style = {tw`flex-grow-1`}>
+                    <Text style={tw`font-bold text-xl`}>{item.title}</Text>
+                    {(item.notes && <Text style={tw`text-slate-500 text-sm`}>{item.notes}</Text>) || null}
+                    <Text style={tw`font-500 text-lg`}>IDR {item.nominal?.toLocaleString('id-ID')}</Text>
+                    {item.Items.length > 0 && (
+                      <View style={tw`mt-1 mb-2`}>
+                        {chunk(item.Items, 4).map((itemChunk, index) => (
+                          <View style={tw`flex flex-row mt-1 mb-2`} key={index}>
+                            {itemChunk.map((item) => (
+                              <View
+                                style={tw`relative mr-3 ${item.deleted ? 'opacity-20' : 'opacity-100'}`}
+                                key={item.id}
+                              >
+                                <View style={tw`absolute top-[-4px] right-0 z-10`}>
+                                  <Badge value={item.ItemTransaction.amount} status="primary"></Badge>
+                                </View>
+                                <Avatar
+                                  size={64}
+                                  source={{
+                                    uri: item.picture || undefined,
+                                  }}
+                                  avatarStyle={tw`rounded-[12px]`}
+                                ></Avatar>
+                              </View>
+                            ))}
                           </View>
                         ))}
                       </View>
                     )}
                     <View>
-                      <Text style={tw`text-3`}>{moment(transaksi?.transaction_date).format('dddd, DD MMMM YYYY')}</Text>
+                      <Text style={tw`text-3`}>{moment(item.transaction_date).format('dddd, DD MMMM YYYY')}</Text>
                     </View>
                   </View>
-                </View>
+                </TouchableOpacity>
               ))
             )}
             <Text style={tw`text-sm text-slate-500`}>Note: Transaksi dengan nominal pemasukan terbesar</Text>

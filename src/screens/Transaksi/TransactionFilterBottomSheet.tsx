@@ -159,7 +159,7 @@ function TransactionSortBottomSheet({ bottomSheetRefFilter, onApplyFilter }: ITr
                         });
                       }}
                     >
-                      <Text style={tw`${selectedType.includes(option.value) ? 'text-white font-medium' : ''}`}>
+                      <Text style={tw`${selectedType.includes(option.value) ? 'text-white font-medium' : 'text-black'}`}>
                         {option.label}
                       </Text>
                     </TouchableOpacity>

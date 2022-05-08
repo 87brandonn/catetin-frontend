@@ -108,6 +108,7 @@ function CreateModal({
             value={watch('category')
               .map((data) => data.name)
               .join(', ')}
+            editable={false}
           />
         </TouchableOpacity>
       </View>

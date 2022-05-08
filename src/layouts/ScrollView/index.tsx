@@ -1,5 +1,6 @@
 import React from 'react';
-import { ScrollView, ScrollViewProps, View } from 'react-native';
+import { View, ScrollViewProps } from 'react-native';
+import { ScrollView } from 'react-native-gesture-handler';
 import tw from 'twrnc';
 
 function CatetinScrollView({ children, ...rest }: ScrollViewProps) {

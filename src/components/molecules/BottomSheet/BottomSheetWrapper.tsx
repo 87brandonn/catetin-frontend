@@ -43,7 +43,7 @@ function CatetinBottomSheetWrapper({
   }
 
   return (
-    <BottomSheetScrollView
+    <CatetinScrollView
       style={tw`flex-1 bg-white px-4`}
       showsHorizontalScrollIndicator={false}
       showsVerticalScrollIndicator={false}
@@ -79,8 +79,7 @@ function CatetinBottomSheetWrapper({
         <View />
       </View>
       <View style={tw`flex-1`}>{children}</View>
-      <View style={tw`mb-[36]`}></View>
-    </BottomSheetScrollView>
+    </CatetinScrollView>
   );
 }
 

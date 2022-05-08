@@ -226,7 +226,7 @@ function TransactionCreateBottomSheet({
                             >
                               <Text
                                 style={tw`text-center ${
-                                  watch('tipe')?.value === option.value ? 'font-bold text-white' : ''
+                                  watch('tipe')?.value === option.value ? 'font-bold text-white' : 'text-black'
                                 }`}
                               >
                                 {option.label}

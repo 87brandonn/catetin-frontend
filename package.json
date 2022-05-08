@@ -60,7 +60,7 @@
     "react-native-document-picker": "^8.1.0",
     "react-native-dotenv": "^3.3.1",
     "react-native-elements": "^3.4.2",
-    "react-native-gesture-handler": "^2.3.2",
+    "react-native-gesture-handler": "^2.4.2",
     "react-native-image-crop-picker": "^0.37.3",
     "react-native-image-viewing": "^0.2.1",
     "react-native-linear-gradient": "^2.5.6",
