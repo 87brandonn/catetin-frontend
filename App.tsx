@@ -1,10 +1,8 @@
-import RootNavigation from './src/navigation';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import React from 'react';
 import { Provider } from 'react-redux';
-import { store } from './src/store';
-import tw from 'twrnc';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Sentry from 'sentry-expo';
+import AppWrapper from './src/AppWrapper';
+import { store } from './src/store';
 
 Sentry.init({
   dsn: 'https://b3198868359a4ac4b036021af6a1d6a5@o1235697.ingest.sentry.io/6385694',
@@ -18,11 +16,7 @@ Sentry.Native.captureException('message');
 export default function App() {
   return (
     <Provider store={store}>
-      <SafeAreaProvider>
-        <GestureHandlerRootView style={tw`flex-1`}>
-          <RootNavigation />
-        </GestureHandlerRootView>
-      </SafeAreaProvider>
+      <AppWrapper />
     </Provider>
   );
 }

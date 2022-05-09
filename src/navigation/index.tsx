@@ -1,4 +1,3 @@
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { PortalProvider } from '@gorhom/portal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -8,9 +7,10 @@ import { createStackNavigator } from '@react-navigation/stack';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Dimensions, ImageBackground, Platform } from 'react-native';
-import Toast from 'react-native-toast-message';
+import { Dimensions, Platform, View } from 'react-native';
+import * as SplashScreen from 'expo-splash-screen';
 import tw from 'twrnc';
+import Toast from 'react-native-toast-message';
 import { axiosCatetin } from '../api';
 import CatetinToast from '../components/molecules/Toast';
 import { useAppDispatch, useAppSelector } from '../hooks';
@@ -57,10 +57,6 @@ const ProfileScreenWrapperStack = createStackNavigator();
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator();
 
-const IPHONE12_H = 844;
-const IPHONE12_Max = 926;
-const IPHONE12_Mini = 780;
-
 function ProfileScreenNavigator() {
   return (
     <ProfileScreenWrapperStack.Navigator>
@@ -100,63 +96,6 @@ export default function RootNavigation() {
 
   const [notification, setNotification] = useState<Notifications.Notification | boolean>(false);
 
-  const getVerifyCode = useCallback(async (accessToken) => {
-    try {
-      await axiosCatetin.get(`/auth/verify`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-    } catch (err: any) {
-      throw new Error(err);
-    }
-  }, []);
-
-  const fetchUserProfile = useCallback(async () => {
-    try {
-      if (accessToken) {
-        const promises = [];
-        promises.push(axiosCatetin.get(`/store`), axiosCatetin.get(`/auth/profile`));
-        const [
-          {
-            data: { data: dataStore },
-          },
-          {
-            data: { data: dataProfile },
-          },
-        ] = await Promise.all(promises);
-        if (!dataProfile?.verified) {
-          await getVerifyCode(accessToken);
-        }
-        dispatch(setActiveStore(dataStore?.[0]?.id || null));
-        dispatch(setProfile(dataProfile));
-        dispatch(setStore(dataStore));
-        dispatch(setLoggedIn(true));
-        setLoading(false);
-      }
-    } catch (err: any) {
-      setLoading(false);
-      CatetinToast(err?.response?.status, 'error', 'Failed to authenticate user.');
-    }
-  }, [accessToken, dispatch, getVerifyCode]);
-
-  useEffect(() => {
-    (async () => {
-      const token = await AsyncStorage.getItem('accessToken');
-
-      if (token) {
-        dispatch(setAccessToken(token));
-      } else {
-        setLoading(false);
-      }
-    })();
-  }, [dispatch]);
-
-  const { height: D_HEIGHT, width: D_WIDTH } = Dimensions.get('window');
-  useEffect(() => {
-    fetchUserProfile();
-  }, [fetchUserProfile]);
-
   useEffect(() => {
     registerForPushNotificationsAsync().then(async (token) => {
       try {
@@ -189,9 +128,6 @@ export default function RootNavigation() {
     };
   }, [dispatch]);
 
-  if (loading) {
-    return <ImageBackground source={require('../assets/splash.png')} style={tw`w-full h-full`} />;
-  }
   return (
     <>
       <PortalProvider>

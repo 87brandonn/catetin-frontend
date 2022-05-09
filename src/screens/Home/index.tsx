@@ -178,7 +178,6 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
           ...dateParams,
         },
       });
-      console.log(data);
       setBestItem(data);
     } catch (err: any) {
       if (JSON.parse(err.response.data.err)?.name !== 'SequelizeConnectionError') {

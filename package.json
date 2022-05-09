@@ -45,6 +45,7 @@
     "expo-notifications": "^0.14.1",
     "expo-permissions": "~13.1.1",
     "expo-random": "^12.1.2",
+    "expo-splash-screen": "~0.14.2",
     "expo-status-bar": "~1.2.0",
     "expo-updates": "~0.11.6",
     "expo-web-browser": "^10.1.1",
