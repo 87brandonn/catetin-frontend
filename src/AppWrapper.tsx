@@ -61,7 +61,6 @@ function AppWrapper() {
 
   useEffect(() => {
     (async () => {
-      await SplashScreen.preventAutoHideAsync();
       const token = await AsyncStorage.getItem('accessToken');
       if (token) {
         dispatch(setAccessToken(token));

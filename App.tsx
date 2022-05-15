@@ -1,8 +1,11 @@
 import React from 'react';
 import { Provider } from 'react-redux';
 import * as Sentry from 'sentry-expo';
+import * as SplashScreen from 'expo-splash-screen';
 import AppWrapper from './src/AppWrapper';
 import { store } from './src/store';
+
+SplashScreen.preventAutoHideAsync();
 
 Sentry.init({
   dsn: 'https://b3198868359a4ac4b036021af6a1d6a5@o1235697.ingest.sentry.io/6385694',
