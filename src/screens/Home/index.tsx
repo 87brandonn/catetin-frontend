@@ -8,7 +8,7 @@ import moment from 'moment';
 import chunk from 'lodash/chunk';
 import 'moment/locale/id';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Dimensions, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Dimensions, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
 import ActionSheet from 'react-native-actionsheet';
 import { LineChart } from 'react-native-chart-kit';
 import { Avatar, Badge, Button, Icon } from 'react-native-elements';
@@ -86,6 +86,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
   const fetchGraphData = useCallback(async () => {
     try {
       setLoadingGraph(true);
+      console.log(dateParams);
       const {
         data: { data },
       } = await axiosCatetin.get(`/transaksi/summary/${activeStore}`, {
@@ -619,7 +620,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
           ) : (
             <LineChart
               data={{
-                labels: graphData?.map((data) => moment(data.date).format('D-M-YY')) || [],
+                labels: /* graphData?.map((data) => moment(data.date).format('D-M-YY')) || */ [],
                 datasets: [
                   {
                     data: graphData?.map((data) => parseInt(data.data.outcome?.[0].sum_nominal || '0', 10)) || [],
@@ -632,11 +633,22 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
                 ],
                 legend: ['Pengeluaran', 'Pemasukan'],
               }}
+              onDataPointClick={(data) => {
+                Alert.alert(
+                  `${moment(graphData?.[data.index].date).format('dddd, D MMMM YYYY')} `,
+                  `IDR ${data.value.toLocaleString('id-ID')}`,
+                  [
+                    {
+                      text: 'OK',
+                    },
+                  ],
+                );
+              }}
               formatYLabel={(yValue) => abbrNum(yValue, 0)}
               width={Dimensions.get('window').width}
-              height={220}
+              height={(Dimensions.get('window').width * 3) / 4}
               yAxisLabel="Rp"
-              yAxisInterval={1}
+              fromZero
               chartConfig={{
                 backgroundColor: '#e26a00',
                 backgroundGradientFrom: '#fb8c00',
@@ -655,7 +667,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
               }}
               bezier
               style={tw`rounded-[16px]`}
-            />
+            ></LineChart>
           )}
         </View>
         <View style={tw`px-3`}>
@@ -877,7 +889,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
                   key={item.id}
                 >
                   <Text style={tw`self-center text-xl font-bold text-blue-500 mr-3`}>{index + 1}</Text>
-                  <View style = {tw`flex-grow-1`}>
+                  <View style={tw`flex-grow-1`}>
                     <Text style={tw`font-bold text-xl`}>{item.title}</Text>
                     {(item.notes && <Text style={tw`text-slate-500 text-sm`}>{item.notes}</Text>) || null}
                     <Text style={tw`font-500 text-lg`}>IDR {item.nominal?.toLocaleString('id-ID')}</Text>
