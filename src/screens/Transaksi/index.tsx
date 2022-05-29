@@ -1,10 +1,11 @@
 import BottomSheet from '@gorhom/bottom-sheet';
+import { useNavigation } from '@react-navigation/native';
 import chunk from 'lodash/chunk';
 import moment from 'moment';
 import 'moment/locale/id';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { RefreshControl, Text, TouchableOpacity, View } from 'react-native';
-import { Avatar, Badge } from 'react-native-elements';
+import { Avatar, Badge, Icon } from 'react-native-elements';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import tw from 'twrnc';
 import { axiosCatetin } from '../../api';
@@ -15,10 +16,8 @@ import AppLayout from '../../layouts/AppLayout';
 import CatetinScrollView from '../../layouts/ScrollView';
 import { RootState } from '../../store';
 import { setEditedTransaction, setSelectedTransaction } from '../../store/features/transactionSlice';
-import { ICatetinTransaksi, ICatetinTransaksiWithDetail } from '../../types/transaksi';
+import { ICatetinTransaksiWithDetail } from '../../types/transaksi';
 import TransactionAction from './TransactionAction';
-import TransactionCreateBottomSheet from './TransactionCreateBottomSheet';
-import TransactionDetailBottomSheet from './TransactionDetailBottomSheet';
 import TransactionFilterBottomSheet from './TransactionFilterBottomSheet';
 moment.locale('id');
 
@@ -26,7 +25,6 @@ function Transaksi() {
   const dispatch = useAppDispatch();
   const [loadingTransaksi, setLoadingTransaksi] = useState(true);
 
-  const { editedTransaction } = useAppSelector((state: RootState) => state.transaction);
   const { activeStore } = useAppSelector((state: RootState) => state.store);
 
   const [transaksi, setTransaksi] = useState<ICatetinTransaksiWithDetail[] | null>(null);
@@ -75,31 +73,11 @@ function Transaksi() {
 
   const bottomSheetRef = useRef<BottomSheet>(null);
   const bottomSheetRefFilter = useRef<BottomSheet>(null);
-  const bottomSheetRefDetail = useRef<BottomSheet>(null);
 
-  useEffect(() => {
-    if (editedTransaction) {
-      bottomSheetRefDetail.current?.close();
-      bottomSheetRef.current?.expand();
-    }
-  }, [editedTransaction]);
+  const navigation = useNavigation();
 
   return (
     <AppLayout headerTitle="Transaksi">
-      <TransactionCreateBottomSheet
-        bottomSheetRef={bottomSheetRef}
-        onFinishDelete={() => {
-          fetchTransaksi();
-        }}
-        onFinishSubmit={(data: ICatetinTransaksi) => {
-          fetchTransaksi();
-          if (data.type === '3' || data.type === '4') {
-            dispatch(setSelectedTransaction(data.id));
-            bottomSheetRefDetail.current?.expand();
-          }
-        }}
-      />
-      <TransactionDetailBottomSheet bottomSheetRefDetail={bottomSheetRefDetail} />
       <TransactionFilterBottomSheet
         bottomSheetRefFilter={bottomSheetRefFilter}
         onApplyFilter={(data) => {
@@ -113,7 +91,7 @@ function Transaksi() {
       <TransactionAction
         onClickPlus={() => {
           dispatch(setEditedTransaction(null));
-          bottomSheetRef.current?.expand();
+          navigation.navigate('TransactionCreateScreen');
         }}
         onClickFilter={() => {
           bottomSheetRefFilter.current?.expand();
@@ -161,9 +139,8 @@ function Transaksi() {
               style={tw`shadow-lg bg-white rounded-[12px] px-3 py-2 mb-2 flex flex-row justify-between`}
               key={item.id}
               onPress={() => {
-                dispatch(setEditedTransaction(null));
                 dispatch(setSelectedTransaction(item.id));
-                bottomSheetRefDetail.current?.expand();
+                navigation.navigate('TransactionDetailScreen');
               }}
             >
               <View>
@@ -172,20 +149,30 @@ function Transaksi() {
                 <Text style={tw`font-500 text-lg`}>IDR {item.nominal?.toLocaleString('id-ID')}</Text>
                 {item.Items.length > 0 && (
                   <View style={tw`mt-1 mb-2`}>
-                    {chunk(item.Items, 4).map((itemChunk, index) => (
+                    {chunk(item.Items, 2).map((itemChunk, index) => (
                       <View style={tw`flex flex-row mt-1 mb-2`} key={index}>
                         {itemChunk.map((item) => (
                           <View style={tw`relative mr-3 ${item.deleted ? 'opacity-20' : 'opacity-100'}`} key={item.id}>
                             <View style={tw`absolute top-[-4px] right-0 z-10`}>
                               <Badge value={item.ItemTransaction.amount} status="primary"></Badge>
                             </View>
-                            <Avatar
-                              size={64}
-                              source={{
-                                uri: item.picture || undefined,
-                              }}
-                              avatarStyle={tw`rounded-[12px]`}
-                            ></Avatar>
+                            {item.picture ? (
+                              <Avatar
+                                size={64}
+                                source={{
+                                  uri: item.picture || undefined,
+                                }}
+                                avatarStyle={tw`rounded-[12px]`}
+                              ></Avatar>
+                            ) : (
+                              <Icon
+                                name="camera"
+                                size={64}
+                                iconStyle={tw`text-gray-300`}
+                                type="feather"
+                                tvParallaxProperties=""
+                              />
+                            )}
                           </View>
                         ))}
                       </View>
@@ -195,6 +182,16 @@ function Transaksi() {
                 <View>
                   <Text style={tw`text-3`}>{moment(item.transaction_date).format('dddd, DD MMMM YYYY')}</Text>
                 </View>
+              </View>
+              <View style={tw`self-end`}>
+                <CatetinButton
+                  title="Update Info"
+                  onPress={() => {
+                    navigation.navigate('TransactionCreateScreen', {
+                      data: item,
+                    });
+                  }}
+                />
               </View>
             </TouchableOpacity>
           ))}

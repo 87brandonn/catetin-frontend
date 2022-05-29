@@ -8,22 +8,22 @@ const bottomNavs = [
   {
     name: 'Home',
     icon: 'home',
-    type: 'font-awesome-5',
+    type: 'feather',
   },
   {
     name: 'Transaksi',
-    icon: 'history',
-    type: 'font-awesome-5',
+    icon: 'repeat',
+    type: 'feather',
   },
   {
     name: 'Barang',
     icon: 'box',
-    type: 'font-awesome-5',
+    type: 'feather',
   },
   {
     name: 'Profile',
-    icon: 'user-circle',
-    type: 'font-awesome-5',
+    icon: 'user',
+    type: 'feather',
   },
 ];
 
@@ -36,7 +36,7 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps): React.Re
   return (
     <View
       style={{
-        ...tw`bg-neutral-50 flex-row border-t border-slate-100 pt-4 ${
+        ...tw`bg-white flex-row border-t border-slate-100 pt-4 ${
           Platform.OS === 'ios' && (D_HEIGHT === IPHONE12_H || D_HEIGHT === IPHONE12_Max || D_HEIGHT === IPHONE12_Mini)
             ? 'pb-[28]'
             : 'pb-4'

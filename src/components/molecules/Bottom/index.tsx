@@ -12,22 +12,22 @@ function Bottom() {
     {
       name: 'Home',
       icon: 'home',
-      type: 'font-awesome-5',
+      type: 'feather',
     },
     {
       name: 'Transaksi',
       icon: 'history',
-      type: 'font-awesome-5',
+      type: 'feather',
     },
     {
       name: 'Barang',
       icon: 'box',
-      type: 'font-awesome-5',
+      type: 'feather',
     },
     {
       name: 'Profile',
       icon: 'user-circle',
-      type: 'font-awesome-5',
+      type: 'feather',
     },
   ];
 

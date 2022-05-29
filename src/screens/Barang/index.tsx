@@ -1,6 +1,6 @@
 import BottomSheet from '@gorhom/bottom-sheet';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import chunk from 'lodash/chunk';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -131,6 +131,8 @@ function Barang() {
     [activeStore, params],
   );
 
+  const navigation = useNavigation();
+
   useEffect(() => {
     fetchBarang();
   }, [fetchBarang]);
@@ -258,57 +260,8 @@ function Barang() {
       setLoadingDelete(false);
     }
   };
-  const Stack = createStackNavigator();
   return (
     <AppLayout headerTitle="Barang">
-      <CatetinBottomSheet bottomSheetRef={bottomSheetRef}>
-        <NavigationContainer>
-          <Stack.Navigator
-            screenOptions={{
-              headerShown: false,
-            }}
-          >
-            <Stack.Screen name="Create Barang">
-              {(props) => (
-                <CatetinBottomSheetWrapper {...props} title="Create Barang">
-                  <CreateModal
-                    {...props}
-                    control={control}
-                    errors={errors}
-                    watch={watch}
-                    loading={loading}
-                    onSave={() => handleSubmit(onSubmit)()}
-                    onDelete={() => handleDelete()}
-                    title="Create Barang"
-                    loadingDelete={loadingDelete}
-                  />
-                </CatetinBottomSheetWrapper>
-              )}
-            </Stack.Screen>
-            <Stack.Screen name="Kategori Barang">
-              {(props) => (
-                <CatetinBottomSheetWrapper {...props} title="Kategori Barang" showBack to="Create Barang">
-                  <KategoriBarangSheet
-                    {...props}
-                    data={watch('category')}
-                    onSave={(data) => {
-                      setValue('category', data);
-                    }}
-                  />
-                </CatetinBottomSheetWrapper>
-              )}
-            </Stack.Screen>
-            <Stack.Screen name="Add Category">
-              {(props) => (
-                <CatetinBottomSheetWrapper {...props} title="Add Category" showBack to="Kategori Barang">
-                  <AddKategoriSheet {...props} />
-                </CatetinBottomSheetWrapper>
-              )}
-            </Stack.Screen>
-          </Stack.Navigator>
-        </NavigationContainer>
-      </CatetinBottomSheet>
-
       <BarangFilterBottomSheet
         bottomSheetRefFilter={bottomSheetRefFilter}
         onApplyFilter={(data) => {
@@ -320,23 +273,18 @@ function Barang() {
         }}
       />
 
-      <CatetinBottomSheet bottomSheetRef={bottomSheetRefDetail}>
-        <CatetinBottomSheetWrapper single title="Detail Barang">
-          <BarangDetailBottomSheet data={barangTransaksi} loading={loadDetail} />
-        </CatetinBottomSheetWrapper>
-      </CatetinBottomSheet>
-
       <TransactionAction
         onClickPlus={() => {
-          reset({
-            id: 0,
-            name: '',
-            harga: 0,
-            stok: 0,
-            barang_picture: null,
-            category: [],
+          navigation.navigate('CreateBarangScreen', {
+            data: {
+              id: 0,
+              name: '',
+              harga: 0,
+              stok: 0,
+              barang_picture: null,
+              category: [],
+            },
           });
-          bottomSheetRef.current?.expand();
         }}
         onClickFilter={() => {
           bottomSheetRefFilter.current?.expand();
@@ -382,95 +330,89 @@ function Barang() {
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchBarang(true)} />}
           >
             <View style={tw`flex-1`}>
-              {chunk(barang, 2).map((singleBarangChunk, index) => (
-                <View key={index} style={tw`flex flex-1 flex-row `}>
-                  {singleBarangChunk.map((singleBarang, indexItem) => (
-                    <View style={tw`w-1/2 ${indexItem === 0 ? 'mr-3' : ''} py-2`} key={singleBarang.id}>
-                      <View style={tw`mr-3`}>
-                        {singleBarang.picture ? (
-                          <View style={tw`shadow-lg`}>
-                            <Image
-                              source={{
-                                uri: singleBarang?.picture || undefined,
-                              }}
-                              style={tw`w-full h-[120px] rounded-lg mb-1`}
-                            ></Image>
-                          </View>
-                        ) : (
-                          <Icon
-                            name="camera"
-                            size={120}
-                            iconStyle={tw`text-gray-300`}
-                            type="feather"
-                            tvParallaxProperties=""
-                          />
-                        )}
-                        <View style={tw`mb-1`}>
-                          <Text style={tw`font-medium`}>{singleBarang.name}</Text>
-                        </View>
+              {barang.map((singleBarang) => (
+                <TouchableOpacity
+                  style={tw`py-2 flex-1 flex flex-row`}
+                  key={singleBarang.id}
+                  onPress={() => {
+                    navigation.navigate('DetailBarangScreen', {
+                      id: singleBarang.id,
+                      title: singleBarang.name,
+                    });
+                  }}
+                >
+                  {singleBarang.picture ? (
+                    <View style={tw`shadow-lg`}>
+                      <Image
+                        source={{
+                          uri: singleBarang?.picture || undefined,
+                        }}
+                        style={tw`w-[120px] h-[120px] rounded-lg mb-1`}
+                      ></Image>
+                    </View>
+                  ) : (
+                    <Icon
+                      name="camera"
+                      size={120}
+                      iconStyle={tw`text-gray-300`}
+                      type="feather"
+                      tvParallaxProperties=""
+                    />
+                  )}
+                  <View style={tw`flex-1 self-center ml-3`}>
+                    <View style={tw`mb-1`}>
+                      <Text style={tw`font-medium`}>{singleBarang.name}</Text>
+                    </View>
+                    <View>
+                      {singleBarang.ItemCategories.length > 0 && (
                         <View>
-                          {singleBarang.ItemCategories.length > 0 && (
-                            <View>
-                              {chunk(singleBarang.ItemCategories, 2).map((catChunk, index) => (
-                                <View style={tw`flex flex-row mb-1`} key={index}>
-                                  {catChunk.map((cat) => (
-                                    <View key={cat.id} style={tw`mr-1 bg-gray-200 px-2 py-1 rounded-lg`}>
-                                      <Text style={tw`text-[12px]`}>
-                                        {cat.name.slice(0, 5)}
-                                        {cat.name.length > 5 && '..'}
-                                      </Text>
-                                    </View>
-                                  ))}
+                          {chunk(singleBarang.ItemCategories, 2).map((catChunk, index) => (
+                            <View style={tw`flex flex-row mb-1`} key={index}>
+                              {catChunk.map((cat) => (
+                                <View key={cat.id} style={tw`mr-1 bg-gray-200 px-2 py-1 rounded-lg`}>
+                                  <Text style={tw`text-[12px]`}>
+                                    {cat.name.slice(0, 5)}
+                                    {cat.name.length > 5 && '..'}
+                                  </Text>
                                 </View>
                               ))}
                             </View>
-                          )}
+                          ))}
                         </View>
-                        <View>
-                          <Text style={tw``}>
-                            <Text style={tw`font-bold ${singleBarang.stock <= 10 ? 'text-red-500' : ''}`}>
-                              {singleBarang.stock}
-                            </Text>{' '}
-                            pcs tersisa
-                          </Text>
-                        </View>
-                        <View>
-                          <Text style={tw``}>IDR {singleBarang.price.toLocaleString('id-ID')}</Text>
-                        </View>
-                        <View style={tw`flex flex-row flex-1 mt-1`}>
-                          <TouchableOpacity
-                            style={tw`bg-gray-200 shadow flex-1 rounded px-3 py-1 mr-2`}
-                            onPress={() => {
-                              handleViewDetail(singleBarang);
-                            }}
-                          >
-                            <Icon
-                              name="eyeo"
-                              iconStyle={tw`text-gray-500`}
-                              type="antdesign"
-                              size={24}
-                              tvParallaxProperties=""
-                            ></Icon>
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            style={tw`bg-gray-200 shadow flex-1 rounded px-3 py-1`}
-                            onPress={() => {
-                              handleEdit(singleBarang);
-                            }}
-                          >
-                            <Icon
-                              name="edit"
-                              iconStyle={tw`text-gray-500`}
-                              type="antdesign"
-                              size={24}
-                              tvParallaxProperties=""
-                            ></Icon>
-                          </TouchableOpacity>
-                        </View>
-                      </View>
+                      )}
                     </View>
-                  ))}
-                </View>
+                    <View>
+                      <Text style={tw``}>
+                        <Text style={tw`font-bold ${singleBarang.stock <= 10 ? 'text-red-500' : ''}`}>
+                          {singleBarang.stock}
+                        </Text>{' '}
+                        pcs tersisa
+                      </Text>
+                    </View>
+                    <View>
+                      <Text style={tw``}>IDR {singleBarang.price.toLocaleString('id-ID')}</Text>
+                    </View>
+                  </View>
+
+                  <View style={tw`flex flex-row self-center`}>
+                    <TouchableOpacity
+                      style={tw`bg-gray-200 shadow rounded px-3 py-1`}
+                      onPress={() => {
+                        navigation.navigate('CreateBarangScreen', {
+                          data: singleBarang,
+                        });
+                      }}
+                    >
+                      <Icon
+                        name="edit"
+                        iconStyle={tw`text-gray-500`}
+                        type="antdesign"
+                        size={24}
+                        tvParallaxProperties=""
+                      ></Icon>
+                    </TouchableOpacity>
+                  </View>
+                </TouchableOpacity>
               ))}
             </View>
           </CatetinScrollView>

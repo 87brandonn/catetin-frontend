@@ -8,6 +8,7 @@ interface ICatetinDateTimePicker {
   value: Date;
   maximumDate?: boolean;
   format?: string;
+  bottomSheet?: boolean;
   mode?: 'date' | 'time' | 'datetime' | undefined;
   onChange: (value: Date) => void;
 }
@@ -15,6 +16,7 @@ function CatetinDateTimePicker({
   value,
   maximumDate = false,
   onChange,
+  bottomSheet = true,
   mode = 'date',
   format = 'DD MMMM YYYY',
 }: ICatetinDateTimePicker) {
@@ -27,7 +29,7 @@ function CatetinDateTimePicker({
         }}
       >
         <CatetinInput
-          bottomSheet
+          bottomSheet={bottomSheet}
           placeholder="Tanggal Dari"
           pointerEvents="none"
           editable={false}

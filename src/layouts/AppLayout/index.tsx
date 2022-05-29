@@ -10,17 +10,27 @@ interface IAppLayout {
   bottom?: boolean;
   headerTitle?: string;
   customStyle?: TextStyle;
+  isBackEnabled?: boolean;
+  onPressBack?: () => void;
 }
 
-function AppLayout({ children, header = true, headerTitle = '', customStyle }: IAppLayout) {
+function AppLayout({
+  children,
+  header = true,
+  isBackEnabled = false,
+  headerTitle = '',
+  customStyle,
+  onPressBack,
+}: IAppLayout) {
   return (
     <SafeAreaView
       forceInset={{
         top: 'always',
+        bottom: 'never',
       }}
       style={{ ...tw`bg-white flex-1`, ...customStyle }}
     >
-      {header && <Header title={headerTitle} />}
+      {header && <Header title={headerTitle} isBackEnabled={isBackEnabled} onPressBack={onPressBack} />}
       <View style={tw`flex-1 bg-white`}>{children}</View>
     </SafeAreaView>
   );

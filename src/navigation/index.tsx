@@ -11,8 +11,12 @@ import { Platform } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { axiosCatetin } from '../api';
 import { useAppDispatch, useAppSelector } from '../hooks';
+import AddKategoriBarang from '../screens/AddKategoriBarang';
 import Barang from '../screens/Barang';
+import CreateBarangScreen from '../screens/CreateBarang';
+import BarangDetail from '../screens/DetailBarang';
 import HomeScreen from '../screens/Home';
+import KategoriBarangScreen from '../screens/KategoriBarang';
 import Login from '../screens/Login';
 import ProfileScreen from '../screens/Profile';
 import Register from '../screens/Register';
@@ -20,7 +24,11 @@ import ResetPassword from '../screens/ResetPassword';
 import EmailInputResetPassword from '../screens/ResetPassword/EmailInput';
 import VerifyResetPassword from '../screens/ResetPassword/Verification';
 import TokoLanding from '../screens/TokoLanding';
+import TransactionBarangEditScreen from '../screens/TransactionBarangEditScreen';
+import TransactionBarangScreen from '../screens/TransactionBarangScreen';
+import TransactionCreateScreen from '../screens/TransactionCreate';
 import Transaksi from '../screens/Transaksi';
+import TransactionDetailScreen from '../screens/TransaksiDetail';
 import VerifyEmail from '../screens/VerifyEmail';
 import { RootState } from '../store';
 import TabBar from './TabBar';
@@ -35,54 +43,67 @@ Notifications.setNotificationHandler({
 });
 
 type RootStackParamList = {
-  Home: undefined;
+  HomeScreen: undefined;
   Login: undefined;
   Register: undefined;
   Profile: undefined;
   TokoLanding: undefined;
   Barang: undefined;
   Transaksi: undefined;
+  TransactionDetailScreen: undefined;
+  TransactionCreateScreen: undefined;
+  TransactionBarangScreen: undefined;
+  TransactionBarangEditScreen: undefined;
+  DetailBarangScreen: undefined;
+  KategoriBarangScreen: undefined;
+  CreateBarangScreen: undefined;
   VerifyEmail: undefined;
+  AddKategoriBarangScreen: undefined;
   ResetPassword: undefined;
   VerifyResetPassword: undefined;
   EmailInputResetPassword: undefined;
 };
 
-const ProfileScreenWrapperStack = createStackNavigator();
-const Stack = createNativeStackNavigator<RootStackParamList>();
-const Tab = createBottomTabNavigator();
+const HomeScreenWrapperTab = createBottomTabNavigator();
 
-function ProfileScreenNavigator() {
+const Stack = createNativeStackNavigator<RootStackParamList>();
+
+function HomeScreenNavigator() {
   return (
-    <ProfileScreenWrapperStack.Navigator>
-      <ProfileScreenWrapperStack.Screen
-        name="ProfileScreen"
+    <HomeScreenWrapperTab.Navigator tabBar={TabBar}>
+      <HomeScreenWrapperTab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <HomeScreenWrapperTab.Screen
+        name="Transaksi"
+        component={Transaksi}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <HomeScreenWrapperTab.Screen
+        name="Barang"
+        component={Barang}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <HomeScreenWrapperTab.Screen
+        name="Profile"
         component={ProfileScreen}
         options={{
           headerShown: false,
         }}
       />
-      <Stack.Screen
-        name="ResetPassword"
-        component={ResetPassword}
-        options={{
-          headerShown: false,
-        }}
-      />
-      <Stack.Screen
-        name="VerifyResetPassword"
-        component={VerifyResetPassword}
-        options={{
-          headerShown: false,
-        }}
-      />
-    </ProfileScreenWrapperStack.Navigator>
+    </HomeScreenWrapperTab.Navigator>
   );
 }
 
 export default function RootNavigation() {
-  const [loading, setLoading] = useState(true);
-
   const { accessToken, store, profile, loggedIn } = useAppSelector((state: RootState) => state.auth);
 
   const dispatch = useAppDispatch();
@@ -127,27 +148,118 @@ export default function RootNavigation() {
     <>
       <PortalProvider>
         <NavigationContainer>
-          {!loggedIn ? (
-            <Stack.Navigator>
-              <Stack.Screen
-                name="Login"
-                component={Login}
-                options={{
-                  headerShown: false,
-                }}
-              />
-              <Stack.Screen
-                name="Register"
-                component={Register}
-                options={{
-                  headerShown: false,
-                }}
-              />
-              <Stack.Screen
-                name="EmailInputResetPassword"
-                component={EmailInputResetPassword}
-                options={{ headerShown: false }}
-              />
+          <Stack.Navigator
+            screenOptions={{
+              headerShown: false,
+            }}
+          >
+            {!loggedIn ? (
+              <>
+                <Stack.Screen
+                  name="Login"
+                  component={Login}
+                  options={{
+                    headerShown: false,
+                  }}
+                />
+                <Stack.Screen
+                  name="Register"
+                  component={Register}
+                  options={{
+                    headerShown: false,
+                  }}
+                />
+                <Stack.Screen
+                  name="EmailInputResetPassword"
+                  component={EmailInputResetPassword}
+                  options={{ headerShown: false }}
+                />
+              </>
+            ) : !profile?.verified ? (
+              <>
+                <Stack.Screen
+                  name="VerifyEmail"
+                  component={VerifyEmail}
+                  options={{
+                    headerShown: false,
+                  }}
+                />
+              </>
+            ) : !store || store.length === 0 ? (
+              <>
+                <Stack.Screen
+                  name="TokoLanding"
+                  component={TokoLanding}
+                  options={{
+                    headerShown: false,
+                  }}
+                />
+              </>
+            ) : (
+              store &&
+              profile && (
+                <>
+                  <Stack.Screen name="HomeScreen" component={HomeScreenNavigator} />
+                  <Stack.Screen
+                    name="TransactionDetailScreen"
+                    component={TransactionDetailScreen}
+                    options={{
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="TransactionBarangScreen"
+                    component={TransactionBarangScreen}
+                    options={{
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="TransactionBarangEditScreen"
+                    component={TransactionBarangEditScreen}
+                    options={{
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="TransactionCreateScreen"
+                    component={TransactionCreateScreen}
+                    options={{
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="DetailBarangScreen"
+                    component={BarangDetail}
+                    options={{
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="CreateBarangScreen"
+                    component={CreateBarangScreen}
+                    options={{
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="KategoriBarangScreen"
+                    component={KategoriBarangScreen}
+                    options={{
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="AddKategoriBarangScreen"
+                    component={AddKategoriBarang}
+                    options={{
+                      headerShown: false,
+                    }}
+                  />
+                </>
+              )
+            )}
+            <Stack.Group navigationKey={!loggedIn ? 'guest' : 'user'}>
               <Stack.Screen
                 name="ResetPassword"
                 component={ResetPassword}
@@ -162,62 +274,8 @@ export default function RootNavigation() {
                   headerShown: false,
                 }}
               />
-            </Stack.Navigator>
-          ) : !profile?.verified ? (
-            <Stack.Navigator>
-              <Stack.Screen
-                name="VerifyEmail"
-                component={VerifyEmail}
-                options={{
-                  headerShown: false,
-                }}
-              />
-            </Stack.Navigator>
-          ) : !store || store.length === 0 ? (
-            <Stack.Navigator>
-              <Stack.Screen
-                name="TokoLanding"
-                component={TokoLanding}
-                options={{
-                  headerShown: false,
-                }}
-              />
-            </Stack.Navigator>
-          ) : (
-            store &&
-            profile && (
-              <Tab.Navigator tabBar={TabBar}>
-                <Tab.Screen
-                  name="Home"
-                  component={HomeScreen}
-                  options={{
-                    headerShown: false,
-                  }}
-                />
-                <Tab.Screen
-                  name="Transaksi"
-                  component={Transaksi}
-                  options={{
-                    headerShown: false,
-                  }}
-                />
-                <Tab.Screen
-                  name="Barang"
-                  component={Barang}
-                  options={{
-                    headerShown: false,
-                  }}
-                />
-                <Tab.Screen
-                  name="Profile"
-                  component={ProfileScreenNavigator}
-                  options={{
-                    headerShown: false,
-                  }}
-                />
-              </Tab.Navigator>
-            )
-          )}
+            </Stack.Group>
+          </Stack.Navigator>
         </NavigationContainer>
       </PortalProvider>
       <Toast config={toastConfig} />

@@ -1,4 +1,5 @@
 import { yupResolver } from '@hookform/resolvers/yup';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -51,14 +52,13 @@ function ResetPassword(props: any) {
         email: props.route?.params?.email,
       });
 
-      reset({
-        new_password: '',
-        confirm_new_password: '',
-      });
-
       CatetinToast(200, 'default', 'Password succesfully changed');
 
       if (props.route?.params?.authenticated) {
+        await axiosCatetin.post(`/auth/logout`, {
+          refreshToken: await AsyncStorage.getItem('refreshToken'),
+          device_token_id: await AsyncStorage.getItem('deviceId'),
+        });
         dispatch(logout());
       } else {
         navigation.navigate('Login');

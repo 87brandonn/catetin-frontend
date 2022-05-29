@@ -37,7 +37,15 @@ const schema = yup
   })
   .required();
 
-function Header({ title = '' }: { title?: string }) {
+function Header({
+  title = '',
+  isBackEnabled = false,
+  onPressBack,
+}: {
+  title?: string;
+  isBackEnabled?: boolean;
+  onPressBack?: () => void;
+}) {
   const { navigate } = useNavigation<StackNavigationProp<RootStackParamList, 'Home'>>();
   const [loading, setLoading] = useState(true);
   const [loadingStore, setLoadingStore] = useState(true);
@@ -122,6 +130,8 @@ function Header({ title = '' }: { title?: string }) {
       setLoadingAddStore(false);
     }
   };
+
+  const navigation = useNavigation();
 
   return (
     <View style={tw`pt-4 pb-4 px-3 flex flex-row justify-between items-center`}>
@@ -232,37 +242,54 @@ function Header({ title = '' }: { title?: string }) {
         </NavigationContainer>
       </CatetinBottomSheet>
 
-      <View>
-        <Text style={tw`text-3xl font-bold`}>{title}</Text>
-      </View>
       <View style={tw`flex flex-row items-center`}>
-        <Icon
-          name="storefront"
-          type="materialicons"
-          size={24}
-          tvParallaxProperties=""
-          iconStyle={tw`text-slate-500 mr-3`}
-          onPress={() => {
-            bottomSheetRef?.current?.collapse();
-          }}
-        />
-        <TouchableOpacity
-          onPress={() => {
-            navigate('Profile');
-          }}
-        >
-          <Avatar
-            size={36}
-            rounded
-            source={{
-              uri: profileData?.Profile?.profilePicture || undefined,
+        {isBackEnabled ? (
+          <Icon
+            name="arrow-left"
+            type="feather"
+            iconStyle={tw`mr-3`}
+            tvParallaxProperties=""
+            onPress={() => {
+              if (onPressBack) {
+                onPressBack();
+              } else {
+                navigation.goBack();
+              }
             }}
-            containerStyle={tw`bg-gray-300`}
-            titleStyle={tw`text-gray-200`}
-            title={getAvatarTitle(profileData)}
-          ></Avatar>
-        </TouchableOpacity>
+          />
+        ) : null}
+        <Text style={tw`text-${isBackEnabled ? 'xl' : '3xl'} font-bold`}>{title}</Text>
       </View>
+      {!isBackEnabled ? (
+        <View style={tw`flex flex-row items-center`}>
+          <Icon
+            name="storefront"
+            type="materialicons"
+            size={24}
+            tvParallaxProperties=""
+            iconStyle={tw`text-slate-500 mr-3`}
+            onPress={() => {
+              bottomSheetRef?.current?.collapse();
+            }}
+          />
+          <TouchableOpacity
+            onPress={() => {
+              navigate('Profile');
+            }}
+          >
+            <Avatar
+              size={36}
+              rounded
+              source={{
+                uri: profileData?.Profile?.profilePicture || undefined,
+              }}
+              containerStyle={tw`bg-gray-300`}
+              titleStyle={tw`text-gray-200`}
+              title={getAvatarTitle(profileData)}
+            ></Avatar>
+          </TouchableOpacity>
+        </View>
+      ) : null}
     </View>
   );
 }
