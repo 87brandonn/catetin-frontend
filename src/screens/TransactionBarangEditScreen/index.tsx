@@ -83,9 +83,9 @@ function TransactionBarangEditScreen(props: {
                   } as ICatetinBarangWithTransaksiDetail),
               );
             }}
-            style={tw`${props.route.params.type === '3' ? 'text-gray-500' : ''} mb-1`}
+            style={tw`${props.route.params?.type === 'outcome' ? 'text-gray-500' : ''} mb-1`}
             keyboardType={'numeric'}
-            pointerEvents={props.route.params.type === '3' ? 'none' : 'auto'}
+            pointerEvents={props.route.params?.type === 'outcome' ? 'none' : 'auto'}
             placeholder="Jumlah"
           ></CatetinInput>
           <Text style={tw`text-gray-500`}>
@@ -100,7 +100,7 @@ function TransactionBarangEditScreen(props: {
                   (originalItemData?.ItemTransaction.amount || 0) -
                   parseInt(text || '0', 10) <
                   0 &&
-                props.route.params.type === '3'
+                props.route.params?.type === 'outcome'
               ) {
                 setError(true);
               } else {

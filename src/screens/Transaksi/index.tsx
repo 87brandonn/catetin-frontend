@@ -71,7 +71,6 @@ function Transaksi() {
     };
   }, [fetchTransaksi]);
 
-  const bottomSheetRef = useRef<BottomSheet>(null);
   const bottomSheetRefFilter = useRef<BottomSheet>(null);
 
   const navigation = useNavigation();
@@ -118,7 +117,7 @@ function Transaksi() {
             title="Tambah Transaksi"
             onPress={() => {
               dispatch(setEditedTransaction(null));
-              bottomSheetRef.current?.expand();
+              navigation.navigate('TransactionDetailScreen');
             }}
           />
         </View>
@@ -189,6 +188,7 @@ function Transaksi() {
                   onPress={() => {
                     navigation.navigate('TransactionCreateScreen', {
                       data: item,
+                      from: 'transaction-index',
                     });
                   }}
                 />

@@ -45,12 +45,6 @@ export interface IFormScheduleSchema {
   month: number;
 }
 
-const schema = yup.object().shape({
-  current_password: yup.string().required('Current password is required'),
-  new_password: yup.string().required('New password is required'),
-  confirm_new_password: yup.string().oneOf([yup.ref('new_password'), null], 'Password must match'),
-});
-
 const schemaScheduler = yup.object().shape({
   scheduleId: yup.number().required('Scheduler id is required'),
   type: yup.mixed().required('Tipe scheduler harus diisi'),
@@ -93,28 +87,8 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
 
   const { activeStore } = useAppSelector((state: RootState) => state.store);
 
-  const [scheduleLaporan, setScheduleLaporan] = useState<{
-    label: string;
-    value: string;
-  } | null>(null);
-
   const actionSheetRefDay = useRef<ActionSheet>(null);
   const actionSheetRefMonth = useRef<ActionSheet>(null);
-
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-    reset,
-    watch,
-  } = useForm<IFormSchema>({
-    resolver: yupResolver(schema),
-    defaultValues: {
-      current_password: '',
-      new_password: '',
-      confirm_new_password: '',
-    },
-  });
 
   const dispatch = useAppDispatch();
 
@@ -124,8 +98,6 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
     formState: { errors: errorsScheduler },
     watch: watchScheduler,
     setValue: setValueScheduler,
-    reset: resetScheduler,
-    clearErrors,
   } = useForm<IFormScheduleSchema>({
     resolver: yupResolver(schemaScheduler),
     defaultValues: {
@@ -411,10 +383,6 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
     }
   };
 
-  const [showFromManual, setShowFromManual] = useState(false);
-  const [showUntilManual, setShowUntilManual] = useState(false);
-  const [showAutomaticTime, setShowAutomaticTime] = useState(false);
-
   return (
     <AppLayout header={false}>
       <CatetinBottomSheet bottomSheetRef={bottomSheetManualLaporanRef} snapPoints={['45%']}>
@@ -699,21 +667,12 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
                       } as ProfileJoinUser),
                   );
                 }}
-              >
-                <View style={tw`flex flex-row justify-center items-center absolute top-0 right-0`}>
-                  <Icon
-                    name="check-circle"
-                    type="font-awesome-5"
-                    tvParallaxProperties=""
-                    iconStyle={tw`text-green-300 mr-1`}
-                  />
-                </View>
-              </CatetinImagePicker>
+              />
             )}
           </View>
           <View style={tw`mb-4`}>
             {loading ? (
-              <SkeletonPlaceholder>
+              <SkeletonPlaceholder highlightColor="blue">
                 <View style={tw`flex flex-row justify-center`}>
                   <View style={tw`w-[200px] h-[10px] rounded text-center`}></View>
                 </View>

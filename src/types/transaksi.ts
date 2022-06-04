@@ -22,6 +22,26 @@ export interface ICatetinTransaksiDetail {
   total: number;
   TransactionId: number;
 }
+
+export type ICatetinTransactionType = {
+  StoreId: null | number;
+  createdAt: Date;
+  deleted: boolean;
+  global: boolean;
+  id: number;
+  name: string;
+  picture: string | null;
+  rootType: 'outcome' | 'income';
+  updatedAt: Date;
+};
+
 export type ICatetinTransaksiWithDetail = ICatetinTransaksi & {
   Items: ({ ItemTransaction: ICatetinTransaksiDetail } & ICatetinBarang)[];
+  TransactionTransactionTypes: {
+    TransactionId: number;
+    TransactionType: ICatetinTransactionType;
+    TransactionTypeId: number;
+    createdAt: Date;
+    updatedAt: Date;
+  }[];
 };

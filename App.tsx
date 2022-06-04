@@ -1,11 +1,14 @@
+import * as SplashScreen from 'expo-splash-screen';
 import React from 'react';
+import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import * as Sentry from 'sentry-expo';
-import * as SplashScreen from 'expo-splash-screen';
 import AppWrapper from './src/AppWrapper';
 import { store } from './src/store';
 
 SplashScreen.preventAutoHideAsync();
+
+const queryClient = new QueryClient();
 
 Sentry.init({
   dsn: 'https://b3198868359a4ac4b036021af6a1d6a5@o1235697.ingest.sentry.io/6385694',
@@ -18,8 +21,10 @@ Sentry.Native.captureException('message');
 
 export default function App() {
   return (
-    <Provider store={store}>
-      <AppWrapper />
-    </Provider>
+    <QueryClientProvider client={queryClient}>
+      <Provider store={store}>
+        <AppWrapper />
+      </Provider>
+    </QueryClientProvider>
   );
 }

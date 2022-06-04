@@ -27,6 +27,7 @@ import TokoLanding from '../screens/TokoLanding';
 import TransactionBarangEditScreen from '../screens/TransactionBarangEditScreen';
 import TransactionBarangScreen from '../screens/TransactionBarangScreen';
 import TransactionCreateScreen from '../screens/TransactionCreate';
+import TransactionCategoryScreen from '../screens/TransactionCategoryScreen';
 import Transaksi from '../screens/Transaksi';
 import TransactionDetailScreen from '../screens/TransaksiDetail';
 import VerifyEmail from '../screens/VerifyEmail';
@@ -52,6 +53,7 @@ type RootStackParamList = {
   Transaksi: undefined;
   TransactionDetailScreen: undefined;
   TransactionCreateScreen: undefined;
+  TransactionCategoryScreen: undefined;
   TransactionBarangScreen: undefined;
   TransactionBarangEditScreen: undefined;
   DetailBarangScreen: undefined;
@@ -224,6 +226,13 @@ export default function RootNavigation() {
                   <Stack.Screen
                     name="TransactionCreateScreen"
                     component={TransactionCreateScreen}
+                    options={{
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="TransactionCategoryScreen"
+                    component={TransactionCategoryScreen}
                     options={{
                       headerShown: false,
                     }}

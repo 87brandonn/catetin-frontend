@@ -79,7 +79,7 @@ function TransactionBarangScreen(props: any) {
       .filter((data) => data.checked === true);
     const objError = {};
     finalData.forEach((data) => {
-      if ((data.amount || -99) > data.stock && props.route.params?.type === '3') {
+      if ((data.amount || -99) > data.stock && props.route.params?.type === 'outcome') {
         Object.assign(objError, {
           [data.id]: true,
         });
@@ -214,8 +214,8 @@ function TransactionBarangScreen(props: any) {
                 <View style={tw`flex flex-row items-center`}>
                   <Text style={tw`text-base mr-1`}>IDR</Text>
                   <CatetinInput
-                    style={tw`py-1 px-3 font-medium ${props.route.params?.type === '3' ? 'text-gray-400' : ''}`}
-                    pointerEvents={props.route.params?.type === '3' ? 'none' : 'auto'}
+                    style={tw`py-1 px-3 font-medium ${props.route.params?.type === 'outcome' ? 'text-gray-400' : ''}`}
+                    pointerEvents={props.route.params?.type === 'outcome' ? 'none' : 'auto'}
                     value={
                       (customPrice.find((data) => data.id === eachBarang.id)?.customPrice !== 0 &&
                         customPrice.find((data) => data.id === eachBarang.id)?.customPrice?.toString()) ||

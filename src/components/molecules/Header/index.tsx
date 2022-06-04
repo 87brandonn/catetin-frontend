@@ -1,11 +1,11 @@
-import BottomSheet, { BottomSheetBackdrop, BottomSheetModal } from '@gorhom/bottom-sheet';
+import BottomSheet from '@gorhom/bottom-sheet';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createStackNavigator, StackNavigationOptions, StackNavigationProp } from '@react-navigation/stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Text, TouchableOpacity, View } from 'react-native';
-import { Avatar, Icon } from 'react-native-elements';
+import { Text, View } from 'react-native';
+import { Icon } from 'react-native-elements';
 import tw from 'twrnc';
 import * as yup from 'yup';
 import { axiosCatetin } from '../../../api';
@@ -13,9 +13,8 @@ import { useAppDispatch, useAppSelector } from '../../../hooks';
 import { RootStackParamList } from '../../../navigation';
 import { RootState } from '../../../store';
 import { setActiveStore } from '../../../store/features/storeSlice';
-import { ProfileJoinUser } from '../../../types/profil';
 import { ICatetinStore } from '../../../types/store';
-import { getAvatarTitle, screenOptions } from '../../../utils';
+import { screenOptions } from '../../../utils';
 import CatetinBottomSheet from '../BottomSheet';
 import CatetinBottomSheetWrapper from '../BottomSheet/BottomSheetWrapper';
 import CatetinButton from '../Button';
@@ -47,11 +46,9 @@ function Header({
   onPressBack?: () => void;
 }) {
   const { navigate } = useNavigation<StackNavigationProp<RootStackParamList, 'Home'>>();
-  const [loading, setLoading] = useState(true);
   const [loadingStore, setLoadingStore] = useState(true);
   const [loadingAddStore, setLoadingAddStore] = useState(false);
   const [storeData, setStoreData] = useState<ICatetinStore[] | null>(null);
-  const [profileData, setProfileData] = useState<ProfileJoinUser | null>(null);
 
   const bottomSheetRef = useRef<BottomSheet>(null);
 
@@ -76,20 +73,6 @@ function Header({
 
   const Stack = createStackNavigator();
 
-  const fetchProfile = useCallback(async () => {
-    setLoading(true);
-    try {
-      const {
-        data: { data },
-      } = await axiosCatetin.get('/auth/profile');
-      setProfileData(data);
-    } catch (err: any) {
-      console.log(err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   const fetchStore = useCallback(async () => {
     setLoadingStore(true);
     try {
@@ -107,10 +90,6 @@ function Header({
   useEffect(() => {
     fetchStore();
   }, [fetchStore]);
-
-  useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
 
   const onSubmit = async (data: FormData, navigation: any) => {
     const { storeId, ...rest } = data;
@@ -272,22 +251,6 @@ function Header({
               bottomSheetRef?.current?.collapse();
             }}
           />
-          <TouchableOpacity
-            onPress={() => {
-              navigate('Profile');
-            }}
-          >
-            <Avatar
-              size={36}
-              rounded
-              source={{
-                uri: profileData?.Profile?.profilePicture || undefined,
-              }}
-              containerStyle={tw`bg-gray-300`}
-              titleStyle={tw`text-gray-200`}
-              title={getAvatarTitle(profileData)}
-            ></Avatar>
-          </TouchableOpacity>
         </View>
       ) : null}
     </View>

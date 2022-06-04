@@ -1,12 +1,11 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useNavigation } from '@react-navigation/native';
-import chunk from 'lodash/chunk';
 import moment from 'moment';
 import React, { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Alert, Text, TouchableOpacity, View } from 'react-native';
+import { Icon } from 'react-native-elements';
 import tw from 'twrnc';
-import { StackActions } from '@react-navigation/native';
 import * as yup from 'yup';
 import { axiosCatetin } from '../../api';
 import CatetinButton from '../../components/molecules/Button';
@@ -18,22 +17,35 @@ import AppLayout from '../../layouts/AppLayout';
 import CatetinScrollView from '../../layouts/ScrollView';
 import { optionsTransaksi } from '../../static/optionsTransaksi';
 import { RootState } from '../../store';
-import { setSelectedTransaction } from '../../store/features/transactionSlice';
+import { ICatetinBarang } from '../../types/barang';
 import { ICatetinTransaksi } from '../../types/transaksi';
-import { Icon } from 'react-native-elements';
 
 export interface ICatetinTipeTransaksi {
   label: string;
-  value: number;
+  value: 'income' | 'outcome';
 }
+
+export type ICatetinTransaksiCategory = {
+  id: number;
+  name: string;
+  picture: string;
+  global: boolean;
+  rootType: 'income' | 'outcome';
+  deleted: boolean;
+  StoreId: number;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
 export interface TransactionCreateFormSchema {
   transaksi_id: number;
+  transaksi_category: ICatetinTransaksiCategory | null;
   name: string;
   tipe: ICatetinTipeTransaksi | null | undefined;
   tanggal: Date;
   deskripsi: string;
   total: number | string;
+  barang: ICatetinBarang[];
 }
 
 export type TransactionCreateRootStackParamList = {
@@ -53,13 +65,8 @@ const schema = yup.object().shape({
     then: (rule) => rule.typeError('Type must be number').required('Total is required'),
   }),
   barang: yup.array(),
+  transaksi_category: yup.mixed().required('Transaksi category is required'),
 });
-
-interface ITransactionCreateScreen {
-  // bottomSheetRef: React.RefObject<BottomSheetMethods>;
-  onFinishSubmit: (data: ICatetinTransaksi) => void;
-  onFinishDelete: () => void;
-}
 
 function TransactionCreateScreen(props: any) {
   const [loadingDelete, setLoadingDelete] = useState(false);
@@ -77,6 +84,7 @@ function TransactionCreateScreen(props: any) {
     watch,
     setValue,
     reset,
+    clearErrors,
   } = useForm<TransactionCreateFormSchema>({
     resolver: yupResolver(schema),
     defaultValues: {
@@ -87,26 +95,39 @@ function TransactionCreateScreen(props: any) {
       deskripsi: '',
       total: 0,
       barang: [],
+      transaksi_category: null,
     },
   });
 
-  const dispatch = useAppDispatch();
+  useEffect(() => {
+    if (props.route.params?.from === 'transaction-category') {
+      setValue('transaksi_category', props.route.params?.data);
+      clearErrors('transaksi_category');
+    }
+  }, [clearErrors, props.route.params?.data, props.route.params?.from, setValue]);
 
   useEffect(() => {
     if (props.route.params?.from === 'transaction-barang') {
       setValue('barang', props.route.params?.data);
-    } else if (props.route.params?.data) {
+    } else if (props.route.params?.from === 'transaction-index') {
+      console.log(props.route.params?.data);
       setValue('name', props.route.params?.data.title);
       setValue('tanggal', moment(props.route.params?.data.transaction_date).toDate());
       setValue('deskripsi', props.route.params?.data.notes);
       setValue('total', props.route.params?.data.nominal);
       setValue(
         'tipe',
-        optionsTransaksi.find((opt) => opt?.value === parseInt(props.route.params?.data.type, 10)),
+        optionsTransaksi.find(
+          (opt) => opt?.value === props.route.params?.data.TransactionTransactionTypes[0]?.TransactionType.rootType,
+        ),
+      );
+      setValue(
+        'transaksi_category',
+        props.route.params?.data.TransactionTransactionTypes[0]?.TransactionType.deleted
+          ? null
+          : props.route.params?.data.TransactionTransactionTypes[0]?.TransactionType,
       );
       setValue('transaksi_id', props.route.params?.data.id);
-    } else {
-      reset({ transaksi_id: 0, name: '', tipe: null, tanggal: new Date(), deskripsi: '', total: 0 });
     }
   }, [props.route.params?.data, props.route.params?.from, reset, setValue]);
 
@@ -115,11 +136,12 @@ function TransactionCreateScreen(props: any) {
     try {
       const finalData = {
         title: data.name,
-        tipe_transaksi: data.tipe?.value,
         tanggal: moment(data.tanggal).toISOString(),
         notes: data.deskripsi,
         total: data.total,
         transaksi_id: data.transaksi_id,
+        transaksi_category: data.transaksi_category?.id,
+        rootType: data.transaksi_category?.rootType,
       };
       let dataTransaksi: ICatetinTransaksi;
       if (data.transaksi_id === 0) {
@@ -135,13 +157,16 @@ function TransactionCreateScreen(props: any) {
         } = await axiosCatetin.put('/transaksi', finalData);
         dataTransaksi = updatedData;
       }
+      console.log(dataTransaksi);
       CatetinToast(200, 'default', `Sukses ${data.transaksi_id === 0 ? 'menambah' : 'memperbarui'} transaksi`);
-      if (dataTransaksi.type === '3' || dataTransaksi.type === '4') {
-        dispatch(setSelectedTransaction(dataTransaksi.id));
-        navigation.navigate('TransactionDetailScreen');
-      } else {
-        navigation.navigate('Transaksi');
-      }
+      navigation.navigate('Transaksi');
+
+      // if (dataTransaksi.type === '3' || dataTransaksi.type === '4') {
+      //   dispatch(setSelectedTransaction(dataTransaksi.id));
+      //   navigation.navigate('TransactionDetailScreen');
+      // } else {
+      //   navigation.navigate('Transaksi');
+      // }
     } catch (err: any) {
       CatetinToast(err?.response?.status, 'error', err.response?.data?.message || 'Failed to create transaction');
     } finally {
@@ -162,7 +187,7 @@ function TransactionCreateScreen(props: any) {
   };
 
   return (
-    <AppLayout header isBackEnabled headerTitle={props.route.params?.data ? 'Edit Transaksi' : 'Tambah Transaksi'}>
+    <AppLayout header isBackEnabled headerTitle={watch('transaksi_id') !== 0 ? 'Edit Transaksi' : 'Tambah Transaksi'}>
       <CatetinScrollView style={tw`px-3`}>
         <View style={tw`mb-4 flex-1`}>
           <Text style={tw`mb-1 text-base`}>Nama Transaksi</Text>
@@ -214,6 +239,8 @@ function TransactionCreateScreen(props: any) {
                   }`}
                   tvParallaxProperties=""
                   onPress={() => {
+                    clearErrors('tipe');
+                    setValue('transaksi_category', null);
                     setValue('tipe', option);
                   }}
                   disabled={watch('transaksi_id') !== 0}
@@ -225,7 +252,37 @@ function TransactionCreateScreen(props: any) {
           {errors.tipe && <Text style={tw`text-red-500 mt-1`}>{(errors.tipe as any)?.message as any}</Text>}
         </View>
 
-        {(watch('tipe')?.value === 1 || watch('tipe')?.value === 2) && (
+        {watch('tipe')?.value && (
+          <View style={tw`mb-4 flex-1`}>
+            <Text style={tw`mb-1 text-base`}>Kategori Transaksi</Text>
+            <TouchableOpacity
+              onPress={() => {
+                navigation.navigate('TransactionCategoryScreen', {
+                  data: watch('transaksi_category'),
+                  type: watch('tipe')?.value,
+                });
+              }}
+              disabled={watch('transaksi_id') !== 0}
+            >
+              <CatetinInput
+                placeholder="Kategori Transaksi"
+                style={tw`border-b border-gray-100 px-4 py-3 rounded ${
+                  watch('transaksi_id') !== 0 ? 'text-gray-500' : ''
+                }`}
+                pointerEvents="none"
+                keyboardType="numeric"
+                value={watch('transaksi_category')?.name}
+                editable={false}
+              />
+
+              {errors.transaksi_category && (
+                <Text style={tw`text-red-500 mt-1`}>{(errors.transaksi_category as any)?.message as any}</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {watch('transaksi_category') && ![19, 20].includes(watch('transaksi_category').id) && (
           <View style={tw`mb-4 flex-1`}>
             <Text style={tw`mb-1 text-base`}>Nominal Transaksi</Text>
 
