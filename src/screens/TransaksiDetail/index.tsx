@@ -1,92 +1,39 @@
-import { useNavigation } from '@react-navigation/native';
+import { StackActions, useNavigation } from '@react-navigation/native';
 import moment from 'moment';
 import 'moment/locale/id';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { ActivityIndicator, Alert, RefreshControl, Text, View } from 'react-native';
 import { Avatar } from 'react-native-elements';
 import tw from 'twrnc';
-import { axiosCatetin } from '../../api';
-import { StackActions } from '@react-navigation/native';
 import CatetinButton from '../../components/molecules/Button';
-import CatetinToast from '../../components/molecules/Toast';
 import { useAppSelector } from '../../hooks';
+import useDeleteTransactionDetail from '../../hooks/useDeleteTransactionDetail';
+import useTransactionDetail from '../../hooks/useTransactionDetail';
 import AppLayout from '../../layouts/AppLayout';
 import CatetinScrollView from '../../layouts/ScrollView';
 import { optionsTransaksi } from '../../static/optionsTransaksi';
 import { RootState } from '../../store';
-import { ICatetinTransaksiWithDetail } from '../../types/transaksi';
 moment.locale('id');
 
-function TransactionDetailScreen(props: any) {
-  const [loadingDetail, setLoadingDetail] = useState(true);
-  const [dataDetail, setDataDetail] = useState<ICatetinTransaksiWithDetail | null>(null);
-
-  const [refreshing, setRefreshing] = useState(false);
-
+function TransactionDetailScreen() {
   const { selectedTransaction } = useAppSelector((state: RootState) => state.transaction);
 
-  useEffect(() => {
-    if (props.route.params?.from === 'transaction-barang-edit') {
-      fetchTransaksiDetail(selectedTransaction);
-    }
-  }, [props.route.params?.from, selectedTransaction]);
+  const {
+    data: dataDetail,
+    isLoading: loadingDetail,
+    isRefetching: refreshing,
+    refetch,
+  } = useTransactionDetail(selectedTransaction);
 
-  const fetchTransaksiDetail = async (id: number, refreshing = false) => {
-    if (refreshing) {
-      setRefreshing(true);
-    } else {
-      setLoadingDetail(true);
-    }
-    try {
-      const {
-        data: { data },
-      } = await axiosCatetin.get(`/transaksi/${id}`);
-      setDataDetail(data);
-    } catch (err: any) {
-      console.log(err);
-    } finally {
-      if (refreshing) {
-        setRefreshing(false);
-      } else {
-        setLoadingDetail(false);
-      }
-    }
-  };
+  const { navigate } = useNavigation();
 
-  const { navigate }: any = useNavigation();
-
-  useEffect(() => {
-    if (refreshing) {
-      fetchTransaksiDetail(selectedTransaction as number, true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshing]);
-
-  useEffect(() => {
-    if (selectedTransaction) {
-      fetchTransaksiDetail(selectedTransaction);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedTransaction]);
-
-  const [loadingDelete, setLoadingDelete] = useState(false);
+  const { mutate: deleteTransactionDetail, isLoading: loadingDelete } = useDeleteTransactionDetail();
 
   const handleDeleteTransactionDetailScreen = async (itemId: number, transactionId: number) => {
-    setLoadingDelete(true);
-    try {
-      await axiosCatetin.delete(`/transaksi/detail`, {
-        data: {
-          transaksi_id: transactionId,
-          barang_id: itemId,
-        },
-      });
-      CatetinToast(200, 'default', 'Berhasil menghapus detail transaksi');
-      fetchTransaksiDetail(selectedTransaction as number);
-    } catch (err: any) {
-      CatetinToast(err?.response?.status, 'error', 'Failed to delete transaction detail');
-    } finally {
-      setLoadingDelete(false);
-    }
+    deleteTransactionDetail({
+      transaksi_id: transactionId,
+      barang_id: itemId,
+    });
   };
 
   const navigation = useNavigation();
@@ -107,7 +54,7 @@ function TransactionDetailScreen(props: any) {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={() => {
-              setRefreshing(true);
+              refetch();
             }}
           />
         }

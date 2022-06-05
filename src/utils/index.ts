@@ -16,7 +16,7 @@ export const screenOptions = {
 export const titleCase = (s: string) =>
   s.replace(/^_*(.)|_+(.)/g, (s, c, d) => (c ? c.toUpperCase() : ' ' + d.toUpperCase()));
 
-export const getAvatarTitle = (profile: ProfileJoinUser | null) => {
+export const getAvatarTitle = (profile: ProfileJoinUser | null | undefined) => {
   if (profile?.Profile?.profilePicture) {
     return undefined;
   }

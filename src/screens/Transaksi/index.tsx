@@ -3,73 +3,39 @@ import { useNavigation } from '@react-navigation/native';
 import chunk from 'lodash/chunk';
 import moment from 'moment';
 import 'moment/locale/id';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { RefreshControl, Text, TouchableOpacity, View } from 'react-native';
 import { Avatar, Badge, Icon } from 'react-native-elements';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import tw from 'twrnc';
-import { axiosCatetin } from '../../api';
 import CatetinButton from '../../components/molecules/Button';
-import CatetinToast from '../../components/molecules/Toast';
 import { useAppDispatch, useAppSelector } from '../../hooks';
+import useTransaction from '../../hooks/useTransaction';
 import AppLayout from '../../layouts/AppLayout';
 import CatetinScrollView from '../../layouts/ScrollView';
+import { optionsTransaksi } from '../../static/optionsTransaksi';
 import { RootState } from '../../store';
 import { setEditedTransaction, setSelectedTransaction } from '../../store/features/transactionSlice';
-import { ICatetinTransaksiWithDetail } from '../../types/transaksi';
 import TransactionAction from './TransactionAction';
 import TransactionFilterBottomSheet from './TransactionFilterBottomSheet';
 moment.locale('id');
 
 function Transaksi() {
   const dispatch = useAppDispatch();
-  const [loadingTransaksi, setLoadingTransaksi] = useState(true);
 
   const { activeStore } = useAppSelector((state: RootState) => state.store);
 
-  const [transaksi, setTransaksi] = useState<ICatetinTransaksiWithDetail[] | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
   const [params, setParams] = useState({
     search: '',
   });
 
-  const fetchTransaksi = useCallback(
-    async (isMounted = true, refreshing = false) => {
-      if (refreshing) {
-        setRefreshing(true);
-      } else {
-        setLoadingTransaksi(true);
-      }
-      try {
-        const {
-          data: { data },
-        } = await axiosCatetin.get(`/transaksi/${activeStore}/list`, {
-          params,
-        });
-        if (isMounted) {
-          setTransaksi(data);
-        }
-      } catch (err: any) {
-        CatetinToast(err?.response?.status, 'error', 'Terjadi kesalahan. Gagal mengambil data transaksi.');
-        console.log(err);
-      } finally {
-        if (refreshing) {
-          setRefreshing(false);
-        } else {
-          setLoadingTransaksi(false);
-        }
-      }
-    },
-    [activeStore, params],
-  );
-
-  useEffect(() => {
-    let isMounted = true;
-    fetchTransaksi(isMounted);
-    return () => {
-      isMounted = false;
-    };
-  }, [fetchTransaksi]);
+  const {
+    data: transaksi,
+    isLoading: loadingTransaksi,
+    refetch,
+    error: errorTransaksi,
+    isRefetching: refreshing,
+  } = useTransaction(activeStore, params);
 
   const bottomSheetRefFilter = useRef<BottomSheet>(null);
 
@@ -110,6 +76,10 @@ function Transaksi() {
           <View style={tw`w-full h-[100px] mb-3 rounded-lg`}></View>
           <View style={tw`w-full h-[100px] mb-3 rounded-lg`}></View>
         </SkeletonPlaceholder>
+      ) : errorTransaksi ? (
+        <View style={tw`flex-1 items-center justify-center`}>
+          <Text style={tw`text-red-500 text-3xl font-bold`}>Error occured</Text>
+        </View>
       ) : transaksi?.length === 0 ? (
         <View style={tw`flex-1 justify-center items-center`}>
           <Text style={tw`font-semibold text-2xl mb-1`}>Tidak ada transaksi</Text>
@@ -128,7 +98,7 @@ function Transaksi() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={() => {
-                fetchTransaksi(true, true);
+                refetch();
               }}
             />
           }
@@ -144,6 +114,13 @@ function Transaksi() {
             >
               <View>
                 <Text style={tw`font-bold text-xl`}>{item.title}</Text>
+                <Text style={tw`text-gray-400`}>
+                  {
+                    optionsTransaksi.find(
+                      (data) => data.value === item.TransactionTransactionTypes[0]?.TransactionType.rootType,
+                    )?.label
+                  }
+                </Text>
                 {(item.notes && <Text style={tw`text-slate-500 text-sm`}>{item.notes}</Text>) || null}
                 <Text style={tw`font-500 text-lg`}>IDR {item.nominal?.toLocaleString('id-ID')}</Text>
                 {item.Items.length > 0 && (

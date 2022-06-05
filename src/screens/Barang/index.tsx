@@ -1,22 +1,24 @@
 import BottomSheet from '@gorhom/bottom-sheet';
 import { useNavigation } from '@react-navigation/native';
 import chunk from 'lodash/chunk';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Image, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { ActivityIndicator, Image, Platform, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
 import { Icon } from 'react-native-elements';
+import DocumentPicker, { types } from 'react-native-document-picker';
 import tw from 'twrnc';
-import { axiosCatetin } from '../../api';
+import CatetinBottomSheet from '../../components/molecules/BottomSheet';
+import CatetinBottomSheetWrapper from '../../components/molecules/BottomSheet/BottomSheetWrapper';
 import CatetinButton from '../../components/molecules/Button';
-import CatetinToast from '../../components/molecules/Toast';
 import { useAppSelector } from '../../hooks';
+import useBarang from '../../hooks/useBarang';
 import AppLayout from '../../layouts/AppLayout';
 import CatetinScrollView from '../../layouts/ScrollView';
 import { RootState } from '../../store';
-import { ICatetinBarang } from '../../types/barang';
 import { ICatetinItemCategory } from '../../types/itemCategory';
 import { ICatetinTransaksi } from '../../types/transaksi';
 import TransactionAction from '../Transaksi/TransactionAction';
 import BarangFilterBottomSheet from './BarangFilterBottomSheet';
+import CatetinToast from '../../components/molecules/Toast';
 
 export interface IFormSchema {
   id: number;
@@ -31,69 +33,70 @@ export interface IFormSchema {
 function Barang() {
   const { activeStore } = useAppSelector((state: RootState) => state.store);
 
-  const [originalBarang, setOriginalBarang] = useState<
-    (ICatetinBarang & {
-      ItemCategories: ICatetinItemCategory[];
-      Transactions: ICatetinTransaksi[];
-    })[]
-  >([]);
-  const [barang, setBarang] = useState<
-    (ICatetinBarang & {
-      ItemCategories: ICatetinItemCategory[];
-      Transactions: ICatetinTransaksi[];
-    })[]
-  >([]);
-  const [loadingFetch, setLoadingFetch] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-
   const [params, setParams] = useState<{
     nama_barang: string;
-    sort: string | undefined;
-    transactionId: number | undefined;
+    categories: number[] | undefined;
+    harga: number[] | undefined;
+    stok: number[] | undefined;
   }>({
     nama_barang: '',
-    sort: undefined,
-    transactionId: undefined,
+    categories: undefined,
+    harga: undefined,
+    stok: undefined,
   });
 
   const bottomSheetRefFilter = useRef<BottomSheet>(null);
+  const bottomSheetRefImport = useRef<BottomSheet>(null);
 
-  const fetchBarang = useCallback(
-    async (isRefreshing = false) => {
-      if (isRefreshing) {
-        setRefreshing(true);
-      } else {
-        setLoadingFetch(true);
-      }
-      try {
-        const {
-          data: { data },
-        } = await axiosCatetin.get(`/barang/${activeStore}/list`, {
-          params,
-        });
-        setOriginalBarang(data);
-        setBarang(data);
-      } catch (err: any) {
-        CatetinToast(err?.response?.status, 'error', 'Terjadi kesalahan. Gagal mengambil data barang.');
-      } finally {
-        if (isRefreshing) {
-          setRefreshing(false);
-        } else {
-          setLoadingFetch(false);
-        }
-      }
-    },
-    [activeStore, params],
-  );
+  const { data: barang, isLoading: loadingFetch, isRefetching: refreshing, refetch } = useBarang(activeStore, params);
 
   const navigation = useNavigation();
 
-  useEffect(() => {
-    fetchBarang();
-  }, [fetchBarang]);
+  const handleUploadCSV = async () => {
+    try {
+      const data = await DocumentPicker.pickSingle({
+        type: [types.xlsx, types.xls, types.csv],
+      });
+      const form: any = new FormData();
+      form.append('file', {
+        uri: Platform.OS === 'android' ? data.uri : data.uri?.replace('file://', ''),
+        type: data.type,
+        name: data.name,
+      });
+      await fetch(`https://catetin-be.herokuapp.com/barang/import/${activeStore}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        body: form,
+      });
+      CatetinToast(200, 'default', 'Berhasil menambah data barang');
+      bottomSheetRefImport.current?.close();
+    } catch (err: any) {
+      if (err?.code !== 'DOCUMENT_PICKER_CANCELED') {
+        CatetinToast(err?.response?.status, 'error', 'Failed to upload data');
+      }
+    }
+  };
 
   return (
     <AppLayout headerTitle="Barang">
+      <CatetinBottomSheet bottomSheetRef={bottomSheetRefImport}>
+        <CatetinBottomSheetWrapper title="Import Data" single>
+          <View style={tw`flex-row flex justify-center shadow-lg px-4 py-3 bg-gray-200 rounded-lg mb-2`}>
+            <Image source={require('./TemplateCSV.png')} style={tw`w-[300px] h-[300px] rounded-xl`} />
+          </View>
+          <Text style={tw`font-medium mb-4`}>
+            Note: Pastikan file excel yang di upload sudah sesuai dengan format diatas.
+          </Text>
+          <CatetinButton
+            title="Browse File"
+            onPress={async () => {
+              handleUploadCSV();
+            }}
+          />
+        </CatetinBottomSheetWrapper>
+      </CatetinBottomSheet>
       <BarangFilterBottomSheet
         bottomSheetRefFilter={bottomSheetRefFilter}
         onApplyFilter={(data) => {
@@ -122,6 +125,9 @@ function Barang() {
           bottomSheetRefFilter.current?.expand();
         }}
         showImport
+        onPressImport={() => {
+          bottomSheetRefImport.current?.expand();
+        }}
         onChangeSearch={(value) => {
           setParams((prevParams) => ({
             ...prevParams,
@@ -134,7 +140,7 @@ function Barang() {
       <View style={tw`flex-1`}>
         {loadingFetch ? (
           <ActivityIndicator color="#2461FF" />
-        ) : originalBarang?.length === 0 ? (
+        ) : barang?.length === 0 ? (
           <View style={tw`flex-1 justify-center items-center`}>
             <Text style={tw`font-semibold text-2xl mb-1`}>Tidak ada barang</Text>
             <CatetinButton
@@ -153,17 +159,13 @@ function Barang() {
               }}
             />
           </View>
-        ) : barang?.length === 0 ? (
-          <View style={tw`flex-1 justify-center items-center`}>
-            <Text style={tw`font-semibold text-2xl mb-1`}>Barang tidak ditemukan</Text>
-          </View>
         ) : (
           <CatetinScrollView
             style={tw`flex-1 py-3 px-3`}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchBarang(true)} />}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => refetch()} />}
           >
             <View style={tw`flex-1`}>
-              {barang.map((singleBarang) => (
+              {barang?.map((singleBarang) => (
                 <TouchableOpacity
                   style={tw`py-2 flex-1 flex flex-row`}
                   key={singleBarang.id}

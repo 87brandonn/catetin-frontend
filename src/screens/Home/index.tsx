@@ -8,7 +8,15 @@ import moment from 'moment';
 import chunk from 'lodash/chunk';
 import 'moment/locale/id';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Dimensions, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Alert,
+  Dimensions,
+  RefreshControl,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
 import ActionSheet from 'react-native-actionsheet';
 import { LineChart } from 'react-native-chart-kit';
 import { Avatar, Badge, Button, Icon } from 'react-native-elements';
@@ -28,6 +36,8 @@ import { RootState } from '../../store';
 import { ICatetinBarang } from '../../types/barang';
 import { ICatetinTransaksiWithDetail } from '../../types/transaksi';
 import { abbrNum } from '../../utils';
+import CatetinButton from '../../components/molecules/Button';
+import useProfile from '../../hooks/useProfile';
 
 moment.locale('id');
 
@@ -86,7 +96,6 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
   const fetchGraphData = useCallback(async () => {
     try {
       setLoadingGraph(true);
-      console.log(dateParams);
       const {
         data: { data },
       } = await axiosCatetin.get(`/transaksi/summary/${activeStore}`, {
@@ -97,9 +106,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
       });
       setGraphData(data);
     } catch (err: any) {
-      if (JSON.parse(err.response.data.err)?.name !== 'SequelizeConnectionError') {
-        CatetinToast(err?.response?.status, 'error', `Gagal mengambil data graph`);
-      }
+      CatetinToast(err?.response?.status, 'error', `Gagal mengambil data graph`);
     } finally {
       setLoadingGraph(false);
     }
@@ -118,9 +125,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
       });
       setMaxOutcome(data);
     } catch (err: any) {
-      if (JSON.parse(err.response.data.err)?.name !== 'SequelizeConnectionError') {
-        CatetinToast(err?.response?.status, 'error', `Gagal mengambil data total pengeluaran`);
-      }
+      CatetinToast(err?.response?.status, 'error', `Gagal mengambil data total pengeluaran`);
     } finally {
       setLoadingMaxOutcome(false);
     }
@@ -139,9 +144,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
       });
       setMaxIncome(data);
     } catch (err: any) {
-      if (JSON.parse(err.response.data.err)?.name !== 'SequelizeConnectionError') {
-        CatetinToast(err?.response?.status, 'error', `Gagal mengambil data pemasukan`);
-      }
+      CatetinToast(err?.response?.status, 'error', `Gagal mengambil data pemasukan`);
     } finally {
       setLoadingMaxIncome(false);
     }
@@ -160,9 +163,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
       });
       setFrequentItem(data);
     } catch (err: any) {
-      if (JSON.parse(err.response.data.err)?.name !== 'SequelizeConnectionError') {
-        CatetinToast(err?.response?.status, 'error', `Gagal mengambil data barang ter-frequent`);
-      }
+      CatetinToast(err?.response?.status, 'error', `Gagal mengambil data barang ter-frequent`);
     } finally {
       setLoadingFrequentItem(false);
     }
@@ -181,9 +182,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
       });
       setBestItem(data);
     } catch (err: any) {
-      if (JSON.parse(err.response.data.err)?.name !== 'SequelizeConnectionError') {
-        CatetinToast(err?.response?.status, 'error', `Gagal mengambil data barang terbaik`);
-      }
+      CatetinToast(err?.response?.status, 'error', `Gagal mengambil data barang terbaik`);
     } finally {
       setLoadingBestItem(false);
     }
@@ -202,9 +201,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
       });
       setImpressionData(data);
     } catch (err: any) {
-      if (JSON.parse(err.response.data.err)?.name !== 'SequelizeConnectionError') {
-        CatetinToast(err?.response?.status, 'error', `Gagal mengambil data impresi`);
-      }
+      CatetinToast(err?.response?.status, 'error', `Gagal mengambil data impresi`);
     } finally {
       setLoadingImpression(false);
     }
@@ -223,9 +220,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
       });
       setTotalOutcome(data);
     } catch (err: any) {
-      if (JSON.parse(err.response.data.err)?.name !== 'SequelizeConnectionError') {
-        CatetinToast(err?.response?.status, 'error', `Gagal mengambil data total pengeluaran`);
-      }
+      CatetinToast(err?.response?.status, 'error', `Gagal mengambil data total pengeluaran`);
     } finally {
       setLoadingTotalOutcome(false);
     }
@@ -244,9 +239,7 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
       });
       setTotalIncome(data);
     } catch (err: any) {
-      if (JSON.parse(err.response.data.err)?.name !== 'SequelizeConnectionError') {
-        CatetinToast(err?.response?.status, 'error', `Gagal mengambil data total pemasukan`);
-      }
+      CatetinToast(err?.response?.status, 'error', `Gagal mengambil data total pemasukan`);
     } finally {
       setLoadingTotalIncome(false);
     }
@@ -417,169 +410,22 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
     bottomSheetRef.current?.close();
   };
 
-  const { profile } = useAppSelector((state: RootState) => state.auth);
+  const [showGraphInfo, setShowGraphInfo] = useState<
+    | {
+        index: number;
+        x: number;
+        y: number;
+        value: number;
+      }
+    | undefined
+  >();
+
+  const { data: profile } = useProfile();
 
   return (
     <AppLayout headerTitle="Home" customStyle={tw``}>
-      <CatetinBottomSheet bottomSheetRef={bottomSheetRef}>
-        <NavigationContainer independent={true}>
-          <Stack.Navigator>
-            <Stack.Screen name="Periode" options={{ header: () => null }}>
-              {(props) => (
-                <CatetinBottomSheetWrapper {...props} title="Periode">
-                  {periodeOptions.map((periode) => (
-                    <View style={tw`flex flex-row justify-between mb-3 rounded-lg px-3 py-2`} key={periode.label}>
-                      <Text style={tw`text-lg`}>{periode.label}</Text>
-                      <Icon
-                        name={`radio-button-${activePeriode === periode.value ? 'on' : 'off'}`}
-                        iconStyle={tw`${activePeriode === periode.value ? 'text-blue-500' : ''}`}
-                        tvParallaxProperties=""
-                        onPress={() => {
-                          setActivePeriode(periode.value);
-                        }}
-                      />
-                    </View>
-                  ))}
-                  {activePeriode === 'custom' && (
-                    <View style={tw`px-5 mb-5`}>
-                      <TouchableOpacity
-                        style={tw` px-3 py-2 ${
-                          activeSubPeriod === 'tanggal' ? 'bg-zinc-200 shadow' : ''
-                        } rounded-lg mb-3 flex flex-row justify-between items-center`}
-                        onPress={() => {
-                          props.navigation.navigate('Tanggal');
-                          setActiveSubPeriod('tanggal');
-                        }}
-                      >
-                        <View>
-                          <Text style={tw`text-base font-500`}>Tanggal</Text>
-                          <Text style={tw`text-[12px] text-gray-500`}>
-                            {moment(customDate.from).format('DD MMMM YYYY')} s/d{' '}
-                            {moment(customDate.until).format('DD MMMM YYYY')}
-                          </Text>
-                        </View>
-                        <Icon name="chevron-right" tvParallaxProperties="" />
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={tw` px-3 py-2 ${
-                          activeSubPeriod === 'periode' ? 'bg-zinc-200 shadow' : ''
-                        } rounded-lg flex flex-row justify-between items-center`}
-                        onPress={() => {
-                          setActiveSubPeriod('periode');
-                          props.navigation.navigate('Periode Custom');
-                        }}
-                      >
-                        <View>
-                          <Text style={tw`text-base font-500`}>Periode</Text>
-                          <Text style={tw`text-[12px] text-gray-500`}>
-                            {customPeriod.value}{' '}
-                            {customPeriodeOptions.find((opt) => opt.value === customPeriod.date)?.label.toLowerCase()}{' '}
-                            lalu
-                          </Text>
-                        </View>
-                        <Icon name="chevron-right" tvParallaxProperties="" />
-                      </TouchableOpacity>
-                    </View>
-                  )}
-                  <Button
-                    title="Simpan"
-                    buttonStyle={tw`bg-blue-500`}
-                    titleStyle={tw`font-bold`}
-                    onPress={() => {
-                      handleApplyPeriod();
-                    }}
-                  />
-                </CatetinBottomSheetWrapper>
-              )}
-            </Stack.Screen>
-            <Stack.Screen name="Tanggal" options={{ header: () => null }}>
-              {(props) => (
-                <CatetinBottomSheetWrapper {...props} title="Custom Tanggal" showBack to="Periode">
-                  <Text style={tw`text-lg font-500`}>Dari</Text>
-                  <CatetinDateTimePicker
-                    value={customDate.from}
-                    onChange={(value) => {
-                      setCustomDate((prevState) => ({
-                        ...prevState,
-                        from: moment(value).startOf('days').toDate(),
-                      }));
-                    }}
-                    maximumDate
-                  ></CatetinDateTimePicker>
-                  <Text style={tw`text-lg font-500 mt-3`}>Sampai</Text>
-                  <CatetinDateTimePicker
-                    value={customDate.until}
-                    onChange={(value) => {
-                      setCustomDate((prevState) => ({
-                        ...prevState,
-                        until: moment(value).startOf('days').toDate(),
-                      }));
-                    }}
-                    maximumDate
-                  ></CatetinDateTimePicker>
-                </CatetinBottomSheetWrapper>
-              )}
-            </Stack.Screen>
-            <Stack.Screen name="Periode Custom" options={{ header: () => null }}>
-              {(props) => (
-                <CatetinBottomSheetWrapper {...props} title="Custom Periode" showBack to="Periode">
-                  <View style={tw`flex`}>
-                    <View style={tw`flex-1 mb-3`}>
-                      <CatetinInput
-                        placeholder="Nominal"
-                        value={(customPeriod.value !== 0 && customPeriod.value.toString()) || ''}
-                        onChangeText={(value) => {
-                          setCustomPeriod((prevState) => ({
-                            ...prevState,
-                            value: parseInt(value || '0', 10),
-                          }));
-                        }}
-                        keyboardType="numeric"
-                      />
-                    </View>
-                    <TouchableOpacity
-                      style={tw`flex-1 mb-3`}
-                      onPress={() => {
-                        actionSheetRef.current?.show();
-                      }}
-                    >
-                      <CatetinInput
-                        placeholder="Bulan"
-                        value={customPeriodeOptions.find((opt) => opt.value === customPeriod.date)?.label}
-                        pointerEvents="none"
-                      />
-                    </TouchableOpacity>
-                    <View style={tw`flex-1`}>
-                      <CatetinInput value="Lalu" pointerEvents="none" />
-                    </View>
-                    <ActionSheet
-                      ref={actionSheetRef}
-                      title={'Pilih Periode'}
-                      options={[...customPeriodeOptions.map((opt) => opt.label), 'Cancel']}
-                      cancelButtonIndex={3}
-                      onPress={(index) => {
-                        if (index !== 3) {
-                          setCustomPeriod((prevState) => ({
-                            ...prevState,
-                            date: customPeriodeOptions[index].value,
-                          }));
-                        }
-                      }}
-                    />
-                    <Text style={tw`mt-3 mb-3 text-gray-500`}>
-                      Ringkasan transaksi untuk {customPeriod.value}{' '}
-                      {customPeriodeOptions.find((opt) => opt.value === customPeriod.date)?.label.toLowerCase()}{' '}
-                      terakhir akan diterapkan.
-                    </Text>
-                  </View>
-                </CatetinBottomSheetWrapper>
-              )}
-            </Stack.Screen>
-          </Stack.Navigator>
-        </NavigationContainer>
-      </CatetinBottomSheet>
       <CatetinScrollView
-        style={tw`flex-1 pt-4`}
+        style={tw`flex-1`}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -589,6 +435,162 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
           />
         }
       >
+        <CatetinBottomSheet bottomSheetRef={bottomSheetRef}>
+          <NavigationContainer independent={true}>
+            <Stack.Navigator>
+              <Stack.Screen name="Periode" options={{ header: () => null }}>
+                {(props) => (
+                  <CatetinBottomSheetWrapper {...props} title="Periode">
+                    {periodeOptions.map((periode) => (
+                      <View style={tw`flex flex-row justify-between mb-3 rounded-lg py-2`} key={periode.label}>
+                        <Text style={tw`text-lg`}>{periode.label}</Text>
+                        <Icon
+                          name={`radio-button-${activePeriode === periode.value ? 'on' : 'off'}`}
+                          iconStyle={tw`${activePeriode === periode.value ? 'text-blue-500' : ''}`}
+                          tvParallaxProperties=""
+                          onPress={() => {
+                            setActivePeriode(periode.value);
+                          }}
+                        />
+                      </View>
+                    ))}
+                    {activePeriode === 'custom' && (
+                      <View style={tw`px-5 mb-5`}>
+                        <TouchableOpacity
+                          style={tw` px-3 py-2 ${
+                            activeSubPeriod === 'tanggal' ? 'bg-zinc-200 shadow' : ''
+                          } rounded-lg mb-3 flex flex-row justify-between items-center`}
+                          onPress={() => {
+                            props.navigation.navigate('Tanggal');
+                            setActiveSubPeriod('tanggal');
+                          }}
+                        >
+                          <View>
+                            <Text style={tw`text-base font-500`}>Tanggal</Text>
+                            <Text style={tw`text-[12px] text-gray-500`}>
+                              {moment(customDate.from).format('DD MMMM YYYY')} s/d{' '}
+                              {moment(customDate.until).format('DD MMMM YYYY')}
+                            </Text>
+                          </View>
+                          <Icon name="chevron-right" tvParallaxProperties="" />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={tw` px-3 py-2 ${
+                            activeSubPeriod === 'periode' ? 'bg-zinc-200 shadow' : ''
+                          } rounded-lg flex flex-row justify-between items-center`}
+                          onPress={() => {
+                            setActiveSubPeriod('periode');
+                            props.navigation.navigate('Periode Custom');
+                          }}
+                        >
+                          <View>
+                            <Text style={tw`text-base font-500`}>Periode</Text>
+                            <Text style={tw`text-[12px] text-gray-500`}>
+                              {customPeriod.value}{' '}
+                              {customPeriodeOptions.find((opt) => opt.value === customPeriod.date)?.label.toLowerCase()}{' '}
+                              lalu
+                            </Text>
+                          </View>
+                          <Icon name="chevron-right" tvParallaxProperties="" />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                    <CatetinButton
+                      title="Simpan"
+                      onPress={() => {
+                        handleApplyPeriod();
+                      }}
+                    />
+                  </CatetinBottomSheetWrapper>
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="Tanggal" options={{ header: () => null }}>
+                {(props) => (
+                  <CatetinBottomSheetWrapper {...props} title="Custom Tanggal" showBack to="Periode">
+                    <Text style={tw`text-lg font-500`}>Dari</Text>
+                    <CatetinDateTimePicker
+                      value={customDate.from}
+                      onChange={(value) => {
+                        setCustomDate((prevState) => ({
+                          ...prevState,
+                          from: moment(value).startOf('days').toDate(),
+                        }));
+                      }}
+                      maximumDate
+                    ></CatetinDateTimePicker>
+                    <Text style={tw`text-lg font-500 mt-3`}>Sampai</Text>
+                    <CatetinDateTimePicker
+                      value={customDate.until}
+                      onChange={(value) => {
+                        setCustomDate((prevState) => ({
+                          ...prevState,
+                          until: moment(value).startOf('days').toDate(),
+                        }));
+                      }}
+                      maximumDate
+                    ></CatetinDateTimePicker>
+                  </CatetinBottomSheetWrapper>
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="Periode Custom" options={{ header: () => null }}>
+                {(props) => (
+                  <CatetinBottomSheetWrapper {...props} title="Custom Periode" showBack to="Periode">
+                    <View style={tw`flex`}>
+                      <View style={tw`flex-1 mb-3`}>
+                        <CatetinInput
+                          placeholder="Nominal"
+                          value={(customPeriod.value !== 0 && customPeriod.value.toString()) || ''}
+                          onChangeText={(value) => {
+                            setCustomPeriod((prevState) => ({
+                              ...prevState,
+                              value: parseInt(value || '0', 10),
+                            }));
+                          }}
+                          keyboardType="numeric"
+                        />
+                      </View>
+                      <TouchableOpacity
+                        style={tw`flex-1 mb-3`}
+                        onPress={() => {
+                          actionSheetRef.current?.show();
+                        }}
+                      >
+                        <CatetinInput
+                          placeholder="Bulan"
+                          value={customPeriodeOptions.find((opt) => opt.value === customPeriod.date)?.label}
+                          pointerEvents="none"
+                        />
+                      </TouchableOpacity>
+                      <View style={tw`flex-1`}>
+                        <CatetinInput value="Lalu" pointerEvents="none" />
+                      </View>
+                      <ActionSheet
+                        ref={actionSheetRef}
+                        title={'Pilih Periode'}
+                        options={[...customPeriodeOptions.map((opt) => opt.label), 'Cancel']}
+                        cancelButtonIndex={3}
+                        onPress={(index) => {
+                          if (index !== 3) {
+                            setCustomPeriod((prevState) => ({
+                              ...prevState,
+                              date: customPeriodeOptions[index].value,
+                            }));
+                          }
+                        }}
+                      />
+                      <Text style={tw`mt-3 mb-3 text-gray-500`}>
+                        Ringkasan transaksi untuk {customPeriod.value}{' '}
+                        {customPeriodeOptions.find((opt) => opt.value === customPeriod.date)?.label.toLowerCase()}{' '}
+                        terakhir akan diterapkan.
+                      </Text>
+                    </View>
+                  </CatetinBottomSheetWrapper>
+                )}
+              </Stack.Screen>
+            </Stack.Navigator>
+          </NavigationContainer>
+        </CatetinBottomSheet>
+
         <View style={tw`px-3`}>
           <Text style={tw`text-3xl`}>Hi, {profile?.Profile?.displayName}</Text>
           <Text style={tw`text-base mb-1`}>Ringkasan laporan keuangan kamu</Text>
@@ -618,56 +620,70 @@ function HomeScreen({ navigation: { navigate } }: NativeStackScreenProps<RootSta
               <Text style={tw`text-white`}>Tidak ada data transaksi pada periode ini.</Text>
             </View>
           ) : (
-            <LineChart
-              data={{
-                labels: /* graphData?.map((data) => moment(data.date).format('D-M-YY')) || */ [],
-                datasets: [
-                  {
-                    data: graphData?.map((data) => parseInt(data.data.outcome?.[0].sum_nominal || '0', 10)) || [],
-                    color: (opacity = 1) => 'rgb(239,68,68)',
-                  },
-                  {
-                    data: graphData?.map((data) => parseInt(data.data.income?.[0].sum_nominal || '0', 10)) || [],
-                    color: (opacity = 1) => 'rgb(96,165,250)',
-                  },
-                ],
-                legend: ['Pengeluaran', 'Pemasukan'],
-              }}
-              onDataPointClick={(data) => {
-                Alert.alert(
-                  `${moment(graphData?.[data.index].date).format('dddd, D MMMM YYYY')} `,
-                  `IDR ${data.value.toLocaleString('id-ID')}`,
-                  [
+            <>
+              <LineChart
+                data={{
+                  labels: graphData?.map((data) => moment(data.date).format('D-M-YY')) || [],
+                  datasets: [
                     {
-                      text: 'OK',
+                      data: graphData?.map((data) => parseInt(data.data.outcome?.[0].sum_nominal || '0', 10)) || [],
+                      color: (opacity = 1) => 'rgb(239,68,68)',
+                    },
+                    {
+                      data: graphData?.map((data) => parseInt(data.data.income?.[0].sum_nominal || '0', 10)) || [],
+                      color: (opacity = 1) => 'rgb(96,165,250)',
                     },
                   ],
-                );
-              }}
-              formatYLabel={(yValue) => abbrNum(yValue, 0)}
-              width={Dimensions.get('window').width}
-              height={(Dimensions.get('window').width * 3) / 4}
-              yAxisLabel="Rp"
-              fromZero
-              chartConfig={{
-                backgroundColor: '#e26a00',
-                backgroundGradientFrom: '#fb8c00',
-                backgroundGradientTo: '#ffa726',
-                decimalPlaces: 2,
-                color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                style: {
-                  borderRadius: 16,
-                },
-                propsForDots: {
-                  r: '6',
-                  strokeWidth: '2',
-                  stroke: '#ffa726',
-                },
-              }}
-              bezier
-              style={tw`rounded-[16px]`}
-            ></LineChart>
+                  legend: ['Pengeluaran', 'Pemasukan'],
+                }}
+                verticalLabelRotation={90}
+                onDataPointClick={(data) => {
+                  if (data.index === showGraphInfo?.index) {
+                    setShowGraphInfo(undefined);
+                    return;
+                  }
+                  setShowGraphInfo({ index: data.index, x: data.x, y: data.y, value: data.value });
+                }}
+                xLabelsOffset={-10}
+                decorator={(data) => {
+                  if (!showGraphInfo) return null;
+                  return (
+                    <View
+                      style={tw.style(`bg-white px-2 py-1 rounded shadow-lg`, {
+                        left: (showGraphInfo?.x || 0) - (showGraphInfo?.index + 1 === graphData?.length ? 100 : 50),
+                        top: (showGraphInfo?.y || 0) + data.paddingTop,
+                        width: 100,
+                      })}
+                    >
+                      <Text style={tw`text-center`}>{showGraphInfo?.value.toLocaleString('id-ID')}</Text>
+                    </View>
+                  );
+                }}
+                formatYLabel={(yValue) => abbrNum(yValue, 0)}
+                width={Dimensions.get('window').width}
+                height={(Dimensions.get('window').width * 3) / 4}
+                yAxisLabel="Rp"
+                fromZero
+                chartConfig={{
+                  backgroundColor: '#e26a00',
+                  backgroundGradientFrom: '#fb8c00',
+                  backgroundGradientTo: '#ffa726',
+                  decimalPlaces: 2,
+                  color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                  labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                  style: {
+                    borderRadius: 16,
+                  },
+                  propsForDots: {
+                    r: '6',
+                    strokeWidth: '2',
+                    stroke: '#ffa726',
+                  },
+                }}
+                bezier
+                style={tw`rounded-[16px]`}
+              ></LineChart>
+            </>
           )}
         </View>
         <View style={tw`px-3`}>

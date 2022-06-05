@@ -11,14 +11,14 @@ import { axiosCatetin } from '../../api';
 import CatetinButton from '../../components/molecules/Button';
 import CatetinDateTimePicker from '../../components/molecules/DateTimePicker';
 import CatetinInput from '../../components/molecules/Input';
-import CatetinToast from '../../components/molecules/Toast';
 import { useAppDispatch, useAppSelector } from '../../hooks';
+import useCreateTransaction from '../../hooks/useCreateTransaction';
 import AppLayout from '../../layouts/AppLayout';
 import CatetinScrollView from '../../layouts/ScrollView';
 import { optionsTransaksi } from '../../static/optionsTransaksi';
 import { RootState } from '../../store';
+import { setSelectedTransaction } from '../../store/features/transactionSlice';
 import { ICatetinBarang } from '../../types/barang';
-import { ICatetinTransaksi } from '../../types/transaksi';
 
 export interface ICatetinTipeTransaksi {
   label: string;
@@ -44,7 +44,7 @@ export interface TransactionCreateFormSchema {
   tipe: ICatetinTipeTransaksi | null | undefined;
   tanggal: Date;
   deskripsi: string;
-  total: number | string;
+  total: string;
   barang: ICatetinBarang[];
 }
 
@@ -60,9 +60,9 @@ const schema = yup.object().shape({
   tipe: yup.mixed().required('Tipe transaksi is required'),
   tanggal: yup.date().required('Tanggal transaksi is required'),
   deskripsi: yup.string(),
-  total: yup.number().when('tipe', {
-    is: (opt: { label: string; value: number }) => opt?.value === 1 || opt?.value === 2,
-    then: (rule) => rule.typeError('Type must be number').required('Total is required'),
+  total: yup.string().when('transaksi_category', {
+    is: (opt: ICatetinTransaksiCategory | null) => opt && ![19, 20].includes(opt.id),
+    then: (rule) => rule.required('Total is required'),
   }),
   barang: yup.array(),
   transaksi_category: yup.mixed().required('Transaksi category is required'),
@@ -71,11 +71,10 @@ const schema = yup.object().shape({
 function TransactionCreateScreen(props: any) {
   const [loadingDelete, setLoadingDelete] = useState(false);
 
-  const [loading, setLoading] = useState(false);
-
   const navigation = useNavigation();
 
   const { activeStore } = useAppSelector((state: RootState) => state.store);
+  const dispatch = useAppDispatch();
 
   const {
     control,
@@ -93,7 +92,7 @@ function TransactionCreateScreen(props: any) {
       tipe: null,
       tanggal: new Date(),
       deskripsi: '',
-      total: 0,
+      total: '',
       barang: [],
       transaksi_category: null,
     },
@@ -131,47 +130,29 @@ function TransactionCreateScreen(props: any) {
     }
   }, [props.route.params?.data, props.route.params?.from, reset, setValue]);
 
-  const onSubmit = async (data: TransactionCreateFormSchema) => {
-    setLoading(true);
-    try {
-      const finalData = {
-        title: data.name,
-        tanggal: moment(data.tanggal).toISOString(),
-        notes: data.deskripsi,
-        total: data.total,
-        transaksi_id: data.transaksi_id,
-        transaksi_category: data.transaksi_category?.id,
-        rootType: data.transaksi_category?.rootType,
-      };
-      let dataTransaksi: ICatetinTransaksi;
-      if (data.transaksi_id === 0) {
-        const {
-          data: { data: insertedData },
-        } = await axiosCatetin.post(`/transaksi/${activeStore}`, finalData);
-        dataTransaksi = insertedData;
+  const { mutate: createTransaction, isLoading: loading } = useCreateTransaction(
+    activeStore,
+    (payload, dataTransaksi) => {
+      if (payload.transaksi_category === 19 || payload.transaksi_category === 20) {
+        dispatch(setSelectedTransaction(dataTransaksi.id));
+        navigation.navigate('TransactionDetailScreen');
       } else {
-        const {
-          data: {
-            data: [updatedData],
-          },
-        } = await axiosCatetin.put('/transaksi', finalData);
-        dataTransaksi = updatedData;
+        navigation.navigate('Transaksi');
       }
-      console.log(dataTransaksi);
-      CatetinToast(200, 'default', `Sukses ${data.transaksi_id === 0 ? 'menambah' : 'memperbarui'} transaksi`);
-      navigation.navigate('Transaksi');
+    },
+  );
 
-      // if (dataTransaksi.type === '3' || dataTransaksi.type === '4') {
-      //   dispatch(setSelectedTransaction(dataTransaksi.id));
-      //   navigation.navigate('TransactionDetailScreen');
-      // } else {
-      //   navigation.navigate('Transaksi');
-      // }
-    } catch (err: any) {
-      CatetinToast(err?.response?.status, 'error', err.response?.data?.message || 'Failed to create transaction');
-    } finally {
-      setLoading(false);
-    }
+  const onSubmit = async (data: TransactionCreateFormSchema) => {
+    const finalData = {
+      title: data.name,
+      tanggal: moment(data.tanggal).toISOString(),
+      notes: data.deskripsi,
+      total: parseInt(data.total || '0', 10),
+      transaksi_id: data.transaksi_id,
+      transaksi_category: data.transaksi_category?.id,
+      rootType: data.transaksi_category?.rootType,
+    };
+    createTransaction(finalData);
   };
 
   const handleDelete = async () => {
@@ -292,7 +273,7 @@ function TransactionCreateScreen(props: any) {
                 <CatetinInput
                   placeholder="Nominal Transaksi"
                   keyboardType="numeric"
-                  value={value?.toString() || ''}
+                  value={value !== 0 ? value?.toString() : ''}
                   onChangeText={onChange}
                 />
               )}

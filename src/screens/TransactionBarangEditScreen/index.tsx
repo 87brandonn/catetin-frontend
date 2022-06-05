@@ -3,11 +3,10 @@ import React, { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import { Avatar } from 'react-native-elements';
 import tw from 'twrnc';
-import { axiosCatetin } from '../../api';
 import CatetinButton from '../../components/molecules/Button';
 import CatetinInput from '../../components/molecules/Input';
-import CatetinToast from '../../components/molecules/Toast';
 import { useAppSelector } from '../../hooks';
+import useUpdateTransactionItem from '../../hooks/useUpdateTransactionItem';
 import AppLayout from '../../layouts/AppLayout';
 import CatetinScrollView from '../../layouts/ScrollView';
 import { RootState } from '../../store';
@@ -17,8 +16,6 @@ function TransactionBarangEditScreen(props: {
   route: RouteProp<ParamListBase, 'Transaction Edit Quantity'>;
   navigation: any;
 }) {
-  const [loadingSave, setLoadingSave] = useState(false);
-
   const { selectedTransaction } = useAppSelector((state: RootState) => state.transaction);
   const [itemData, setItemData] = useState<ICatetinBarangWithTransaksiDetail | null>(null);
   const [originalItemData, setOriginalItemData] = useState<ICatetinBarangWithTransaksiDetail | null>(null);
@@ -32,25 +29,23 @@ function TransactionBarangEditScreen(props: {
     setOriginalItemData(props.route.params?.data);
   }, [props.route.params?.data]);
 
+  const { mutate: editBarang, isLoading: loadingSave } = useUpdateTransactionItem();
+
   const handleEditBarang = async () => {
-    setLoadingSave(true);
-    try {
-      await axiosCatetin.put('/transaksi/detail', {
+    editBarang(
+      {
         transaksi_id: selectedTransaction,
         barang_id: itemData?.id,
         amount: itemData?.ItemTransaction.amount,
         price: itemData?.ItemTransaction.price,
         notes: itemData?.ItemTransaction.notes,
-      });
-      CatetinToast(200, 'default', 'Berhasil melakukan update detail');
-      navigation.navigate('TransactionDetailScreen', {
-        from: 'transaction-barang-edit',
-      });
-    } catch (err: any) {
-      CatetinToast(err?.response?.status, 'error', 'Gagal melakukan update detail');
-    } finally {
-      setLoadingSave(false);
-    }
+      },
+      {
+        onSuccess: () => {
+          navigation.navigate('TransactionDetailScreen');
+        },
+      },
+    );
   };
 
   return (
@@ -83,9 +78,9 @@ function TransactionBarangEditScreen(props: {
                   } as ICatetinBarangWithTransaksiDetail),
               );
             }}
-            style={tw`${props.route.params?.type === 'outcome' ? 'text-gray-500' : ''} mb-1`}
+            style={tw`${props.route.params?.type === 'income' ? 'text-gray-500' : ''} mb-1`}
             keyboardType={'numeric'}
-            pointerEvents={props.route.params?.type === 'outcome' ? 'none' : 'auto'}
+            pointerEvents={props.route.params?.type === 'income' ? 'none' : 'auto'}
             placeholder="Jumlah"
           ></CatetinInput>
           <Text style={tw`text-gray-500`}>
@@ -100,7 +95,7 @@ function TransactionBarangEditScreen(props: {
                   (originalItemData?.ItemTransaction.amount || 0) -
                   parseInt(text || '0', 10) <
                   0 &&
-                props.route.params?.type === 'outcome'
+                props.route.params?.type === 'income'
               ) {
                 setError(true);
               } else {

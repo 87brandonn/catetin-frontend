@@ -12,6 +12,9 @@ interface IAppLayout {
   customStyle?: TextStyle;
   isBackEnabled?: boolean;
   onPressBack?: () => void;
+  saveAction?: boolean;
+  saveActionText?: string;
+  onPressSaveAction?: () => void;
 }
 
 function AppLayout({
@@ -21,6 +24,9 @@ function AppLayout({
   headerTitle = '',
   customStyle,
   onPressBack,
+  saveAction,
+  saveActionText,
+  onPressSaveAction,
 }: IAppLayout) {
   return (
     <SafeAreaView
@@ -30,7 +36,16 @@ function AppLayout({
       }}
       style={{ ...tw`bg-white flex-1`, ...customStyle }}
     >
-      {header && <Header title={headerTitle} isBackEnabled={isBackEnabled} onPressBack={onPressBack} />}
+      {header && (
+        <Header
+          title={headerTitle}
+          isBackEnabled={isBackEnabled}
+          onPressBack={onPressBack}
+          saveAction={saveAction}
+          saveActionText={saveActionText}
+          onPressSaveAction={onPressSaveAction}
+        />
+      )}
       <View style={tw`flex-1 bg-white`}>{children}</View>
     </SafeAreaView>
   );

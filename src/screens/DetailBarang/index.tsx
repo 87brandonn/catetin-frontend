@@ -1,65 +1,22 @@
 import moment from 'moment';
 import 'moment/locale/id';
-import React, { Fragment, useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { Avatar } from 'react-native-elements';
 import ImageView from 'react-native-image-viewing';
 import tw from 'twrnc';
-import { axiosCatetin } from '../../api';
+import useBarangDetail from '../../hooks/useBarangDetail';
 import AppLayout from '../../layouts/AppLayout';
 import CatetinScrollView from '../../layouts/ScrollView';
-import { ICatetinBarang } from '../../types/barang';
-import { ICatetinItemCategory } from '../../types/itemCategory';
-import { ICatetinTransaksi, ICatetinTransaksiDetail } from '../../types/transaksi';
 moment.locale('id');
 
-interface IBarangDetail {
-  data:
-    | (ICatetinBarang & {
-        ItemCategories: ICatetinItemCategory[];
-        Transactions: (ICatetinTransaksi & {
-          ItemTransaction: ICatetinTransaksiDetail;
-        })[];
-      })
-    | null;
-  loading: boolean;
-}
 function BarangDetail(props: any) {
   const [viewBarangMode, setViewBarangMode] = useState(false);
 
-  const [loadDetail, setLoadDetail] = useState(true);
-  const [data, setBarangTransaksi] = useState<
-    | (ICatetinBarang & {
-        ItemCategories: ICatetinItemCategory[];
-        Transactions: (ICatetinTransaksi & {
-          ItemTransaction: ICatetinTransaksiDetail;
-        })[];
-      })
-    | null
-  >(null);
-
-  useEffect(() => {
-    handleViewDetail(props.route.params?.id);
-  }, [props.route.params?.id]);
-
-  const handleViewDetail = async (id: string) => {
-    try {
-      setLoadDetail(true);
-      const {
-        data: { data: barangTransaksiData },
-      } = await axiosCatetin.get(`/barang/${id}`, {
-        params: {
-          transaksi: true,
-          category: true,
-        },
-      });
-      setBarangTransaksi(barangTransaksiData);
-    } catch (err: any) {
-      console.error(err);
-    } finally {
-      setLoadDetail(false);
-    }
-  };
+  const { data, isLoading: loadDetail } = useBarangDetail(props.route.params?.id, {
+    transaksi: true,
+    category: true,
+  });
 
   return (
     <AppLayout header isBackEnabled headerTitle={props.route.params?.title}>

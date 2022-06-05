@@ -11,6 +11,7 @@ import CatetinButton from '../../components/molecules/Button';
 import CatetinImagePicker from '../../components/molecules/ImagePicker';
 import CatetinInput from '../../components/molecules/Input';
 import { useAppSelector } from '../../hooks';
+import useCreateBarang from '../../hooks/useCreateBarang';
 import AppLayout from '../../layouts/AppLayout';
 import CatetinScrollView from '../../layouts/ScrollView';
 import { RootState } from '../../store';
@@ -41,19 +42,15 @@ const schema = yup.object().shape({
   transactions: yup.mixed(),
 });
 
-function CreateBarangScreen({ title, ...props }: ICreateBarangScreen) {
+function CreateBarangScreen(props: any) {
   const { navigate } = useNavigation();
 
-  const { activeStore } = useAppSelector((state: RootState) => state.store);
-
-  const [loading, setLoading] = useState(false);
   const [loadingDelete, setLoadingDelete] = useState(false);
 
   const {
     control,
     handleSubmit,
     formState: { errors },
-    reset,
     watch,
     setValue,
   } = useForm<IFormSchema>({
@@ -69,16 +66,6 @@ function CreateBarangScreen({ title, ...props }: ICreateBarangScreen) {
     },
   });
 
-  const onPost = async (data: IFormSchema) => {
-    await axiosCatetin.post(`/barang/${activeStore}`, {
-      name: data.name,
-      price: data.harga,
-      picture: data.barang_picture,
-      stock: data.stok,
-      category: data.category?.map((cat) => cat.id),
-    });
-  };
-
   useEffect(() => {
     if (props.route.params?.from === 'kategori-barang') {
       setValue('category', props.route.params?.data);
@@ -93,49 +80,30 @@ function CreateBarangScreen({ title, ...props }: ICreateBarangScreen) {
     }
   }, [props.route.params?.data, props.route.params?.from, setValue]);
 
-  const onPatch = async (data: IFormSchema) => {
-    await axiosCatetin.put('/barang', {
-      id: data.id,
-      name: data.name,
-      price: data.harga,
-      picture: data.barang_picture,
-      stock: data.stok,
-      category: data.category?.map((cat) => cat.id),
-    });
-  };
-
   const navigation = useNavigation();
 
+  const { mutate: createBarang, isLoading: loading } = useCreateBarang();
+
   const onSubmit = async (data: any) => {
-    setLoading(true);
-    try {
-      if (data.id !== 0) {
-        await onPatch(data);
-      } else {
-        await onPost(data);
-      }
-      Toast.show({
-        type: 'customToast',
-        text2: `Berhasil ${data.id !== 0 ? 'memperbarui' : 'menambah'} barang`,
-        position: 'bottom',
-      });
-      if (props.route.params?.from === 'transaction-barang') {
-        navigation.navigate('TransactionBarangScreen', {
-          from: 'add-barang',
-        });
-      } else {
-        navigation.goBack();
-      }
-    } catch (err: any) {
-      console.log(err);
-      Toast.show({
-        type: 'customToast',
-        text2: err.response?.data?.message,
-        position: 'bottom',
-      });
-    } finally {
-      setLoading(false);
-    }
+    createBarang(
+      {
+        id: data.id,
+        name: data.name,
+        price: data.harga,
+        picture: data.barang_picture,
+        stock: data.stok,
+        category: data.category.length ? data.category.map((cat) => cat.id) : undefined,
+      },
+      {
+        onSuccess: () => {
+          if (props.route.params?.from === 'transaction-barang') {
+            navigate('TransactionBarangScreen');
+          } else {
+            navigate('Barang');
+          }
+        },
+      },
+    );
   };
   const handleDelete = async () => {
     setLoadingDelete(true);
@@ -162,7 +130,7 @@ function CreateBarangScreen({ title, ...props }: ICreateBarangScreen) {
     <AppLayout
       header
       isBackEnabled
-      headerTitle={`${props.route.params?.data?.name ? `Edit ${props.route.params?.data?.name}` : ``}`}
+      headerTitle={`${watch('id') !== 0 ? `Edit ${props.route.params?.data?.name}` : ``}`}
     >
       <CatetinScrollView style={tw`px-3`}>
         <View style={tw`mb-4`}>

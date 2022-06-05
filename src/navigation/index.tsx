@@ -34,6 +34,9 @@ import VerifyEmail from '../screens/VerifyEmail';
 import { RootState } from '../store';
 import TabBar from './TabBar';
 import { toastConfig } from './ToastConfig';
+import ProfileAccountScreen from '../screens/ProfileAccount';
+import EditProfileScreen from '../screens/EditProfileScreen';
+import EditDisplayNameScreen from '../screens/EditDisplayNameScreen';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -48,6 +51,9 @@ type RootStackParamList = {
   Login: undefined;
   Register: undefined;
   Profile: undefined;
+  EditProfileScreen: undefined;
+  EditDisplayNameScreen: undefined;
+  ProfileAccountScreen: undefined;
   TokoLanding: undefined;
   Barang: undefined;
   Transaksi: undefined;
@@ -240,6 +246,27 @@ export default function RootNavigation() {
                   <Stack.Screen
                     name="DetailBarangScreen"
                     component={BarangDetail}
+                    options={{
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="EditProfileScreen"
+                    component={EditProfileScreen}
+                    options={{
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="EditDisplayNameScreen"
+                    component={EditDisplayNameScreen}
+                    options={{
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="ProfileAccountScreen"
+                    component={ProfileAccountScreen}
                     options={{
                       headerShown: false,
                     }}
