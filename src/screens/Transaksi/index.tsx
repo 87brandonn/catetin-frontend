@@ -55,8 +55,16 @@ function Transaksi() {
       />
       <TransactionAction
         onClickPlus={() => {
-          dispatch(setEditedTransaction(null));
-          navigation.navigate('TransactionCreateScreen');
+          navigation.navigate('TransactionCreateScreen', {
+            transaksi_id: 0,
+            name: '',
+            tipe: null,
+            tanggal: new Date().toISOString(),
+            deskripsi: '',
+            total: '',
+            barang: [],
+            transaksi_category: null,
+          });
         }}
         onClickFilter={() => {
           bottomSheetRefFilter.current?.expand();
@@ -86,8 +94,16 @@ function Transaksi() {
           <CatetinButton
             title="Tambah Transaksi"
             onPress={() => {
-              dispatch(setEditedTransaction(null));
-              navigation.navigate('TransactionDetailScreen');
+              navigation.navigate('TransactionCreateScreen', {
+                transaksi_id: 0,
+                name: '',
+                tipe: null,
+                tanggal: new Date().toISOString(),
+                deskripsi: '',
+                total: '',
+                barang: [],
+                transaksi_category: null,
+              });
             }}
           />
         </View>
@@ -114,13 +130,15 @@ function Transaksi() {
             >
               <View>
                 <Text style={tw`font-bold text-xl`}>{item.title}</Text>
-                <Text style={tw`text-gray-400`}>
-                  {
-                    optionsTransaksi.find(
-                      (data) => data.value === item.TransactionTransactionTypes[0]?.TransactionType.rootType,
-                    )?.label
-                  }
-                </Text>
+                {item.TransactionTransactionTypes[0]?.TransactionType.rootType && (
+                  <Text style={tw`text-gray-400`}>
+                    {`${
+                      optionsTransaksi.find(
+                        (data) => data.value === item.TransactionTransactionTypes[0]?.TransactionType.rootType,
+                      )?.label
+                    } - ${item.TransactionTransactionTypes[0]?.TransactionType.name}`}
+                  </Text>
+                )}
                 {(item.notes && <Text style={tw`text-slate-500 text-sm`}>{item.notes}</Text>) || null}
                 <Text style={tw`font-500 text-lg`}>IDR {item.nominal?.toLocaleString('id-ID')}</Text>
                 {item.Items.length > 0 && (

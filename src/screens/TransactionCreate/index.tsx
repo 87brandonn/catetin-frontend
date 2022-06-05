@@ -109,7 +109,6 @@ function TransactionCreateScreen(props: any) {
     if (props.route.params?.from === 'transaction-barang') {
       setValue('barang', props.route.params?.data);
     } else if (props.route.params?.from === 'transaction-index') {
-      console.log(props.route.params?.data);
       setValue('name', props.route.params?.data.title);
       setValue('tanggal', moment(props.route.params?.data.transaction_date).toDate());
       setValue('deskripsi', props.route.params?.data.notes);

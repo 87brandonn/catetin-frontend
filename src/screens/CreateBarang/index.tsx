@@ -96,11 +96,7 @@ function CreateBarangScreen(props: any) {
       },
       {
         onSuccess: () => {
-          if (props.route.params?.from === 'transaction-barang') {
-            navigate('TransactionBarangScreen');
-          } else {
-            navigate('Barang');
-          }
+          navigation.goBack();
         },
       },
     );

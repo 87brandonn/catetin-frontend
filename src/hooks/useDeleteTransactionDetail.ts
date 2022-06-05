@@ -24,6 +24,7 @@ const useDeleteTransactionDetail = () => {
     },
     {
       onSuccess: (data, payload) => {
+        client.invalidateQueries(['barang', activeStore]);
         client.invalidateQueries(['transaction', activeStore]);
         client.invalidateQueries(['transaction-detail', payload.transaksi_id]);
         CatetinToast(200, 'default', 'Berhasil menghapus detail transaksi');
