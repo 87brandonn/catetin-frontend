@@ -4,7 +4,7 @@ import { store } from '../store';
 import { logout } from '../store/features/authSlice';
 
 const axiosCatetin: AxiosInstance = axios.create({
-  baseURL: /*  process.env.CATETIN_BASEURL ||  */ 'https://d042-180-244-165-47.ngrok.io',
+  baseURL: process.env.CATETIN_BASEURL,
 });
 
 axiosCatetin.interceptors.request.use(async (config) => {
