@@ -35,13 +35,34 @@ export type ICatetinTransactionType = {
   updatedAt: Date;
 };
 
+export type ICatetinPaymentMethod = {
+  StoreId: number;
+  createdAt: Date;
+  deleted: boolean;
+  global: boolean;
+  id: number;
+  name: string;
+  picture: string;
+  updatedAt: Date;
+};
+
+export type ICatetinTransactionPaymentMethod = {
+  PaymentMethod: ICatetinPaymentMethod;
+  PaymentMethodId: number;
+  TransactionId: number;
+  id: number;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 export type ICatetinTransaksiWithDetail = ICatetinTransaksi & {
   Items: ({ ItemTransaction: ICatetinTransaksiDetail } & ICatetinBarang)[];
-  TransactionTransactionTypes: {
+  TransactionTransactionType: {
     TransactionId: number;
     TransactionType: ICatetinTransactionType;
     TransactionTypeId: number;
     createdAt: Date;
     updatedAt: Date;
-  }[];
+  };
+  TransactionPaymentMethod: ICatetinTransactionPaymentMethod;
 };

@@ -25,6 +25,8 @@ function TransactionDetailScreen() {
     refetch,
   } = useTransactionDetail(selectedTransaction);
 
+  console.log(dataDetail);
+
   const { navigate } = useNavigation();
 
   const { mutate: deleteTransactionDetail, isLoading: loadingDelete } = useDeleteTransactionDetail();
@@ -63,13 +65,13 @@ function TransactionDetailScreen() {
           <ActivityIndicator color="#2461FF" />
         ) : (
           <>
-            {[19, 20].includes(dataDetail?.TransactionTransactionTypes[0]?.TransactionType.id || 0) && (
+            {[19, 20].includes(dataDetail?.TransactionTransactionType?.TransactionType.id || 0) && (
               <Text
                 style={tw`text-blue-500 text-base text-right`}
                 onPress={() => {
                   navigate('TransactionBarangScreen', {
                     id: dataDetail?.id,
-                    type: dataDetail?.TransactionTransactionTypes[0]?.TransactionType.rootType,
+                    type: dataDetail?.TransactionTransactionType?.TransactionType.rootType,
                   });
                 }}
               >
@@ -86,26 +88,28 @@ function TransactionDetailScreen() {
             <Text style={tw`text-base mb-2`}>
               {
                 optionsTransaksi.find(
-                  (opt) => opt.value === dataDetail?.TransactionTransactionTypes[0]?.TransactionType.rootType,
+                  (opt) => opt.value === dataDetail?.TransactionTransactionType?.TransactionType.rootType,
                 )?.label
               }
             </Text>
             <Text style={tw`text-xl font-medium `}>Kategori:</Text>
             <Text
               style={tw`text-base mb-2 ${
-                dataDetail?.TransactionTransactionTypes[0]?.TransactionType.deleted ? 'text-red-500' : ''
+                dataDetail?.TransactionTransactionType?.TransactionType.deleted ? 'text-red-500' : ''
               }`}
             >
-              {`${dataDetail?.TransactionTransactionTypes[0]?.TransactionType.name} ${
-                dataDetail?.TransactionTransactionTypes[0]?.TransactionType.deleted ? '(tidak tersedia)' : ''
+              {`${dataDetail?.TransactionTransactionType?.TransactionType.name} ${
+                dataDetail?.TransactionTransactionType?.TransactionType.deleted ? '(tidak tersedia)' : ''
               }`}
             </Text>
             <Text style={tw`text-xl font-medium`}>Nominal:</Text>
             <Text style={tw`text-base mb-2`}>IDR {dataDetail?.nominal.toLocaleString('id-ID')}</Text>
+            <Text style={tw`text-xl font-medium`}>Metode Pembayaran:</Text>
+            <Text style={tw`text-base mb-2`}>{dataDetail?.TransactionPaymentMethod?.PaymentMethod?.name || '-'}</Text>
             <Text style={tw`text-xl font-medium`}>Deskripsi:</Text>
             <Text style={tw`text-base mb-2 mb-2`}>{dataDetail?.notes || '-'}</Text>
 
-            {[19, 20].includes(dataDetail?.TransactionTransactionTypes[0]?.TransactionType.id || 0) && (
+            {[19, 20].includes(dataDetail?.TransactionTransactionType?.TransactionType.id || 0) && (
               <View>
                 {(dataDetail?.Items.length || 0) > 0 && <Text style={tw`text-xl font-medium`}>List Barang:</Text>}
                 {dataDetail?.Items.map((item) => (
@@ -134,7 +138,7 @@ function TransactionDetailScreen() {
                       onPress={() => {
                         navigate('TransactionBarangEditScreen', {
                           data: item,
-                          type: dataDetail?.TransactionTransactionTypes[0]?.TransactionType.rootType,
+                          type: dataDetail?.TransactionTransactionType?.TransactionType.rootType,
                         });
                       }}
                       style={tw`mb-2`}

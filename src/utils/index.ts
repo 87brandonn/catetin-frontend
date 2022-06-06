@@ -103,3 +103,13 @@ export const abbrNum = (number: any, decPlaces: number) => {
 
   return number;
 };
+
+export const combine: any = ([head, ...[headTail, ...tailTail]]: any) => {
+  if (!headTail) return head;
+
+  const combined = headTail.reduce((acc: any, x: any) => {
+    return acc.concat(head.map((h: any) => `${h} / ${x}`));
+  }, []);
+
+  return combine([combined, ...tailTail]);
+};

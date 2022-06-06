@@ -11,6 +11,7 @@ type CreateTransactionPayload = {
   notes: string;
   total: number;
   rootType: 'income' | 'outcome' | undefined;
+  paymentMethod: number | undefined;
 };
 
 const useCreateTransaction = (
@@ -28,11 +29,9 @@ const useCreateTransaction = (
         dataTransaksi = insertedData;
       } else {
         const {
-          data: {
-            data: [updatedData],
-          },
+          data: { data },
         } = await axiosCatetin.put('/transaksi', payload);
-        dataTransaksi = updatedData;
+        dataTransaksi = data?.[1]?.[0] || undefined;
       }
       return dataTransaksi;
     },

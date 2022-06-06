@@ -19,6 +19,7 @@ import { optionsTransaksi } from '../../static/optionsTransaksi';
 import { RootState } from '../../store';
 import { setSelectedTransaction } from '../../store/features/transactionSlice';
 import { ICatetinBarang } from '../../types/barang';
+import { ICatetinPaymentMethod, ICatetinTransactionPaymentMethod } from '../../types/transaksi';
 
 export interface ICatetinTipeTransaksi {
   label: string;
@@ -46,6 +47,7 @@ export interface TransactionCreateFormSchema {
   deskripsi: string;
   total: string;
   barang: ICatetinBarang[];
+  paymentMethod: ICatetinTransactionPaymentMethod | null;
 }
 
 export type TransactionCreateRootStackParamList = {
@@ -66,6 +68,7 @@ const schema = yup.object().shape({
   }),
   barang: yup.array(),
   transaksi_category: yup.mixed().required('Transaksi category is required'),
+  paymentMethod: yup.mixed(),
 });
 
 function TransactionCreateScreen(props: any) {
@@ -95,8 +98,16 @@ function TransactionCreateScreen(props: any) {
       total: '',
       barang: [],
       transaksi_category: null,
+      paymentMethod: null,
     },
   });
+
+  useEffect(() => {
+    if (props.route.params?.from === 'transaction-payment-method') {
+      setValue('paymentMethod', { ...watch('paymentMethod'), PaymentMethod: props.route.params?.data });
+      clearErrors('paymentMethod');
+    }
+  }, [clearErrors, props.route.params?.data, props.route.params?.from, setValue, watch]);
 
   useEffect(() => {
     if (props.route.params?.from === 'transaction-category') {
@@ -116,15 +127,16 @@ function TransactionCreateScreen(props: any) {
       setValue(
         'tipe',
         optionsTransaksi.find(
-          (opt) => opt?.value === props.route.params?.data.TransactionTransactionTypes[0]?.TransactionType.rootType,
+          (opt) => opt?.value === props.route.params?.data.TransactionTransactionType?.TransactionType.rootType,
         ),
       );
       setValue(
         'transaksi_category',
-        props.route.params?.data.TransactionTransactionTypes[0]?.TransactionType.deleted
+        props.route.params?.data.TransactionTransactionType?.TransactionType.deleted
           ? null
-          : props.route.params?.data.TransactionTransactionTypes[0]?.TransactionType,
+          : props.route.params?.data.TransactionTransactionType?.TransactionType,
       );
+      setValue('paymentMethod', props.route.params?.data.TransactionPaymentMethod);
       setValue('transaksi_id', props.route.params?.data.id);
     }
   }, [props.route.params?.data, props.route.params?.from, reset, setValue]);
@@ -150,6 +162,8 @@ function TransactionCreateScreen(props: any) {
       transaksi_id: data.transaksi_id,
       transaksi_category: data.transaksi_category?.id,
       rootType: data.transaksi_category?.rootType,
+      paymentMethod: data.paymentMethod?.PaymentMethod?.id,
+      transaksiPaymentMethodId: data.paymentMethod?.id,
     };
     createTransaction(finalData);
   };
@@ -281,6 +295,30 @@ function TransactionCreateScreen(props: any) {
             {errors.total && <Text style={tw`text-red-500 mt-1`}>{errors.total?.message as any}</Text>}
           </View>
         )}
+
+        <View style={tw`mb-4 flex-1`}>
+          <Text style={tw`mb-1 text-base`}>Metode Pembayaran</Text>
+          <TouchableOpacity
+            onPress={() => {
+              navigation.navigate('TransactionPaymentMethodScreen', {
+                data: watch('paymentMethod')?.PaymentMethod,
+              });
+            }}
+          >
+            <CatetinInput
+              placeholder="Metode Pembayaran"
+              style={tw`border-b border-gray-100 px-4 py-3 rounded`}
+              pointerEvents="none"
+              keyboardType="numeric"
+              value={watch('paymentMethod')?.PaymentMethod?.name}
+              editable={false}
+            />
+
+            {errors.paymentMethod && (
+              <Text style={tw`text-red-500 mt-1`}>{(errors.paymentMethod as any)?.message as any}</Text>
+            )}
+          </TouchableOpacity>
+        </View>
 
         <View style={tw`mb-4 flex-1`}>
           <Text style={tw`mb-1 text-base`}>Deskripsi Transaksi</Text>

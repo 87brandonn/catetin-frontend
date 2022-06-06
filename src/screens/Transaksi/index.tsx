@@ -37,6 +37,8 @@ function Transaksi() {
     isRefetching: refreshing,
   } = useTransaction(activeStore, params);
 
+  console.log(transaksi);
+
   const bottomSheetRefFilter = useRef<BottomSheet>(null);
 
   const navigation = useNavigation();
@@ -84,10 +86,6 @@ function Transaksi() {
           <View style={tw`w-full h-[100px] mb-3 rounded-lg`}></View>
           <View style={tw`w-full h-[100px] mb-3 rounded-lg`}></View>
         </SkeletonPlaceholder>
-      ) : errorTransaksi ? (
-        <View style={tw`flex-1 items-center justify-center`}>
-          <Text style={tw`text-red-500 text-3xl font-bold`}>Error occured</Text>
-        </View>
       ) : transaksi?.length === 0 ? (
         <View style={tw`flex-1 justify-center items-center`}>
           <Text style={tw`font-semibold text-2xl mb-1`}>Tidak ada transaksi</Text>
@@ -130,13 +128,13 @@ function Transaksi() {
             >
               <View>
                 <Text style={tw`font-bold text-xl`}>{item.title}</Text>
-                {item.TransactionTransactionTypes[0]?.TransactionType.rootType && (
+                {item.TransactionTransactionType?.TransactionType?.rootType && (
                   <Text style={tw`text-gray-400`}>
                     {`${
                       optionsTransaksi.find(
-                        (data) => data.value === item.TransactionTransactionTypes[0]?.TransactionType.rootType,
+                        (data) => data.value === item.TransactionTransactionType?.TransactionType?.rootType,
                       )?.label
-                    } - ${item.TransactionTransactionTypes[0]?.TransactionType.name}`}
+                    } - ${item.TransactionTransactionType?.TransactionType?.name}`}
                   </Text>
                 )}
                 {(item.notes && <Text style={tw`text-slate-500 text-sm`}>{item.notes}</Text>) || null}

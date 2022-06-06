@@ -2,7 +2,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useNavigation } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Alert, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Switch, Text, TouchableOpacity, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 import tw from 'twrnc';
 import * as yup from 'yup';
@@ -12,6 +12,7 @@ import CatetinImagePicker from '../../components/molecules/ImagePicker';
 import CatetinInput from '../../components/molecules/Input';
 import { useAppSelector } from '../../hooks';
 import useCreateBarang from '../../hooks/useCreateBarang';
+import useItemOption from '../../hooks/useItemOption';
 import AppLayout from '../../layouts/AppLayout';
 import CatetinScrollView from '../../layouts/ScrollView';
 import { RootState } from '../../store';
@@ -30,6 +31,13 @@ export interface IFormSchema {
   barang_picture: string | null;
   category: ICatetinItemCategory[];
   transactions: ICatetinTransaksi[];
+  // variants: {
+  //   id: number;
+  //   name: string;
+  //   quantity: number;
+  //   price: number;
+  // }[];
+  // isHaveVariant: boolean;
 }
 
 const schema = yup.object().shape({
@@ -40,6 +48,8 @@ const schema = yup.object().shape({
   barang_picture: yup.mixed(),
   category: yup.mixed(),
   transactions: yup.mixed(),
+  // variants: yup.mixed(),
+  // isHaveVariant: yup.bool().required('Variant is required'),
 });
 
 function CreateBarangScreen(props: any) {
@@ -63,6 +73,8 @@ function CreateBarangScreen(props: any) {
       barang_picture: null,
       category: [],
       transactions: [],
+      variants: [],
+      // isHaveVariant: false,
     },
   });
 
@@ -83,6 +95,10 @@ function CreateBarangScreen(props: any) {
   const navigation = useNavigation();
 
   const { mutate: createBarang, isLoading: loading } = useCreateBarang();
+
+  // const { data: barangOption, isLoading: isLoadingBarangOption } = useItemOption({
+  //   enabled: watch('isHaveVariant') === true,
+  // });
 
   const onSubmit = async (data: any) => {
     createBarang(
@@ -161,7 +177,7 @@ function CreateBarangScreen(props: any) {
                   }
                 }}
                 keyboardType="numeric"
-                value={(value !== 0 && value.toString()) || ''}
+                value={(value !== 0 && value?.toString()) || ''}
                 disabled={watch('id') !== 0 && watch('transactions')?.length > 0}
               />
             )}
@@ -193,6 +209,37 @@ function CreateBarangScreen(props: any) {
             />
           </TouchableOpacity>
         </View>
+        {/* <View style={tw`mb-4`}>
+          <View style={tw`flex flex-row justify-between`}>
+            <Text style={tw`mb-1 text-base`}>Variant</Text>
+            <Switch
+              value={watch('isHaveVariant')}
+              onValueChange={(value) => {
+                setValue('isHaveVariant', value);
+              }}
+            />
+          </View>
+          {watch('isHaveVariant') && (
+            <TouchableOpacity
+              onPress={() => {
+                navigate('BarangVariantScreen', {
+                  data: watch('variants'),
+                });
+              }}
+            >
+              <CatetinInput
+                placeholder="Variant"
+                style={tw`border-b border-gray-100 px-4 py-3 rounded`}
+                pointerEvents="none"
+                keyboardType="numeric"
+                value={watch('category')
+                  ?.map((data) => data.name)
+                  .join(', ')}
+                editable={false}
+              />
+            </TouchableOpacity>
+          )}
+        </View> */}
         <View style={tw`mb-4`}>
           <Text style={tw`mb-1 text-base`}>Harga Barang</Text>
           <Controller
@@ -205,7 +252,7 @@ function CreateBarangScreen(props: any) {
                   onChange(parseInt(value || '0', 10));
                 }}
                 keyboardType="numeric"
-                value={(value !== 0 && value.toString()) || ''}
+                value={(value !== 0 && value?.toString()) || ''}
               />
             )}
             name="harga"
