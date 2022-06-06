@@ -2,7 +2,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useNavigation } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Alert, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Switch, Text, TouchableOpacity, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 import tw from 'twrnc';
 import * as yup from 'yup';
@@ -11,6 +11,8 @@ import CatetinButton from '../../components/molecules/Button';
 import CatetinImagePicker from '../../components/molecules/ImagePicker';
 import CatetinInput from '../../components/molecules/Input';
 import { useAppSelector } from '../../hooks';
+import useCreateBarang from '../../hooks/useCreateBarang';
+import useItemOption from '../../hooks/useItemOption';
 import AppLayout from '../../layouts/AppLayout';
 import CatetinScrollView from '../../layouts/ScrollView';
 import { RootState } from '../../store';
@@ -29,6 +31,13 @@ export interface IFormSchema {
   barang_picture: string | null;
   category: ICatetinItemCategory[];
   transactions: ICatetinTransaksi[];
+  // variants: {
+  //   id: number;
+  //   name: string;
+  //   quantity: number;
+  //   price: number;
+  // }[];
+  // isHaveVariant: boolean;
 }
 
 const schema = yup.object().shape({
@@ -39,21 +48,19 @@ const schema = yup.object().shape({
   barang_picture: yup.mixed(),
   category: yup.mixed(),
   transactions: yup.mixed(),
+  // variants: yup.mixed(),
+  // isHaveVariant: yup.bool().required('Variant is required'),
 });
 
-function CreateBarangScreen({ title, ...props }: ICreateBarangScreen) {
+function CreateBarangScreen(props: any) {
   const { navigate } = useNavigation();
 
-  const { activeStore } = useAppSelector((state: RootState) => state.store);
-
-  const [loading, setLoading] = useState(false);
   const [loadingDelete, setLoadingDelete] = useState(false);
 
   const {
     control,
     handleSubmit,
     formState: { errors },
-    reset,
     watch,
     setValue,
   } = useForm<IFormSchema>({
@@ -66,18 +73,10 @@ function CreateBarangScreen({ title, ...props }: ICreateBarangScreen) {
       barang_picture: null,
       category: [],
       transactions: [],
+      variants: [],
+      // isHaveVariant: false,
     },
   });
-
-  const onPost = async (data: IFormSchema) => {
-    await axiosCatetin.post(`/barang/${activeStore}`, {
-      name: data.name,
-      price: data.harga,
-      picture: data.barang_picture,
-      stock: data.stok,
-      category: data.category?.map((cat) => cat.id),
-    });
-  };
 
   useEffect(() => {
     if (props.route.params?.from === 'kategori-barang') {
@@ -93,49 +92,30 @@ function CreateBarangScreen({ title, ...props }: ICreateBarangScreen) {
     }
   }, [props.route.params?.data, props.route.params?.from, setValue]);
 
-  const onPatch = async (data: IFormSchema) => {
-    await axiosCatetin.put('/barang', {
-      id: data.id,
-      name: data.name,
-      price: data.harga,
-      picture: data.barang_picture,
-      stock: data.stok,
-      category: data.category?.map((cat) => cat.id),
-    });
-  };
-
   const navigation = useNavigation();
 
+  const { mutate: createBarang, isLoading: loading } = useCreateBarang();
+
+  // const { data: barangOption, isLoading: isLoadingBarangOption } = useItemOption({
+  //   enabled: watch('isHaveVariant') === true,
+  // });
+
   const onSubmit = async (data: any) => {
-    setLoading(true);
-    try {
-      if (data.id !== 0) {
-        await onPatch(data);
-      } else {
-        await onPost(data);
-      }
-      Toast.show({
-        type: 'customToast',
-        text2: `Berhasil ${data.id !== 0 ? 'memperbarui' : 'menambah'} barang`,
-        position: 'bottom',
-      });
-      if (props.route.params?.from === 'transaction-barang') {
-        navigation.navigate('TransactionBarangScreen', {
-          from: 'add-barang',
-        });
-      } else {
-        navigation.goBack();
-      }
-    } catch (err: any) {
-      console.log(err);
-      Toast.show({
-        type: 'customToast',
-        text2: err.response?.data?.message,
-        position: 'bottom',
-      });
-    } finally {
-      setLoading(false);
-    }
+    createBarang(
+      {
+        id: data.id,
+        name: data.name,
+        price: data.harga,
+        picture: data.barang_picture,
+        stock: data.stok,
+        category: data.category.length ? data.category.map((cat) => cat.id) : undefined,
+      },
+      {
+        onSuccess: () => {
+          navigation.goBack();
+        },
+      },
+    );
   };
   const handleDelete = async () => {
     setLoadingDelete(true);
@@ -162,7 +142,7 @@ function CreateBarangScreen({ title, ...props }: ICreateBarangScreen) {
     <AppLayout
       header
       isBackEnabled
-      headerTitle={`${props.route.params?.data?.name ? `Edit ${props.route.params?.data?.name}` : ``}`}
+      headerTitle={`${watch('id') !== 0 ? `Edit ${props.route.params?.data?.name}` : ``}`}
     >
       <CatetinScrollView style={tw`px-3`}>
         <View style={tw`mb-4`}>
@@ -197,7 +177,7 @@ function CreateBarangScreen({ title, ...props }: ICreateBarangScreen) {
                   }
                 }}
                 keyboardType="numeric"
-                value={(value !== 0 && value.toString()) || ''}
+                value={(value !== 0 && value?.toString()) || ''}
                 disabled={watch('id') !== 0 && watch('transactions')?.length > 0}
               />
             )}
@@ -229,6 +209,37 @@ function CreateBarangScreen({ title, ...props }: ICreateBarangScreen) {
             />
           </TouchableOpacity>
         </View>
+        {/* <View style={tw`mb-4`}>
+          <View style={tw`flex flex-row justify-between`}>
+            <Text style={tw`mb-1 text-base`}>Variant</Text>
+            <Switch
+              value={watch('isHaveVariant')}
+              onValueChange={(value) => {
+                setValue('isHaveVariant', value);
+              }}
+            />
+          </View>
+          {watch('isHaveVariant') && (
+            <TouchableOpacity
+              onPress={() => {
+                navigate('BarangVariantScreen', {
+                  data: watch('variants'),
+                });
+              }}
+            >
+              <CatetinInput
+                placeholder="Variant"
+                style={tw`border-b border-gray-100 px-4 py-3 rounded`}
+                pointerEvents="none"
+                keyboardType="numeric"
+                value={watch('category')
+                  ?.map((data) => data.name)
+                  .join(', ')}
+                editable={false}
+              />
+            </TouchableOpacity>
+          )}
+        </View> */}
         <View style={tw`mb-4`}>
           <Text style={tw`mb-1 text-base`}>Harga Barang</Text>
           <Controller
@@ -241,7 +252,7 @@ function CreateBarangScreen({ title, ...props }: ICreateBarangScreen) {
                   onChange(parseInt(value || '0', 10));
                 }}
                 keyboardType="numeric"
-                value={(value !== 0 && value.toString()) || ''}
+                value={(value !== 0 && value?.toString()) || ''}
               />
             )}
             name="harga"

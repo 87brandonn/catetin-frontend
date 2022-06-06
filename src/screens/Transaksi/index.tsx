@@ -3,75 +3,42 @@ import { useNavigation } from '@react-navigation/native';
 import chunk from 'lodash/chunk';
 import moment from 'moment';
 import 'moment/locale/id';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { RefreshControl, Text, TouchableOpacity, View } from 'react-native';
 import { Avatar, Badge, Icon } from 'react-native-elements';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import tw from 'twrnc';
-import { axiosCatetin } from '../../api';
 import CatetinButton from '../../components/molecules/Button';
-import CatetinToast from '../../components/molecules/Toast';
 import { useAppDispatch, useAppSelector } from '../../hooks';
+import useTransaction from '../../hooks/useTransaction';
 import AppLayout from '../../layouts/AppLayout';
 import CatetinScrollView from '../../layouts/ScrollView';
+import { optionsTransaksi } from '../../static/optionsTransaksi';
 import { RootState } from '../../store';
 import { setEditedTransaction, setSelectedTransaction } from '../../store/features/transactionSlice';
-import { ICatetinTransaksiWithDetail } from '../../types/transaksi';
 import TransactionAction from './TransactionAction';
 import TransactionFilterBottomSheet from './TransactionFilterBottomSheet';
 moment.locale('id');
 
 function Transaksi() {
   const dispatch = useAppDispatch();
-  const [loadingTransaksi, setLoadingTransaksi] = useState(true);
 
   const { activeStore } = useAppSelector((state: RootState) => state.store);
 
-  const [transaksi, setTransaksi] = useState<ICatetinTransaksiWithDetail[] | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
   const [params, setParams] = useState({
     search: '',
   });
 
-  const fetchTransaksi = useCallback(
-    async (isMounted = true, refreshing = false) => {
-      if (refreshing) {
-        setRefreshing(true);
-      } else {
-        setLoadingTransaksi(true);
-      }
-      try {
-        const {
-          data: { data },
-        } = await axiosCatetin.get(`/transaksi/${activeStore}/list`, {
-          params,
-        });
-        if (isMounted) {
-          setTransaksi(data);
-        }
-      } catch (err: any) {
-        CatetinToast(err?.response?.status, 'error', 'Terjadi kesalahan. Gagal mengambil data transaksi.');
-        console.log(err);
-      } finally {
-        if (refreshing) {
-          setRefreshing(false);
-        } else {
-          setLoadingTransaksi(false);
-        }
-      }
-    },
-    [activeStore, params],
-  );
+  const {
+    data: transaksi,
+    isLoading: loadingTransaksi,
+    refetch,
+    error: errorTransaksi,
+    isRefetching: refreshing,
+  } = useTransaction(activeStore, params);
 
-  useEffect(() => {
-    let isMounted = true;
-    fetchTransaksi(isMounted);
-    return () => {
-      isMounted = false;
-    };
-  }, [fetchTransaksi]);
+  console.log(transaksi);
 
-  const bottomSheetRef = useRef<BottomSheet>(null);
   const bottomSheetRefFilter = useRef<BottomSheet>(null);
 
   const navigation = useNavigation();
@@ -90,8 +57,16 @@ function Transaksi() {
       />
       <TransactionAction
         onClickPlus={() => {
-          dispatch(setEditedTransaction(null));
-          navigation.navigate('TransactionCreateScreen');
+          navigation.navigate('TransactionCreateScreen', {
+            transaksi_id: 0,
+            name: '',
+            tipe: null,
+            tanggal: new Date().toISOString(),
+            deskripsi: '',
+            total: '',
+            barang: [],
+            transaksi_category: null,
+          });
         }}
         onClickFilter={() => {
           bottomSheetRefFilter.current?.expand();
@@ -117,8 +92,16 @@ function Transaksi() {
           <CatetinButton
             title="Tambah Transaksi"
             onPress={() => {
-              dispatch(setEditedTransaction(null));
-              bottomSheetRef.current?.expand();
+              navigation.navigate('TransactionCreateScreen', {
+                transaksi_id: 0,
+                name: '',
+                tipe: null,
+                tanggal: new Date().toISOString(),
+                deskripsi: '',
+                total: '',
+                barang: [],
+                transaksi_category: null,
+              });
             }}
           />
         </View>
@@ -129,7 +112,7 @@ function Transaksi() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={() => {
-                fetchTransaksi(true, true);
+                refetch();
               }}
             />
           }
@@ -145,6 +128,15 @@ function Transaksi() {
             >
               <View>
                 <Text style={tw`font-bold text-xl`}>{item.title}</Text>
+                {item.TransactionTransactionType?.TransactionType?.rootType && (
+                  <Text style={tw`text-gray-400`}>
+                    {`${
+                      optionsTransaksi.find(
+                        (data) => data.value === item.TransactionTransactionType?.TransactionType?.rootType,
+                      )?.label
+                    } - ${item.TransactionTransactionType?.TransactionType?.name}`}
+                  </Text>
+                )}
                 {(item.notes && <Text style={tw`text-slate-500 text-sm`}>{item.notes}</Text>) || null}
                 <Text style={tw`font-500 text-lg`}>IDR {item.nominal?.toLocaleString('id-ID')}</Text>
                 {item.Items.length > 0 && (
@@ -189,6 +181,7 @@ function Transaksi() {
                   onPress={() => {
                     navigation.navigate('TransactionCreateScreen', {
                       data: item,
+                      from: 'transaction-index',
                     });
                   }}
                 />

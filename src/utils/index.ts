@@ -16,7 +16,7 @@ export const screenOptions = {
 export const titleCase = (s: string) =>
   s.replace(/^_*(.)|_+(.)/g, (s, c, d) => (c ? c.toUpperCase() : ' ' + d.toUpperCase()));
 
-export const getAvatarTitle = (profile: ProfileJoinUser | null) => {
+export const getAvatarTitle = (profile: ProfileJoinUser | null | undefined) => {
   if (profile?.Profile?.profilePicture) {
     return undefined;
   }
@@ -102,4 +102,14 @@ export const abbrNum = (number: any, decPlaces: number) => {
   }
 
   return number;
+};
+
+export const combine: any = ([head, ...[headTail, ...tailTail]]: any) => {
+  if (!headTail) return head;
+
+  const combined = headTail.reduce((acc: any, x: any) => {
+    return acc.concat(head.map((h: any) => `${h} / ${x}`));
+  }, []);
+
+  return combine([combined, ...tailTail]);
 };

@@ -1,23 +1,21 @@
-import { ParamListBase, RouteProp, useNavigation } from '@react-navigation/native';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import React, { useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
-import { Avatar, Button, CheckBox, Icon } from 'react-native-elements';
+import { Avatar, CheckBox, Icon } from 'react-native-elements';
 import tw from 'twrnc';
 import { axiosCatetin } from '../../api';
 import CatetinButton from '../../components/molecules/Button';
 import CatetinInput from '../../components/molecules/Input';
 import CatetinToast from '../../components/molecules/Toast';
 import { useAppSelector } from '../../hooks';
+import useBarang from '../../hooks/useBarang';
+import useCreateTransactionItem from '../../hooks/useCreateTransactionItem';
 import AppLayout from '../../layouts/AppLayout';
 import CatetinScrollView from '../../layouts/ScrollView';
 import { RootState } from '../../store';
-import { ICatetinBarang } from '../../types/barang';
 
 function TransactionBarangScreen(props: any) {
-  const [loadingFetch, setLoadingFetch] = useState(true);
-
   const { selectedTransaction } = useAppSelector((state: RootState) => state.transaction);
-  const [loadingAdd, setLoadingAdd] = useState<boolean>(false);
 
   const { activeStore } = useAppSelector((state: RootState) => state.store);
 
@@ -25,51 +23,20 @@ function TransactionBarangScreen(props: any) {
     [key: string]: boolean;
   } | null>(null);
 
-  const [barang, setBarang] = useState<
-    (ICatetinBarang & {
-      amount: number;
-      customPrice: number;
-      notes: string;
-      checked: boolean;
-    })[]
-  >([]);
-
   const navigation = useNavigation();
 
-  const fetchBarang = useCallback(
-    async (isMounted = true, search = '') => {
-      setLoadingFetch(true);
-      try {
-        const {
-          data: { data },
-        }: { data: { data: ICatetinBarang[] } } = await axiosCatetin.get(`/barang/${activeStore}/list`, {
-          params: {
-            transactionId: selectedTransaction,
-            nama_barang: search,
-          },
-        });
-        if (isMounted) {
-          setBarang(
-            data?.map((eachBarang) => ({
-              ...eachBarang,
-              amount: 0,
-              customPrice: eachBarang.price,
-              notes: '',
-              checked: false,
-            })),
-          );
-          setLoadingFetch(false);
-        }
-      } catch (err: any) {
-        CatetinToast(err?.response?.status, 'error', 'Terjadi kesalahan pada server. Gagal mengambil data barang.');
-      }
-    },
-    [activeStore, selectedTransaction],
-  );
+  const [search, setSearch] = useState('');
+
+  const { data: barang, isLoading: loadingFetch } = useBarang(activeStore, {
+    transactionId: selectedTransaction,
+    nama_barang: search,
+  });
+
+  const { mutate: createTransactionItem, isLoading: loadingAdd } = useCreateTransactionItem();
 
   const handleAddBarang = async () => {
     const finalData = barang
-      .map((data) => ({
+      ?.map((data) => ({
         ...data,
         checked: checked.find((ch) => ch.id === data.id)?.checked,
         amount: amount.find((amt) => amt.id === data.id)?.amount,
@@ -78,8 +45,8 @@ function TransactionBarangScreen(props: any) {
       }))
       .filter((data) => data.checked === true);
     const objError = {};
-    finalData.forEach((data) => {
-      if ((data.amount || -99) > data.stock && props.route.params?.type === '3') {
+    finalData?.forEach((data) => {
+      if ((data.amount || -99) > data.stock && props.route.params?.type === 'income') {
         Object.assign(objError, {
           [data.id]: true,
         });
@@ -89,24 +56,17 @@ function TransactionBarangScreen(props: any) {
     if (Object.values(objError || {}).filter(Boolean).length !== 0) {
       return;
     }
-    const payload = finalData.map((data) => ({
+    const payload = finalData?.map((data) => ({
       id: data.id,
       amount: data.amount,
       notes: data.notes,
       price: data.customPrice,
     }));
-    try {
-      await axiosCatetin.post(`/transaksi/detail`, {
-        transaksi_id: selectedTransaction,
-        barang: payload,
-      });
-      navigation.navigate('TransactionDetailScreen');
-    } catch (err: any) {
-      console.log(err.response?.data?.message);
-      CatetinToast(err?.response?.status, 'error', 'Terjadi kesalahan pada server. Gagal melakukan update barang.');
-    } finally {
-      setLoadingAdd(false);
-    }
+    createTransactionItem(payload, {
+      onSuccess: () => {
+        navigation.navigate('TransactionDetailScreen');
+      },
+    });
   };
 
   const handleInputBarang = () => {
@@ -120,16 +80,6 @@ function TransactionBarangScreen(props: any) {
   const [amount, setAmount] = useState<{ id: number; amount: number }[]>([]);
   const [notes, setNotes] = useState<{ id: number; notes: string }[]>([]);
 
-  useEffect(() => {
-    if ((props.route.params as { from: string })?.from === 'add-barang') {
-      fetchBarang();
-    }
-  }, [props.route.params, fetchBarang]);
-
-  useEffect(() => {
-    fetchBarang();
-  }, [fetchBarang]);
-
   return (
     <AppLayout header isBackEnabled headerTitle="Barang Transaksi">
       <CatetinScrollView style={tw`px-3`}>
@@ -138,9 +88,8 @@ function TransactionBarangScreen(props: any) {
             <CatetinInput
               style={tw`bg-gray-100 px-3 py-3 rounded-[12px] border-0`}
               placeholder="Search"
-              onChangeText={(value) => {
-                fetchBarang(true, value);
-              }}
+              value={search}
+              onChangeText={(value) => setSearch(value)}
             />
           </View>
           <View>
@@ -214,8 +163,8 @@ function TransactionBarangScreen(props: any) {
                 <View style={tw`flex flex-row items-center`}>
                   <Text style={tw`text-base mr-1`}>IDR</Text>
                   <CatetinInput
-                    style={tw`py-1 px-3 font-medium ${props.route.params?.type === '3' ? 'text-gray-400' : ''}`}
-                    pointerEvents={props.route.params?.type === '3' ? 'none' : 'auto'}
+                    style={tw`py-1 px-3 font-medium ${props.route.params?.type === 'income' ? 'text-gray-400' : ''}`}
+                    pointerEvents={props.route.params?.type === 'income' ? 'none' : 'auto'}
                     value={
                       (customPrice.find((data) => data.id === eachBarang.id)?.customPrice !== 0 &&
                         customPrice.find((data) => data.id === eachBarang.id)?.customPrice?.toString()) ||

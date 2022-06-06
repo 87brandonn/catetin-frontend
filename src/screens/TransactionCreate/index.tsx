@@ -1,39 +1,53 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useNavigation } from '@react-navigation/native';
-import chunk from 'lodash/chunk';
 import moment from 'moment';
 import React, { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Alert, Text, TouchableOpacity, View } from 'react-native';
+import { Icon } from 'react-native-elements';
 import tw from 'twrnc';
-import { StackActions } from '@react-navigation/native';
 import * as yup from 'yup';
 import { axiosCatetin } from '../../api';
 import CatetinButton from '../../components/molecules/Button';
 import CatetinDateTimePicker from '../../components/molecules/DateTimePicker';
 import CatetinInput from '../../components/molecules/Input';
-import CatetinToast from '../../components/molecules/Toast';
 import { useAppDispatch, useAppSelector } from '../../hooks';
+import useCreateTransaction from '../../hooks/useCreateTransaction';
 import AppLayout from '../../layouts/AppLayout';
 import CatetinScrollView from '../../layouts/ScrollView';
 import { optionsTransaksi } from '../../static/optionsTransaksi';
 import { RootState } from '../../store';
 import { setSelectedTransaction } from '../../store/features/transactionSlice';
-import { ICatetinTransaksi } from '../../types/transaksi';
-import { Icon } from 'react-native-elements';
+import { ICatetinBarang } from '../../types/barang';
+import { ICatetinPaymentMethod, ICatetinTransactionPaymentMethod } from '../../types/transaksi';
 
 export interface ICatetinTipeTransaksi {
   label: string;
-  value: number;
+  value: 'income' | 'outcome';
 }
+
+export type ICatetinTransaksiCategory = {
+  id: number;
+  name: string;
+  picture: string;
+  global: boolean;
+  rootType: 'income' | 'outcome';
+  deleted: boolean;
+  StoreId: number;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
 export interface TransactionCreateFormSchema {
   transaksi_id: number;
+  transaksi_category: ICatetinTransaksiCategory | null;
   name: string;
   tipe: ICatetinTipeTransaksi | null | undefined;
   tanggal: Date;
   deskripsi: string;
-  total: number | string;
+  total: string;
+  barang: ICatetinBarang[];
+  paymentMethod: ICatetinTransactionPaymentMethod | null;
 }
 
 export type TransactionCreateRootStackParamList = {
@@ -48,27 +62,22 @@ const schema = yup.object().shape({
   tipe: yup.mixed().required('Tipe transaksi is required'),
   tanggal: yup.date().required('Tanggal transaksi is required'),
   deskripsi: yup.string(),
-  total: yup.number().when('tipe', {
-    is: (opt: { label: string; value: number }) => opt?.value === 1 || opt?.value === 2,
-    then: (rule) => rule.typeError('Type must be number').required('Total is required'),
+  total: yup.string().when('transaksi_category', {
+    is: (opt: ICatetinTransaksiCategory | null) => opt && ![19, 20].includes(opt.id),
+    then: (rule) => rule.required('Total is required'),
   }),
   barang: yup.array(),
+  transaksi_category: yup.mixed().required('Transaksi category is required'),
+  paymentMethod: yup.mixed(),
 });
-
-interface ITransactionCreateScreen {
-  // bottomSheetRef: React.RefObject<BottomSheetMethods>;
-  onFinishSubmit: (data: ICatetinTransaksi) => void;
-  onFinishDelete: () => void;
-}
 
 function TransactionCreateScreen(props: any) {
   const [loadingDelete, setLoadingDelete] = useState(false);
 
-  const [loading, setLoading] = useState(false);
-
   const navigation = useNavigation();
 
   const { activeStore } = useAppSelector((state: RootState) => state.store);
+  const dispatch = useAppDispatch();
 
   const {
     control,
@@ -77,6 +86,7 @@ function TransactionCreateScreen(props: any) {
     watch,
     setValue,
     reset,
+    clearErrors,
   } = useForm<TransactionCreateFormSchema>({
     resolver: yupResolver(schema),
     defaultValues: {
@@ -85,68 +95,77 @@ function TransactionCreateScreen(props: any) {
       tipe: null,
       tanggal: new Date(),
       deskripsi: '',
-      total: 0,
+      total: '',
       barang: [],
+      transaksi_category: null,
+      paymentMethod: null,
     },
   });
 
-  const dispatch = useAppDispatch();
+  useEffect(() => {
+    if (props.route.params?.from === 'transaction-payment-method') {
+      setValue('paymentMethod', { ...watch('paymentMethod'), PaymentMethod: props.route.params?.data });
+      clearErrors('paymentMethod');
+    }
+  }, [clearErrors, props.route.params?.data, props.route.params?.from, setValue, watch]);
+
+  useEffect(() => {
+    if (props.route.params?.from === 'transaction-category') {
+      setValue('transaksi_category', props.route.params?.data);
+      clearErrors('transaksi_category');
+    }
+  }, [clearErrors, props.route.params?.data, props.route.params?.from, setValue]);
 
   useEffect(() => {
     if (props.route.params?.from === 'transaction-barang') {
       setValue('barang', props.route.params?.data);
-    } else if (props.route.params?.data) {
+    } else if (props.route.params?.from === 'transaction-index') {
       setValue('name', props.route.params?.data.title);
       setValue('tanggal', moment(props.route.params?.data.transaction_date).toDate());
       setValue('deskripsi', props.route.params?.data.notes);
       setValue('total', props.route.params?.data.nominal);
       setValue(
         'tipe',
-        optionsTransaksi.find((opt) => opt?.value === parseInt(props.route.params?.data.type, 10)),
+        optionsTransaksi.find(
+          (opt) => opt?.value === props.route.params?.data.TransactionTransactionType?.TransactionType.rootType,
+        ),
       );
+      setValue(
+        'transaksi_category',
+        props.route.params?.data.TransactionTransactionType?.TransactionType.deleted
+          ? null
+          : props.route.params?.data.TransactionTransactionType?.TransactionType,
+      );
+      setValue('paymentMethod', props.route.params?.data.TransactionPaymentMethod);
       setValue('transaksi_id', props.route.params?.data.id);
-    } else {
-      reset({ transaksi_id: 0, name: '', tipe: null, tanggal: new Date(), deskripsi: '', total: 0 });
     }
   }, [props.route.params?.data, props.route.params?.from, reset, setValue]);
 
-  const onSubmit = async (data: TransactionCreateFormSchema) => {
-    setLoading(true);
-    try {
-      const finalData = {
-        title: data.name,
-        tipe_transaksi: data.tipe?.value,
-        tanggal: moment(data.tanggal).toISOString(),
-        notes: data.deskripsi,
-        total: data.total,
-        transaksi_id: data.transaksi_id,
-      };
-      let dataTransaksi: ICatetinTransaksi;
-      if (data.transaksi_id === 0) {
-        const {
-          data: { data: insertedData },
-        } = await axiosCatetin.post(`/transaksi/${activeStore}`, finalData);
-        dataTransaksi = insertedData;
-      } else {
-        const {
-          data: {
-            data: [updatedData],
-          },
-        } = await axiosCatetin.put('/transaksi', finalData);
-        dataTransaksi = updatedData;
-      }
-      CatetinToast(200, 'default', `Sukses ${data.transaksi_id === 0 ? 'menambah' : 'memperbarui'} transaksi`);
-      if (dataTransaksi.type === '3' || dataTransaksi.type === '4') {
+  const { mutate: createTransaction, isLoading: loading } = useCreateTransaction(
+    activeStore,
+    (payload, dataTransaksi) => {
+      if (payload.transaksi_category === 19 || payload.transaksi_category === 20) {
         dispatch(setSelectedTransaction(dataTransaksi.id));
         navigation.navigate('TransactionDetailScreen');
       } else {
         navigation.navigate('Transaksi');
       }
-    } catch (err: any) {
-      CatetinToast(err?.response?.status, 'error', err.response?.data?.message || 'Failed to create transaction');
-    } finally {
-      setLoading(false);
-    }
+    },
+  );
+
+  const onSubmit = async (data: TransactionCreateFormSchema) => {
+    const finalData = {
+      title: data.name,
+      tanggal: moment(data.tanggal).toISOString(),
+      notes: data.deskripsi,
+      total: parseInt(data.total || '0', 10),
+      transaksi_id: data.transaksi_id,
+      transaksi_category: data.transaksi_category?.id,
+      rootType: data.transaksi_category?.rootType,
+      paymentMethod: data.paymentMethod?.PaymentMethod?.id,
+      transaksiPaymentMethodId: data.paymentMethod?.id,
+    };
+    createTransaction(finalData);
   };
 
   const handleDelete = async () => {
@@ -162,7 +181,7 @@ function TransactionCreateScreen(props: any) {
   };
 
   return (
-    <AppLayout header isBackEnabled headerTitle={props.route.params?.data ? 'Edit Transaksi' : 'Tambah Transaksi'}>
+    <AppLayout header isBackEnabled headerTitle={watch('transaksi_id') !== 0 ? 'Edit Transaksi' : 'Tambah Transaksi'}>
       <CatetinScrollView style={tw`px-3`}>
         <View style={tw`mb-4 flex-1`}>
           <Text style={tw`mb-1 text-base`}>Nama Transaksi</Text>
@@ -214,6 +233,8 @@ function TransactionCreateScreen(props: any) {
                   }`}
                   tvParallaxProperties=""
                   onPress={() => {
+                    clearErrors('tipe');
+                    setValue('transaksi_category', null);
                     setValue('tipe', option);
                   }}
                   disabled={watch('transaksi_id') !== 0}
@@ -225,7 +246,37 @@ function TransactionCreateScreen(props: any) {
           {errors.tipe && <Text style={tw`text-red-500 mt-1`}>{(errors.tipe as any)?.message as any}</Text>}
         </View>
 
-        {(watch('tipe')?.value === 1 || watch('tipe')?.value === 2) && (
+        {watch('tipe')?.value && (
+          <View style={tw`mb-4 flex-1`}>
+            <Text style={tw`mb-1 text-base`}>Kategori Transaksi</Text>
+            <TouchableOpacity
+              onPress={() => {
+                navigation.navigate('TransactionCategoryScreen', {
+                  data: watch('transaksi_category'),
+                  type: watch('tipe')?.value,
+                });
+              }}
+              disabled={watch('transaksi_id') !== 0}
+            >
+              <CatetinInput
+                placeholder="Kategori Transaksi"
+                style={tw`border-b border-gray-100 px-4 py-3 rounded ${
+                  watch('transaksi_id') !== 0 ? 'text-gray-500' : ''
+                }`}
+                pointerEvents="none"
+                keyboardType="numeric"
+                value={watch('transaksi_category')?.name}
+                editable={false}
+              />
+
+              {errors.transaksi_category && (
+                <Text style={tw`text-red-500 mt-1`}>{(errors.transaksi_category as any)?.message as any}</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {watch('transaksi_category') && ![19, 20].includes(watch('transaksi_category').id) && (
           <View style={tw`mb-4 flex-1`}>
             <Text style={tw`mb-1 text-base`}>Nominal Transaksi</Text>
 
@@ -235,7 +286,7 @@ function TransactionCreateScreen(props: any) {
                 <CatetinInput
                   placeholder="Nominal Transaksi"
                   keyboardType="numeric"
-                  value={value?.toString() || ''}
+                  value={value !== 0 ? value?.toString() : ''}
                   onChangeText={onChange}
                 />
               )}
@@ -244,6 +295,30 @@ function TransactionCreateScreen(props: any) {
             {errors.total && <Text style={tw`text-red-500 mt-1`}>{errors.total?.message as any}</Text>}
           </View>
         )}
+
+        <View style={tw`mb-4 flex-1`}>
+          <Text style={tw`mb-1 text-base`}>Metode Pembayaran</Text>
+          <TouchableOpacity
+            onPress={() => {
+              navigation.navigate('TransactionPaymentMethodScreen', {
+                data: watch('paymentMethod')?.PaymentMethod,
+              });
+            }}
+          >
+            <CatetinInput
+              placeholder="Metode Pembayaran"
+              style={tw`border-b border-gray-100 px-4 py-3 rounded`}
+              pointerEvents="none"
+              keyboardType="numeric"
+              value={watch('paymentMethod')?.PaymentMethod?.name}
+              editable={false}
+            />
+
+            {errors.paymentMethod && (
+              <Text style={tw`text-red-500 mt-1`}>{(errors.paymentMethod as any)?.message as any}</Text>
+            )}
+          </TouchableOpacity>
+        </View>
 
         <View style={tw`mb-4 flex-1`}>
           <Text style={tw`mb-1 text-base`}>Deskripsi Transaksi</Text>

@@ -18,6 +18,7 @@ interface ITransactionAction {
   onClickFilter: () => void;
   onChangeSearch: (search: string) => void;
   showImport?: boolean;
+  onPressImport?: () => void;
 }
 function TransactionAction({
   onClickPlus,
@@ -25,56 +26,10 @@ function TransactionAction({
   onClickFilter,
   onChangeSearch,
   searchValue,
+  onPressImport = () => ({}),
 }: ITransactionAction) {
-  const { activeStore } = useAppSelector((state: RootState) => state.store);
-
-  const handleUploadCSV = async () => {
-    try {
-      const data = await DocumentPicker.pickSingle({
-        type: [types.xlsx, types.xls, types.csv],
-      });
-      const form: any = new FormData();
-      form.append('file', {
-        uri: Platform.OS === 'android' ? data.uri : data.uri?.replace('file://', ''),
-        type: data.type,
-        name: data.name,
-      });
-      await fetch(`https://catetin-be.herokuapp.com/barang/import/${activeStore}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        body: form,
-      });
-      CatetinToast(200, 'default', 'Berhasil menambah data barang');
-      bottomSheetRef.current?.close();
-    } catch (err: any) {
-      if (err?.code !== 'DOCUMENT_PICKER_CANCELED') {
-        CatetinToast(err?.response?.status, 'error', 'Failed to upload data');
-      }
-    }
-  };
-  const bottomSheetRef = useRef<BottomSheet>(null);
   return (
     <View style={tw`pb-2 pt-2 px-3 flex flex-row justify-between items-center`}>
-      {showImport && (
-        <CatetinBottomSheet bottomSheetRef={bottomSheetRef}>
-          <CatetinBottomSheetWrapper title="Import Data" single>
-            <View style={tw`flex-row flex justify-center shadow-lg px-4 py-3 bg-gray-200 rounded-lg mb-2`}>
-              <Image source={require('./TemplateCSV.png')} style={tw`w-[300px] h-[300px] rounded-xl`} />
-            </View>
-            <Text style={tw`font-medium mb-4`}>
-              Note: Pastikan file excel yang di upload sudah sesuai dengan format diatas.
-            </Text>
-            <CatetinButton
-              title="Browse File"
-              onPress={async () => {
-                handleUploadCSV();
-              }}
-            />
-          </CatetinBottomSheetWrapper>
-        </CatetinBottomSheet>
-      )}
       <View style={tw`flex-grow-1 mr-3`}>
         <CatetinInput
           style={tw`border-0 bg-gray-100 px-3 py-2 rounded-[12px]`}
@@ -89,7 +44,7 @@ function TransactionAction({
         <View style={tw`mr-3`}>
           <TouchableOpacity
             onPress={() => {
-              bottomSheetRef.current?.expand();
+              onPressImport();
             }}
           >
             <Icon size={22} name="upload" type="feather" tvParallaxProperties="" />

@@ -1,18 +1,13 @@
-export const optionsTransaksi = [
+export const optionsTransaksi: {
+  label: string;
+  value: 'income' | 'outcome';
+}[] = [
   {
     label: 'Pengeluaran',
-    value: 1,
+    value: 'outcome',
   },
   {
     label: 'Pemasukan',
-    value: 2,
-  },
-  {
-    label: 'Penjualan',
-    value: 3,
-  },
-  {
-    label: 'Pembelian barang',
-    value: 4,
+    value: 'income',
   },
 ];

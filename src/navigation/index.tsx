@@ -27,12 +27,18 @@ import TokoLanding from '../screens/TokoLanding';
 import TransactionBarangEditScreen from '../screens/TransactionBarangEditScreen';
 import TransactionBarangScreen from '../screens/TransactionBarangScreen';
 import TransactionCreateScreen from '../screens/TransactionCreate';
+import TransactionCategoryScreen from '../screens/TransactionCategoryScreen';
+import TransactionPaymentMethodScreen from '../screens/TransactionPaymentMethodScreen';
 import Transaksi from '../screens/Transaksi';
 import TransactionDetailScreen from '../screens/TransaksiDetail';
 import VerifyEmail from '../screens/VerifyEmail';
 import { RootState } from '../store';
 import TabBar from './TabBar';
 import { toastConfig } from './ToastConfig';
+import ProfileAccountScreen from '../screens/ProfileAccount';
+import EditProfileScreen from '../screens/EditProfileScreen';
+import EditDisplayNameScreen from '../screens/EditDisplayNameScreen';
+import BarangVariantScreen from '../screens/BarangVariantScreen';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -47,14 +53,20 @@ type RootStackParamList = {
   Login: undefined;
   Register: undefined;
   Profile: undefined;
+  EditProfileScreen: undefined;
+  EditDisplayNameScreen: undefined;
+  ProfileAccountScreen: undefined;
   TokoLanding: undefined;
   Barang: undefined;
   Transaksi: undefined;
   TransactionDetailScreen: undefined;
   TransactionCreateScreen: undefined;
+  TransactionCategoryScreen: undefined;
   TransactionBarangScreen: undefined;
   TransactionBarangEditScreen: undefined;
+  TransactionPaymentMethodScreen: undefined;
   DetailBarangScreen: undefined;
+  BarangVariantScreen: undefined;
   KategoriBarangScreen: undefined;
   CreateBarangScreen: undefined;
   VerifyEmail: undefined;
@@ -229,8 +241,50 @@ export default function RootNavigation() {
                     }}
                   />
                   <Stack.Screen
+                    name="TransactionCategoryScreen"
+                    component={TransactionCategoryScreen}
+                    options={{
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="TransactionPaymentMethodScreen"
+                    component={TransactionPaymentMethodScreen}
+                    options={{
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
                     name="DetailBarangScreen"
                     component={BarangDetail}
+                    options={{
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="BarangVariantScreen"
+                    component={BarangVariantScreen}
+                    options={{
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="EditProfileScreen"
+                    component={EditProfileScreen}
+                    options={{
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="EditDisplayNameScreen"
+                    component={EditDisplayNameScreen}
+                    options={{
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="ProfileAccountScreen"
+                    component={ProfileAccountScreen}
                     options={{
                       headerShown: false,
                     }}

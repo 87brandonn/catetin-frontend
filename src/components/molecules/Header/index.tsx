@@ -1,27 +1,24 @@
-import BottomSheet, { BottomSheetBackdrop, BottomSheetModal } from '@gorhom/bottom-sheet';
+import BottomSheet from '@gorhom/bottom-sheet';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
-import { createStackNavigator, StackNavigationOptions, StackNavigationProp } from '@react-navigation/stack';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { createStackNavigator, StackNavigationOptions } from '@react-navigation/stack';
+import React, { useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { Avatar, Icon } from 'react-native-elements';
+import { Icon } from 'react-native-elements';
 import tw from 'twrnc';
 import * as yup from 'yup';
-import { axiosCatetin } from '../../../api';
 import { useAppDispatch, useAppSelector } from '../../../hooks';
-import { RootStackParamList } from '../../../navigation';
+import useCreateStore from '../../../hooks/useCreateStore';
+import useStore from '../../../hooks/useStore';
 import { RootState } from '../../../store';
 import { setActiveStore } from '../../../store/features/storeSlice';
-import { ProfileJoinUser } from '../../../types/profil';
-import { ICatetinStore } from '../../../types/store';
-import { getAvatarTitle, screenOptions } from '../../../utils';
+import { screenOptions } from '../../../utils';
 import CatetinBottomSheet from '../BottomSheet';
 import CatetinBottomSheetWrapper from '../BottomSheet/BottomSheetWrapper';
 import CatetinButton from '../Button';
 import CatetinImagePicker from '../ImagePicker';
 import CatetinInput from '../Input';
-import CatetinToast from '../Toast';
 
 interface FormData {
   name: string;
@@ -41,18 +38,17 @@ function Header({
   title = '',
   isBackEnabled = false,
   onPressBack,
+  saveAction = false,
+  saveActionText = 'Save',
+  onPressSaveAction = () => ({}),
 }: {
   title?: string;
   isBackEnabled?: boolean;
   onPressBack?: () => void;
+  saveAction?: boolean;
+  saveActionText?: string;
+  onPressSaveAction?: () => void;
 }) {
-  const { navigate } = useNavigation<StackNavigationProp<RootStackParamList, 'Home'>>();
-  const [loading, setLoading] = useState(true);
-  const [loadingStore, setLoadingStore] = useState(true);
-  const [loadingAddStore, setLoadingAddStore] = useState(false);
-  const [storeData, setStoreData] = useState<ICatetinStore[] | null>(null);
-  const [profileData, setProfileData] = useState<ProfileJoinUser | null>(null);
-
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   const {
@@ -76,59 +72,16 @@ function Header({
 
   const Stack = createStackNavigator();
 
-  const fetchProfile = useCallback(async () => {
-    setLoading(true);
-    try {
-      const {
-        data: { data },
-      } = await axiosCatetin.get('/auth/profile');
-      setProfileData(data);
-    } catch (err: any) {
-      console.log(err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const { data: storeData, isLoading: loadingStore, refetch } = useStore();
 
-  const fetchStore = useCallback(async () => {
-    setLoadingStore(true);
-    try {
-      const {
-        data: { data },
-      } = await axiosCatetin.get('/store');
-      setStoreData(data);
-    } catch (err: any) {
-      console.log(err);
-    } finally {
-      setLoadingStore(false);
-    }
-  }, []);
+  const { mutate: createStore, isLoading: loadingAddStore } = useCreateStore();
 
-  useEffect(() => {
-    fetchStore();
-  }, [fetchStore]);
-
-  useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
-
-  const onSubmit = async (data: FormData, navigation: any) => {
-    const { storeId, ...rest } = data;
-    setLoadingAddStore(true);
-    try {
-      await axiosCatetin.post(`/store`, { ...rest, id: storeId === 0 ? undefined : storeId });
-      reset({
-        name: '',
-        picture: null,
-        storeId: 0,
-      });
-      navigation.navigate('Store List');
-      CatetinToast(200, 'default', `Succesfully ${storeId === 0 ? 'add' : 'edit'} store`);
-    } catch (err: any) {
-      CatetinToast(err?.response?.status, 'error', 'Internal error occured. Failed to add store');
-    } finally {
-      setLoadingAddStore(false);
-    }
+  const onSubmit = async (data: FormData, navigationSheet: any) => {
+    createStore(data, {
+      onSuccess: () => {
+        navigationSheet.navigate('Store List');
+      },
+    });
   };
 
   const navigation = useNavigation();
@@ -154,7 +107,7 @@ function Header({
                     props.navigation.navigate('Add Store');
                   }}
                   onRefresh={() => {
-                    fetchStore();
+                    refetch();
                   }}
                 >
                   <View style={tw`flex-1 mb-3`}>
@@ -260,6 +213,15 @@ function Header({
         ) : null}
         <Text style={tw`text-${isBackEnabled ? 'xl' : '3xl'} font-bold`}>{title}</Text>
       </View>
+      {saveAction ? (
+        <TouchableOpacity
+          onPress={() => {
+            onPressSaveAction();
+          }}
+        >
+          <Text style={tw`font-bold text-base`}>{saveActionText}</Text>
+        </TouchableOpacity>
+      ) : null}
       {!isBackEnabled ? (
         <View style={tw`flex flex-row items-center`}>
           <Icon
@@ -272,22 +234,6 @@ function Header({
               bottomSheetRef?.current?.collapse();
             }}
           />
-          <TouchableOpacity
-            onPress={() => {
-              navigate('Profile');
-            }}
-          >
-            <Avatar
-              size={36}
-              rounded
-              source={{
-                uri: profileData?.Profile?.profilePicture || undefined,
-              }}
-              containerStyle={tw`bg-gray-300`}
-              titleStyle={tw`text-gray-200`}
-              title={getAvatarTitle(profileData)}
-            ></Avatar>
-          </TouchableOpacity>
         </View>
       ) : null}
     </View>

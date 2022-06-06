@@ -107,6 +107,7 @@ function Login({ navigation: { navigate } }: NativeStackScreenProps<RootStackPar
       await AsyncStorage.setItem('refreshToken', refreshToken);
       dispatch(setAccessToken(token));
     } catch (err: any) {
+      console.log(err);
       CatetinToast(
         err?.response?.status,
         'error',
