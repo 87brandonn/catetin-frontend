@@ -1,7 +1,7 @@
 import BottomSheet from '@gorhom/bottom-sheet';
 import { useNavigation } from '@react-navigation/native';
 import chunk from 'lodash/chunk';
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Image, Platform, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
 import { Icon } from 'react-native-elements';
 import DocumentPicker, { types } from 'react-native-document-picker';
@@ -19,7 +19,8 @@ import { ICatetinTransaksi } from '../../types/transaksi';
 import TransactionAction from '../Transaksi/TransactionAction';
 import BarangFilterBottomSheet from './BarangFilterBottomSheet';
 import CatetinToast from '../../components/molecules/Toast';
-
+import useProfile from '../../hooks/useProfile';
+import useStore from '../../hooks/useStore';
 export interface IFormSchema {
   id: number;
   name: string;
@@ -49,6 +50,15 @@ function Barang() {
   const bottomSheetRefImport = useRef<BottomSheet>(null);
 
   const { data: barang, isLoading: loadingFetch, isRefetching: refreshing, refetch } = useBarang(activeStore, params);
+
+  const { data: userStoreData, isLoading: loadingUserStore } = useStore();
+
+  const grantData = useMemo(
+    () => userStoreData?.find((data) => data.StoreId === activeStore),
+    [activeStore, userStoreData],
+  );
+
+  const { data: profileData, isLoading: loadingProfile } = useProfile();
 
   const navigation = useNavigation();
 
@@ -217,7 +227,7 @@ function Barang() {
                       )}
                     </View>
                     <View>
-                      <Text style={tw``}>
+                      <Text style={tw`mb-1`}>
                         <Text style={tw`font-bold ${singleBarang.stock <= 10 ? 'text-red-500' : ''}`}>
                           {singleBarang.stock}
                         </Text>{' '}
@@ -227,26 +237,33 @@ function Barang() {
                     <View>
                       <Text style={tw``}>IDR {singleBarang.price.toLocaleString('id-ID')}</Text>
                     </View>
+                    {singleBarang.User?.email && (
+                      <View>
+                        <Text style={tw`text-gray-400`}>{singleBarang.User?.email}</Text>
+                      </View>
+                    )}
                   </View>
 
-                  <View style={tw`flex flex-row self-center`}>
-                    <TouchableOpacity
-                      style={tw`bg-gray-200 shadow rounded px-3 py-1`}
-                      onPress={() => {
-                        navigation.navigate('CreateBarangScreen', {
-                          data: singleBarang,
-                        });
-                      }}
-                    >
-                      <Icon
-                        name="edit"
-                        iconStyle={tw`text-gray-500`}
-                        type="antdesign"
-                        size={24}
-                        tvParallaxProperties=""
-                      ></Icon>
-                    </TouchableOpacity>
-                  </View>
+                  {(profileData?.id === singleBarang?.UserId || grantData?.grant === 'owner') && (
+                    <View style={tw`flex flex-row self-center`}>
+                      <TouchableOpacity
+                        style={tw`bg-gray-200 shadow rounded px-3 py-1`}
+                        onPress={() => {
+                          navigation.navigate('CreateBarangScreen', {
+                            data: singleBarang,
+                          });
+                        }}
+                      >
+                        <Icon
+                          name="edit"
+                          iconStyle={tw`text-gray-500`}
+                          type="feather"
+                          size={24}
+                          tvParallaxProperties=""
+                        ></Icon>
+                      </TouchableOpacity>
+                    </View>
+                  )}
                 </TouchableOpacity>
               ))}
             </View>

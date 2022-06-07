@@ -3,13 +3,15 @@ import { useNavigation } from '@react-navigation/native';
 import chunk from 'lodash/chunk';
 import moment from 'moment';
 import 'moment/locale/id';
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { RefreshControl, Text, TouchableOpacity, View } from 'react-native';
 import { Avatar, Badge, Icon } from 'react-native-elements';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import tw from 'twrnc';
 import CatetinButton from '../../components/molecules/Button';
 import { useAppDispatch, useAppSelector } from '../../hooks';
+import useProfile from '../../hooks/useProfile';
+import useStore from '../../hooks/useStore';
 import useTransaction from '../../hooks/useTransaction';
 import AppLayout from '../../layouts/AppLayout';
 import CatetinScrollView from '../../layouts/ScrollView';
@@ -36,6 +38,15 @@ function Transaksi() {
     error: errorTransaksi,
     isRefetching: refreshing,
   } = useTransaction(activeStore, params);
+
+  const { data: userStoreData, isLoading: loadingUserStore } = useStore();
+
+  const grantData = useMemo(
+    () => userStoreData?.find((data) => data.StoreId === activeStore),
+    [activeStore, userStoreData],
+  );
+
+  const { data: profileData, isLoading: isLoadingProfile } = useProfile();
 
   const bottomSheetRefFilter = useRef<BottomSheet>(null);
 
@@ -170,20 +181,23 @@ function Transaksi() {
                   </View>
                 )}
                 <View>
+                  {item.User && <Text style={tw`text-3 text-gray-400 mb-1`}>{item.User?.email}</Text>}
                   <Text style={tw`text-3`}>{moment(item.transaction_date).format('dddd, DD MMMM YYYY')}</Text>
                 </View>
               </View>
-              <View style={tw`self-end`}>
-                <CatetinButton
-                  title="Update Info"
-                  onPress={() => {
-                    navigation.navigate('TransactionCreateScreen', {
-                      data: item,
-                      from: 'transaction-index',
-                    });
-                  }}
-                />
-              </View>
+              {(item.User?.id === profileData?.id || grantData?.grant === 'owner') && (
+                <View style={tw`self-end`}>
+                  <CatetinButton
+                    title="Update Info"
+                    onPress={() => {
+                      navigation.navigate('TransactionCreateScreen', {
+                        data: item,
+                        from: 'transaction-index',
+                      });
+                    }}
+                  />
+                </View>
+              )}
             </TouchableOpacity>
           ))}
         </CatetinScrollView>

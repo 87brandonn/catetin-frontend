@@ -63,7 +63,7 @@ const schema = yup.object().shape({
   tanggal: yup.date().required('Tanggal transaksi is required'),
   deskripsi: yup.string(),
   total: yup.string().when('transaksi_category', {
-    is: (opt: ICatetinTransaksiCategory | null) => opt && ![19, 20].includes(opt.id),
+    is: (opt: ICatetinTransaksiCategory | null) => opt && ![1, 2].includes(opt.id),
     then: (rule) => rule.required('Total is required'),
   }),
   barang: yup.array(),
@@ -144,7 +144,7 @@ function TransactionCreateScreen(props: any) {
   const { mutate: createTransaction, isLoading: loading } = useCreateTransaction(
     activeStore,
     (payload, dataTransaksi) => {
-      if (payload.transaksi_category === 19 || payload.transaksi_category === 20) {
+      if (payload.transaksi_category === 1 || payload.transaksi_category === 2) {
         dispatch(setSelectedTransaction(dataTransaksi.id));
         navigation.navigate('TransactionDetailScreen');
       } else {
@@ -282,7 +282,7 @@ function TransactionCreateScreen(props: any) {
             </View>
           )}
 
-          {watch('transaksi_category') && ![19, 20].includes(watch('transaksi_category').id) && (
+          {watch('transaksi_category') && ![1, 2].includes(watch('transaksi_category').id) && (
             <View style={tw`mb-4 flex-1`}>
               <Text style={tw`mb-1 text-base`}>Nominal Transaksi</Text>
 

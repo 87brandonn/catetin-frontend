@@ -59,6 +59,8 @@ function BarangDetail(props: any) {
               {((data?.ItemCategories.length || -1) > 0 && (
                 <Text style={tw`text-base mb-2`}>{data?.ItemCategories.map((cat) => cat.name).join(', ')}</Text>
               )) || <Text style={tw`text-gray-500 mb-2`}>Tidak ada kategori</Text>}
+              <Text style={tw`text-xl font-medium`}>Pembuat</Text>
+              <Text style={tw`text-base mb-2`}>{data?.User?.email || '-'}</Text>
 
               <View>
                 {(data?.Transactions || []).length > 0 && (

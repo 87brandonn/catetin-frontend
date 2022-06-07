@@ -1,24 +1,22 @@
 import BottomSheet from '@gorhom/bottom-sheet';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { Alert, RefreshControl, Text, TouchableOpacity, View } from 'react-native';
 import { Icon } from 'react-native-elements';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import tw from 'twrnc';
-import * as yup from 'yup';
 import { axiosCatetin } from '../../api';
-import CatetinButton from '../../components/molecules/Button';
 import CatetinImagePicker from '../../components/molecules/ImagePicker';
-import CatetinInput from '../../components/molecules/Input';
-import CatetinToast from '../../components/molecules/Toast';
-import { useAppDispatch } from '../../hooks';
+import { useAppDispatch, useAppSelector } from '../../hooks';
 import useProfile from '../../hooks/useProfile';
+import useStore from '../../hooks/useStore';
+import useStoreUsers from '../../hooks/useStoreUsers';
 import AppLayout from '../../layouts/AppLayout';
 import CatetinScrollView from '../../layouts/ScrollView';
 import { RootStackParamList } from '../../navigation';
+import { RootState } from '../../store';
 import { logout } from '../../store/features/authSlice';
-import { ProfileJoinUser } from '../../types/profil';
 import { getAvatarTitle } from '../../utils';
 import AutomaticReportBottomSheet from './AutomaticReportBottomSheet';
 import DownloadManualReportBottomSheet from './DownloadManualReportBottomSheet';
@@ -41,44 +39,20 @@ export interface IFormScheduleSchema {
   month: number;
 }
 
-const schemaScheduler = yup.object().shape({
-  scheduleId: yup.number().required('Scheduler id is required'),
-  type: yup.mixed().required('Tipe scheduler harus diisi'),
-  time: yup.string().when('type', (type, rule) => {
-    if (type?.value === 0) {
-      return rule.required('Time is required');
-    }
-    return rule;
-  }),
-  dayOfWeek: yup.number().when('type', {
-    is: (opt: any) => opt?.value === 1,
-    then: (rule) => rule.required('Hari harus diisi'),
-  }),
-  dayOfMonth: yup
-    .number()
-    .typeError('Tanggal harus diisi')
-    .when('type', (type, rule) => {
-      if (type?.value === 2) {
-        return rule.min(1).max(31, 'Tanggal tidak bisa lebih dari 31').required('Tanggal harus diisi');
-      }
-      return rule;
-    }),
-  month: yup.number().when('type', (type, rule) => {
-    if (type?.value === 3) {
-      return rule.required('Bulan harus diisi');
-    }
-    return rule;
-  }),
-});
-
 function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<RootStackParamList, 'Profile'>) {
-  const [loadingUpdate, setLoadingUpdate] = useState(false);
-  const [loadingUpdatePassword, setLoadingUpdatePassword] = useState(false);
   const [loadingLogout, setLoadingLogout] = useState(false);
 
   const dispatch = useAppDispatch();
 
+  const { activeStore } = useAppSelector((state: RootState) => state.store);
+
   const { data: profileData, isLoading: loading, refetch, isRefetching: refreshing } = useProfile();
+  const { data: userStoreData, isLoading: loadingUserStore } = useStore();
+
+  const grantData = useMemo(
+    () => userStoreData?.find((data) => data.StoreId === activeStore),
+    [activeStore, userStoreData],
+  );
 
   const bottomSheetLaporanRef = useRef<BottomSheet>(null);
   const bottomSheetManualLaporanRef = useRef<BottomSheet>(null);
@@ -114,18 +88,6 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
               <CatetinImagePicker
                 data={profileData?.Profile?.profilePicture || ''}
                 title={getAvatarTitle(profileData)}
-                onUploadImage={(url) => {
-                  setProfileData(
-                    (data) =>
-                      ({
-                        ...data,
-                        Profile: {
-                          ...data?.Profile,
-                          profilePicture: url,
-                        },
-                      } as ProfileJoinUser),
-                  );
-                }}
                 pressable={false}
               />
             )}
@@ -165,43 +127,64 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
           >
             <View style={tw`flex flex-row items-center`}>
               <Icon name="edit-2" type="feather" tvParallaxProperties="" iconStyle={tw`mr-3`} />
-              <Text style={tw`text-black text-base`}> Profile</Text>
+              <Text style={tw`text-black text-base`}>Profile</Text>
             </View>
             <Icon name="chevron-right" tvParallaxProperties="" />
           </TouchableOpacity>
         </View>
 
-        <View style={tw`mb-4`}>
-          <Text style={tw`px-3 mb-1 font-medium text-lg`}>Laporan Keuangan</Text>
-          <TouchableOpacity
-            style={tw`bg-gray-100 border-b border-gray-100 flex flex-row items-center justify-between px-3 py-2`}
-            onPress={() => {
-              bottomSheetManualLaporanRef.current?.expand();
-            }}
-          >
-            <View style={tw`flex flex-row items-center`}>
-              <Icon name="download" type="feather" tvParallaxProperties="" iconStyle={tw`mr-3`} />
-              <Text style={tw`text-black text-base`}>Unduh Laporan Keuangan</Text>
-            </View>
-            <Icon name="chevron-right" tvParallaxProperties="" />
-          </TouchableOpacity>
+        {grantData?.grant === 'owner' && (
+          <View style={tw`mb-4`}>
+            <Text style={tw`px-3 mb-1 font-medium text-lg`}>Laporan Keuangan</Text>
+            <TouchableOpacity
+              style={tw`bg-gray-100 border-b border-gray-100 flex flex-row items-center justify-between px-3 py-2`}
+              onPress={() => {
+                bottomSheetManualLaporanRef.current?.expand();
+              }}
+            >
+              <View style={tw`flex flex-row items-center`}>
+                <Icon name="download" type="feather" tvParallaxProperties="" iconStyle={tw`mr-3`} />
+                <Text style={tw`text-black text-base`}>Unduh Laporan Keuangan</Text>
+              </View>
+              <Icon name="chevron-right" tvParallaxProperties="" />
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={() => {
-              bottomSheetLaporanRef.current?.expand();
-            }}
-            style={tw`mb-1 bg-gray-100 border-b border-gray-100 flex flex-row items-center px-3 py-2 justify-between`}
-          >
-            <View style={tw`flex flex-row items-center`}>
-              <Icon name="clock" type="feather" tvParallaxProperties="" iconStyle={tw`mr-3`} />
-              <Text style={tw`text-black text-base`}>Schedule Laporan Keuangan</Text>
-            </View>
-            <Icon name="chevron-right" tvParallaxProperties="" />
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity
+              onPress={() => {
+                bottomSheetLaporanRef.current?.expand();
+              }}
+              style={tw`mb-1 bg-gray-100 border-b border-gray-100 flex flex-row items-center px-3 py-2 justify-between`}
+            >
+              <View style={tw`flex flex-row items-center`}>
+                <Icon name="clock" type="feather" tvParallaxProperties="" iconStyle={tw`mr-3`} />
+                <Text style={tw`text-black text-base`}>Schedule Laporan Keuangan</Text>
+              </View>
+              <Icon name="chevron-right" tvParallaxProperties="" />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {grantData?.grant === 'owner' && (
+          <View style={tw`mb-4`}>
+            <Text style={tw`px-3 mb-1 font-medium text-lg`}>Store</Text>
+            <TouchableOpacity
+              style={tw`bg-gray-100 border-b border-gray-100 flex flex-row items-center justify-between px-3 py-2`}
+              onPress={() => {
+                navigate('StoreUserScreen');
+              }}
+            >
+              <View style={tw`flex flex-row items-center`}>
+                <Icon name="users" type="feather" tvParallaxProperties="" iconStyle={tw`mr-3`} />
+                <Text style={tw`text-black text-base`}>Manage People & Role</Text>
+              </View>
+              <Icon name="chevron-right" tvParallaxProperties="" />
+            </TouchableOpacity>
+          </View>
+        )}
 
         <View>
           <TouchableOpacity
+            disabled={loadingLogout}
             onPress={() => {
               Alert.alert('Confirm Logout', 'Are you sure want to logout? Your unsaved data will be deleted.', [
                 {

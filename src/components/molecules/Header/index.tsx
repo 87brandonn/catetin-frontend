@@ -2,7 +2,7 @@ import BottomSheet from '@gorhom/bottom-sheet';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createStackNavigator, StackNavigationOptions } from '@react-navigation/stack';
-import React, { useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Icon } from 'react-native-elements';
@@ -72,7 +72,15 @@ function Header({
 
   const Stack = createStackNavigator();
 
-  const { data: storeData, isLoading: loadingStore, refetch } = useStore();
+  const {
+    data: storeData,
+    isLoading: loadingStore,
+    refetch,
+  } = useStore({
+    attributes: ['store'],
+  });
+
+  const grantData = useMemo(() => storeData?.find((data) => data.StoreId === activeStore), [activeStore, storeData]);
 
   const { mutate: createStore, isLoading: loadingAddStore } = useCreateStore();
 
@@ -97,7 +105,7 @@ function Header({
                   {...props}
                   title="Store"
                   rightTitle="Add"
-                  showRight
+                  showRight={grantData?.grant === 'owner'}
                   onPressRight={() => {
                     reset({
                       name: '',
@@ -111,41 +119,45 @@ function Header({
                   }}
                 >
                   <View style={tw`flex-1 mb-3`}>
-                    {storeData?.map((store) => (
-                      <View key={store.id} style={tw`flex flex-row items-center justify-between mb-3`}>
-                        <View style={tw`flex flex-row items-center`}>
-                          <CatetinImagePicker
-                            title={store.name.slice(0, 1)}
-                            size={48}
-                            data={store.picture}
-                            pressable={false}
-                          />
-                          <View style={tw`ml-3`}>
-                            <Text style={tw`text-lg font-medium `}>{store.name}</Text>
-                            <Text
-                              style={tw`underline font-medium text-blue-500 `}
-                              onPress={() => {
-                                setValue('storeId', store.id);
-                                setValue('name', store.name);
-                                setValue('picture', store.picture);
-                                props.navigation.navigate('Add Store');
-                              }}
-                            >
-                              Edit
-                            </Text>
+                    {storeData
+                      ?.map((userStore) => userStore.Store)
+                      .map((store) => (
+                        <View key={store.id} style={tw`flex flex-row items-center justify-between mb-3`}>
+                          <View style={tw`flex flex-row items-center`}>
+                            <CatetinImagePicker
+                              title={store.name.slice(0, 1)}
+                              size={48}
+                              data={store.picture}
+                              pressable={false}
+                            />
+                            <View style={tw`ml-3`}>
+                              <Text style={tw`text-lg font-medium `}>{store.name}</Text>
+                              {grantData?.grant === 'owner' && (
+                                <Text
+                                  style={tw`underline font-medium text-blue-500 `}
+                                  onPress={() => {
+                                    setValue('storeId', store.id);
+                                    setValue('name', store.name);
+                                    setValue('picture', store.picture);
+                                    props.navigation.navigate('Add Store');
+                                  }}
+                                >
+                                  Edit
+                                </Text>
+                              )}
+                            </View>
                           </View>
+                          <Icon
+                            name={`radio-button-${activeStore === store.id ? 'on' : 'off'}`}
+                            iconStyle={tw`${activeStore === store.id ? 'text-blue-500' : ''}`}
+                            tvParallaxProperties=""
+                            onPress={() => {
+                              bottomSheetRef.current?.close();
+                              dispatch(setActiveStore(store.id));
+                            }}
+                          />
                         </View>
-                        <Icon
-                          name={`radio-button-${activeStore === store.id ? 'on' : 'off'}`}
-                          iconStyle={tw`${activeStore === store.id ? 'text-blue-500' : ''}`}
-                          tvParallaxProperties=""
-                          onPress={() => {
-                            bottomSheetRef.current?.close();
-                            dispatch(setActiveStore(store.id));
-                          }}
-                        />
-                      </View>
-                    ))}
+                      ))}
                   </View>
                 </CatetinBottomSheetWrapper>
               )}

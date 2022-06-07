@@ -8,6 +8,7 @@ import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import React, { useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
+import * as Linking from 'expo-linking';
 import Toast from 'react-native-toast-message';
 import { axiosCatetin } from '../api';
 import { useAppDispatch, useAppSelector } from '../hooks';
@@ -39,6 +40,12 @@ import ProfileAccountScreen from '../screens/ProfileAccount';
 import EditProfileScreen from '../screens/EditProfileScreen';
 import EditDisplayNameScreen from '../screens/EditDisplayNameScreen';
 import BarangVariantScreen from '../screens/BarangVariantScreen';
+import StoreUserScreen from '../screens/StoreUserScreen';
+import AddUserStoreScreen from '../screens/AddUserStoreScreen';
+import CreatePasswordScreen from '../screens/CreatePasswordScreen';
+import { setAccessToken } from '../store/features/authSlice';
+
+const prefix = Linking.makeUrl('/');
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -61,10 +68,13 @@ type RootStackParamList = {
   Transaksi: undefined;
   TransactionDetailScreen: undefined;
   TransactionCreateScreen: undefined;
+  CreatePasswordScreen: undefined;
   TransactionCategoryScreen: undefined;
   TransactionBarangScreen: undefined;
   TransactionBarangEditScreen: undefined;
   TransactionPaymentMethodScreen: undefined;
+  AddUserStoreScreen: undefined;
+  StoreUserScreen: undefined;
   DetailBarangScreen: undefined;
   BarangVariantScreen: undefined;
   KategoriBarangScreen: undefined;
@@ -122,7 +132,68 @@ export default function RootNavigation() {
   const notificationListener = useRef<any>();
   const responseListener = useRef<any>();
 
+  const linking = {
+    prefixes: [prefix],
+    config: {
+      screens: {
+        Home: 'home',
+        CreatePasswordScreen: 'create-password',
+      },
+    },
+  };
+
+  // const { mutate: autoLogin, isLoading: loadingAutoLogin } = useLoginAuto();
+
   const [notification, setNotification] = useState<Notifications.Notification | boolean>(false);
+
+  const handleDeepLink = async (data: any) => {
+    const { hostname, queryParams } = Linking.parse(data.url);
+    console.log(hostname, queryParams);
+    // setLinkingState(queryParams);
+    // if (hostname === 'gmail') {
+    //   if (queryParams?.isAlreadyRegistered === 'false') {
+    //     if (!loggedIn) {
+    //       // navigation.navigate('CreatePasswordScreen', {
+    //       //   data: queryParams,
+    //       // });
+    //     } else {
+    //       setModalVisible(true);
+    //       setModalCode('userNotRegistered&loggedInUserNotMatch');
+    //     }
+    //   } else {
+    //     if (!loggedIn) {
+    //       autoLogin(
+    //         {
+    //           id: queryParams?.storeId as string,
+    //           grant: 'employee',
+    //           invitationId: queryParams?.id as string,
+    //           email: queryParams?.email as string,
+    //         },
+    //         {
+    //           onSuccess: async ({ refreshToken, token }) => {
+    //             await AsyncStorage.setItem('accessToken', token);
+    //             await AsyncStorage.setItem('refreshToken', refreshToken);
+    //             dispatch(setAccessToken(token));
+    //           },
+    //         },
+    //       );
+    //     } else {
+    //       if (profileData?.email === queryParams?.email) {
+    //         setModalVisible(true);
+    //         setModalCode('userRegistered&loggedInUserMatch');
+    //       } else {
+    //         setModalVisible(true);
+    //         setModalCode('userRegistered&loggedInUserNotMatch');
+    //       }
+    //     }
+    //   }
+    // }
+  };
+
+  useEffect(() => {
+    Linking.addEventListener('url', handleDeepLink);
+    return () => Linking.removeEventListener('url', handleDeepLink);
+  }, []);
 
   useEffect(() => {
     registerForPushNotificationsAsync().then(async (token) => {
@@ -159,7 +230,7 @@ export default function RootNavigation() {
   return (
     <>
       <PortalProvider>
-        <NavigationContainer>
+        <NavigationContainer linking={linking}>
           <Stack.Navigator
             screenOptions={{
               headerShown: false,
@@ -269,6 +340,20 @@ export default function RootNavigation() {
                     }}
                   />
                   <Stack.Screen
+                    name="AddUserStoreScreen"
+                    component={AddUserStoreScreen}
+                    options={{
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="StoreUserScreen"
+                    component={StoreUserScreen}
+                    options={{
+                      headerShown: false,
+                    }}
+                  />
+                  <Stack.Screen
                     name="EditProfileScreen"
                     component={EditProfileScreen}
                     options={{
@@ -324,6 +409,14 @@ export default function RootNavigation() {
               <Stack.Screen
                 name="VerifyResetPassword"
                 component={VerifyResetPassword}
+                options={{
+                  headerShown: false,
+                }}
+              />
+
+              <Stack.Screen
+                name="CreatePasswordScreen"
+                component={CreatePasswordScreen}
                 options={{
                   headerShown: false,
                 }}

@@ -1,4 +1,5 @@
 import { ICatetinBarang } from './barang';
+import { User } from './profil';
 export interface ICatetinTransaksi {
   id: number;
   nominal: number;
@@ -10,6 +11,7 @@ export interface ICatetinTransaksi {
   createdAt: Date;
   updatedAt: Date;
   UserId: number;
+  StoreId: number;
 }
 export interface ICatetinTransaksiDetail {
   amount: number;
@@ -65,4 +67,5 @@ export type ICatetinTransaksiWithDetail = ICatetinTransaksi & {
     updatedAt: Date;
   };
   TransactionPaymentMethod: ICatetinTransactionPaymentMethod;
+  User: User;
 };

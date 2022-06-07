@@ -1,21 +1,18 @@
 import { useQuery } from 'react-query';
 import { axiosCatetin } from '../api';
 import { Profile, User } from '../types/profil';
-import { ICatetinStore } from '../types/store';
 
-const useStore = (params?: any) => {
-  return useQuery(['store', { params }], async () => {
+const useStoreUsers = (storeId: number) => {
+  return useQuery(['store-users', storeId], async () => {
     const {
       data: { data },
-    } = await axiosCatetin.get('/store', { params });
+    } = await axiosCatetin.get(`/store/${storeId}/user`);
     return data as {
       UserId: number;
-      StoreId: number;
       grant: 'employee' | 'owner';
-      Store: ICatetinStore;
       User: User & { Profile: Profile };
     }[];
   });
 };
 
-export default useStore;
+export default useStoreUsers;

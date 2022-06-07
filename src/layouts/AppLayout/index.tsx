@@ -1,8 +1,22 @@
-import React from 'react';
-import { TextStyle, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Alert, TextStyle, View, Modal, Text } from 'react-native';
 import tw from 'twrnc';
+import * as Linking from 'expo-linking';
+import debounce from 'lodash/debounce';
 import SafeAreaView from 'react-native-safe-area-view';
 import Header from '../../components/molecules/Header';
+import { useNavigation } from '@react-navigation/native';
+import { axiosCatetin } from '../../api';
+import useProfile from '../../hooks/useProfile';
+import CatetinToast from '../../components/molecules/Toast';
+import useCreateUserStore from '../../hooks/useCreateUserStore';
+import { useAppDispatch, useAppSelector } from '../../hooks';
+import { RootState } from '../../store';
+import CatetinButton from '../../components/molecules/Button';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logout, setAccessToken } from '../../store/features/authSlice';
+import useLoginAuto from '../../hooks/useLoginAuto';
+import useUpdateRegisterInvitation from '../../hooks/useUpdateRegisterInvitation';
 
 interface IAppLayout {
   children: React.ReactNode;

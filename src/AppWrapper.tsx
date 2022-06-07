@@ -34,7 +34,14 @@ function AppWrapper() {
     try {
       if (accessToken) {
         const promises = [];
-        promises.push(axiosCatetin.get(`/store`), axiosCatetin.get(`/auth/profile`));
+        promises.push(
+          axiosCatetin.get(`/store`, {
+            params: {
+              attributes: ['store'],
+            },
+          }),
+          axiosCatetin.get(`/auth/profile`),
+        );
         const [
           {
             data: { data: dataStore },
@@ -46,7 +53,7 @@ function AppWrapper() {
         if (!dataProfile?.verified) {
           await getVerifyCode(accessToken);
         }
-        dispatch(setActiveStore(dataStore?.[0]?.id || null));
+        dispatch(setActiveStore(dataStore?.[0]?.Store?.id || null));
         dispatch(setProfile(dataProfile));
         dispatch(setStore(dataStore));
         dispatch(setLoggedIn(true));

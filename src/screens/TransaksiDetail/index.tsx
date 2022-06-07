@@ -1,13 +1,15 @@
 import { StackActions, useNavigation } from '@react-navigation/native';
 import moment from 'moment';
 import 'moment/locale/id';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ActivityIndicator, Alert, RefreshControl, Text, View } from 'react-native';
 import { Avatar } from 'react-native-elements';
 import tw from 'twrnc';
 import CatetinButton from '../../components/molecules/Button';
 import { useAppSelector } from '../../hooks';
 import useDeleteTransactionDetail from '../../hooks/useDeleteTransactionDetail';
+import useProfile from '../../hooks/useProfile';
+import useStore from '../../hooks/useStore';
 import useTransactionDetail from '../../hooks/useTransactionDetail';
 import AppLayout from '../../layouts/AppLayout';
 import CatetinScrollView from '../../layouts/ScrollView';
@@ -17,6 +19,7 @@ moment.locale('id');
 
 function TransactionDetailScreen() {
   const { selectedTransaction } = useAppSelector((state: RootState) => state.transaction);
+  const { activeStore } = useAppSelector((state: RootState) => state.store);
 
   const {
     data: dataDetail,
@@ -24,6 +27,15 @@ function TransactionDetailScreen() {
     isRefetching: refreshing,
     refetch,
   } = useTransactionDetail(selectedTransaction);
+
+  const { data: profileData, isLoading: loadingProfile } = useProfile();
+
+  const { data: userStoreData, isLoading: loadingUserStore } = useStore();
+
+  const grantData = useMemo(
+    () => userStoreData?.find((data) => data.StoreId === activeStore),
+    [activeStore, userStoreData],
+  );
 
   const { navigate } = useNavigation();
 
@@ -63,19 +75,20 @@ function TransactionDetailScreen() {
           <ActivityIndicator color="#2461FF" />
         ) : (
           <>
-            {[19, 20].includes(dataDetail?.TransactionTransactionType?.TransactionType.id || 0) && (
-              <Text
-                style={tw`text-blue-500 text-base text-right`}
-                onPress={() => {
-                  navigate('TransactionBarangScreen', {
-                    id: dataDetail?.id,
-                    type: dataDetail?.TransactionTransactionType?.TransactionType.rootType,
-                  });
-                }}
-              >
-                Tambah Barang
-              </Text>
-            )}
+            {[1, 2].includes(dataDetail?.TransactionTransactionType?.TransactionType.id || 0) &&
+              (profileData?.id === dataDetail?.UserId || grantData?.grant === 'owner') && (
+                <Text
+                  style={tw`text-blue-500 text-base text-right`}
+                  onPress={() => {
+                    navigate('TransactionBarangScreen', {
+                      id: dataDetail?.id,
+                      type: dataDetail?.TransactionTransactionType?.TransactionType.rootType,
+                    });
+                  }}
+                >
+                  Tambah Barang
+                </Text>
+              )}
             <Text style={tw`text-xl font-medium`}>Nama:</Text>
             <Text style={tw`text-base mb-2`}>{dataDetail?.title}</Text>
             <Text style={tw`text-xl font-medium`}>Tanggal:</Text>
@@ -106,8 +119,10 @@ function TransactionDetailScreen() {
             <Text style={tw`text-base mb-2`}>{dataDetail?.TransactionPaymentMethod?.PaymentMethod?.name || '-'}</Text>
             <Text style={tw`text-xl font-medium`}>Deskripsi:</Text>
             <Text style={tw`text-base mb-2 mb-2`}>{dataDetail?.notes || '-'}</Text>
+            <Text style={tw`text-xl font-medium`}>Pembuat:</Text>
+            <Text style={tw`text-base mb-2`}>{dataDetail?.User?.email}</Text>
 
-            {[19, 20].includes(dataDetail?.TransactionTransactionType?.TransactionType.id || 0) && (
+            {[1, 2].includes(dataDetail?.TransactionTransactionType?.TransactionType.id || 0) && (
               <View>
                 {(dataDetail?.Items.length || 0) > 0 && <Text style={tw`text-xl font-medium`}>List Barang:</Text>}
                 {dataDetail?.Items.map((item) => (
@@ -131,43 +146,47 @@ function TransactionDetailScreen() {
                       Total: IDR {item.ItemTransaction.total.toLocaleString('id-ID')}
                     </Text>
                     <Text style={tw`text-base mb-2`}>Notes: {item.ItemTransaction.notes || '-'}</Text>
-                    <CatetinButton
-                      title="Edit"
-                      onPress={() => {
-                        navigate('TransactionBarangEditScreen', {
-                          data: item,
-                          type: dataDetail?.TransactionTransactionType?.TransactionType.rootType,
-                        });
-                      }}
-                      style={tw`mb-2`}
-                      disabled={item.deleted}
-                    ></CatetinButton>
-                    <CatetinButton
-                      title="Delete"
-                      theme="danger"
-                      onPress={() => {
-                        Alert.alert(
-                          'Confirm Delete',
-                          'Are you sure want to delete this item correlated with this transaction? This action can not be restored',
-                          [
-                            {
-                              text: 'Cancel',
-                              style: 'cancel',
-                            },
-                            {
-                              text: 'OK',
-                              onPress: async () => {
-                                handleDeleteTransactionDetailScreen(
-                                  item.ItemTransaction.ItemId,
-                                  item.ItemTransaction.TransactionId,
-                                );
-                              },
-                            },
-                          ],
-                        );
-                      }}
-                      disabled={loadingDelete}
-                    ></CatetinButton>
+                    {(profileData?.id === dataDetail?.UserId || grantData?.grant === 'owner') && (
+                      <>
+                        <CatetinButton
+                          title="Edit"
+                          onPress={() => {
+                            navigate('TransactionBarangEditScreen', {
+                              data: item,
+                              type: dataDetail?.TransactionTransactionType?.TransactionType.rootType,
+                            });
+                          }}
+                          style={tw`mb-2`}
+                          disabled={item.deleted}
+                        ></CatetinButton>
+                        <CatetinButton
+                          title="Delete"
+                          theme="danger"
+                          onPress={() => {
+                            Alert.alert(
+                              'Confirm Delete',
+                              'Are you sure want to delete this item correlated with this transaction? This action can not be restored',
+                              [
+                                {
+                                  text: 'Cancel',
+                                  style: 'cancel',
+                                },
+                                {
+                                  text: 'OK',
+                                  onPress: async () => {
+                                    handleDeleteTransactionDetailScreen(
+                                      item.ItemTransaction.ItemId,
+                                      item.ItemTransaction.TransactionId,
+                                    );
+                                  },
+                                },
+                              ],
+                            );
+                          }}
+                          disabled={loadingDelete}
+                        ></CatetinButton>
+                      </>
+                    )}
                   </View>
                 ))}
               </View>
