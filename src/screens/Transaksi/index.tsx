@@ -37,8 +37,6 @@ function Transaksi() {
     isRefetching: refreshing,
   } = useTransaction(activeStore, params);
 
-  console.log(transaksi);
-
   const bottomSheetRefFilter = useRef<BottomSheet>(null);
 
   const navigation = useNavigation();

@@ -138,30 +138,14 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
                 </View>
               </SkeletonPlaceholder>
             ) : (
-              <CatetinInput
-                style={tw`text-3xl p-0 font-medium text-center border-0`}
-                value={profileData?.Profile?.displayName || ''}
-                onChangeText={(value) => {
-                  setProfileData(
-                    (data) =>
-                      ({
-                        ...data,
-                        Profile: {
-                          ...data?.Profile,
-                          displayName: value,
-                        },
-                      } as ProfileJoinUser),
-                  );
-                }}
-                placeholder={'Display Name'}
-              ></CatetinInput>
+              <Text style={tw`text-3xl p-0 font-medium text-center border-0`}>{profileData?.Profile?.displayName}</Text>
             )}
           </View>
         </TouchableOpacity>
 
         <View style={tw`mb-4`}>
           <TouchableOpacity
-            style={tw`bg-gray-100 border-b border-gray-100 flex flex-row shadow items-center justify-between px-3 py-2`}
+            style={tw`bg-gray-100 border-b border-gray-100 flex flex-row items-center justify-between px-3 py-2`}
             onPress={() => {
               navigate('ProfileAccountScreen');
             }}
@@ -174,7 +158,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={tw`bg-gray-100 border-b border-gray-100 flex flex-row shadow items-center justify-between px-3 py-2`}
+            style={tw`bg-gray-100 border-b border-gray-100 flex flex-row items-center justify-between px-3 py-2`}
             onPress={() => {
               navigate('EditProfileScreen');
             }}
@@ -190,7 +174,7 @@ function ProfileScreen({ navigation: { navigate } }: NativeStackScreenProps<Root
         <View style={tw`mb-4`}>
           <Text style={tw`px-3 mb-1 font-medium text-lg`}>Laporan Keuangan</Text>
           <TouchableOpacity
-            style={tw`bg-gray-100 border-b border-gray-100 flex flex-row shadow items-center justify-between px-3 py-2`}
+            style={tw`bg-gray-100 border-b border-gray-100 flex flex-row items-center justify-between px-3 py-2`}
             onPress={() => {
               bottomSheetManualLaporanRef.current?.expand();
             }}

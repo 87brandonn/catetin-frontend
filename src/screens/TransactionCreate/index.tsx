@@ -3,7 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 import moment from 'moment';
 import React, { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Alert, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, Text, TouchableOpacity, View } from 'react-native';
 import { Icon } from 'react-native-elements';
 import tw from 'twrnc';
 import * as yup from 'yup';
@@ -182,189 +182,196 @@ function TransactionCreateScreen(props: any) {
 
   return (
     <AppLayout header isBackEnabled headerTitle={watch('transaksi_id') !== 0 ? 'Edit Transaksi' : 'Tambah Transaksi'}>
-      <CatetinScrollView style={tw`px-3`}>
-        <View style={tw`mb-4 flex-1`}>
-          <Text style={tw`mb-1 text-base`}>Nama Transaksi</Text>
-          <Controller
-            control={control}
-            render={({ field: { onChange, value } }) => (
-              <CatetinInput placeholder="Nama Transaksi" onChangeText={onChange} value={value} />
-            )}
-            name="name"
-          />
-          {errors.name && <Text style={tw`text-red-400 mt-1`}>{errors.name.message}</Text>}
-        </View>
-
-        <View style={tw`mb-4 flex-1`}>
-          <Text style={tw`mb-1 text-base`}>Tanggal Transaksi</Text>
-          <CatetinDateTimePicker
-            value={watch('tanggal')}
-            onChange={(value) => {
-              setValue('tanggal', value);
-            }}
-            bottomSheet={false}
-            mode="datetime"
-            format="DD MMMM YYYY HH:mm"
-            maximumDate
-          ></CatetinDateTimePicker>
-        </View>
-
-        <View style={tw`mb-4 flex-1`}>
-          <Text style={tw`mb-1 text-base`}>Tipe Transaksi</Text>
-
-          <View style={tw`flex-1`}>
-            {optionsTransaksi.map((option) => (
-              <View style={tw`flex flex-row justify-between mb-3 bg-white rounded-lg px-2 py-2`} key={option.label}>
-                <Text
-                  style={tw`text-base ${
-                    watch('transaksi_id') !== 0 && watch('tipe')?.value !== option.value ? 'text-gray-500' : ''
-                  }`}
-                >
-                  {option.label}
-                </Text>
-                <Icon
-                  name={`radio-button-${watch('tipe')?.value === option.value ? 'on' : 'off'}`}
-                  iconStyle={tw`bg-white ${
-                    watch('tipe')?.value === option.value
-                      ? 'text-blue-500'
-                      : watch('transaksi_id') !== 0
-                      ? 'text-gray-200'
-                      : ''
-                  }`}
-                  tvParallaxProperties=""
-                  onPress={() => {
-                    clearErrors('tipe');
-                    setValue('transaksi_category', null);
-                    setValue('tipe', option);
-                  }}
-                  disabled={watch('transaksi_id') !== 0}
-                />
-              </View>
-            ))}
-          </View>
-
-          {errors.tipe && <Text style={tw`text-red-500 mt-1`}>{(errors.tipe as any)?.message as any}</Text>}
-        </View>
-
-        {watch('tipe')?.value && (
+      <KeyboardAvoidingView
+        style={tw`flex-1`}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        enabled
+        keyboardVerticalOffset={100}
+      >
+        <CatetinScrollView style={tw`flex-1 px-3`}>
           <View style={tw`mb-4 flex-1`}>
-            <Text style={tw`mb-1 text-base`}>Kategori Transaksi</Text>
-            <TouchableOpacity
-              onPress={() => {
-                navigation.navigate('TransactionCategoryScreen', {
-                  data: watch('transaksi_category'),
-                  type: watch('tipe')?.value,
-                });
-              }}
-              disabled={watch('transaksi_id') !== 0}
-            >
-              <CatetinInput
-                placeholder="Kategori Transaksi"
-                style={tw`border-b border-gray-100 px-4 py-3 rounded ${
-                  watch('transaksi_id') !== 0 ? 'text-gray-500' : ''
-                }`}
-                pointerEvents="none"
-                keyboardType="numeric"
-                value={watch('transaksi_category')?.name}
-                editable={false}
-              />
-
-              {errors.transaksi_category && (
-                <Text style={tw`text-red-500 mt-1`}>{(errors.transaksi_category as any)?.message as any}</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {watch('transaksi_category') && ![19, 20].includes(watch('transaksi_category').id) && (
-          <View style={tw`mb-4 flex-1`}>
-            <Text style={tw`mb-1 text-base`}>Nominal Transaksi</Text>
-
+            <Text style={tw`mb-1 text-base`}>Nama Transaksi</Text>
             <Controller
               control={control}
               render={({ field: { onChange, value } }) => (
+                <CatetinInput placeholder="Nama Transaksi" onChangeText={onChange} value={value} />
+              )}
+              name="name"
+            />
+            {errors.name && <Text style={tw`text-red-400 mt-1`}>{errors.name.message}</Text>}
+          </View>
+
+          <View style={tw`mb-4 flex-1`}>
+            <Text style={tw`mb-1 text-base`}>Tanggal Transaksi</Text>
+            <CatetinDateTimePicker
+              value={watch('tanggal')}
+              onChange={(value) => {
+                setValue('tanggal', value);
+              }}
+              bottomSheet={false}
+              mode="datetime"
+              format="DD MMMM YYYY HH:mm"
+              maximumDate
+            ></CatetinDateTimePicker>
+          </View>
+
+          <View style={tw`mb-4 flex-1`}>
+            <Text style={tw`mb-1 text-base`}>Tipe Transaksi</Text>
+
+            <View style={tw`flex-1`}>
+              {optionsTransaksi.map((option) => (
+                <View style={tw`flex flex-row justify-between mb-3 bg-white rounded-lg px-2 py-2`} key={option.label}>
+                  <Text
+                    style={tw`text-base ${
+                      watch('transaksi_id') !== 0 && watch('tipe')?.value !== option.value ? 'text-gray-500' : ''
+                    }`}
+                  >
+                    {option.label}
+                  </Text>
+                  <Icon
+                    name={`radio-button-${watch('tipe')?.value === option.value ? 'on' : 'off'}`}
+                    iconStyle={tw`bg-white ${
+                      watch('tipe')?.value === option.value
+                        ? 'text-blue-500'
+                        : watch('transaksi_id') !== 0
+                        ? 'text-gray-200'
+                        : ''
+                    }`}
+                    tvParallaxProperties=""
+                    onPress={() => {
+                      clearErrors('tipe');
+                      setValue('transaksi_category', null);
+                      setValue('tipe', option);
+                    }}
+                    disabled={watch('transaksi_id') !== 0}
+                  />
+                </View>
+              ))}
+            </View>
+
+            {errors.tipe && <Text style={tw`text-red-500 mt-1`}>{(errors.tipe as any)?.message as any}</Text>}
+          </View>
+
+          {watch('tipe')?.value && (
+            <View style={tw`mb-4 flex-1`}>
+              <Text style={tw`mb-1 text-base`}>Kategori Transaksi</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  navigation.navigate('TransactionCategoryScreen', {
+                    data: watch('transaksi_category'),
+                    type: watch('tipe')?.value,
+                  });
+                }}
+                disabled={watch('transaksi_id') !== 0}
+              >
                 <CatetinInput
-                  placeholder="Nominal Transaksi"
+                  placeholder="Kategori Transaksi"
+                  style={tw`border-b border-gray-100 px-4 py-3 rounded ${
+                    watch('transaksi_id') !== 0 ? 'text-gray-500' : ''
+                  }`}
+                  pointerEvents="none"
                   keyboardType="numeric"
-                  value={value !== 0 ? value?.toString() : ''}
-                  onChangeText={onChange}
+                  value={watch('transaksi_category')?.name}
+                  editable={false}
+                />
+
+                {errors.transaksi_category && (
+                  <Text style={tw`text-red-500 mt-1`}>{(errors.transaksi_category as any)?.message as any}</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {watch('transaksi_category') && ![19, 20].includes(watch('transaksi_category').id) && (
+            <View style={tw`mb-4 flex-1`}>
+              <Text style={tw`mb-1 text-base`}>Nominal Transaksi</Text>
+
+              <Controller
+                control={control}
+                render={({ field: { onChange, value } }) => (
+                  <CatetinInput
+                    placeholder="Nominal Transaksi"
+                    keyboardType="numeric"
+                    value={value !== 0 ? value?.toString() : ''}
+                    onChangeText={onChange}
+                  />
+                )}
+                name="total"
+              />
+              {errors.total && <Text style={tw`text-red-500 mt-1`}>{errors.total?.message as any}</Text>}
+            </View>
+          )}
+
+          <View style={tw`mb-4 flex-1`}>
+            <Text style={tw`mb-1 text-base`}>Metode Pembayaran</Text>
+            <TouchableOpacity
+              onPress={() => {
+                navigation.navigate('TransactionPaymentMethodScreen', {
+                  data: watch('paymentMethod')?.PaymentMethod,
+                });
+              }}
+            >
+              <CatetinInput
+                placeholder="Metode Pembayaran"
+                style={tw`border-b border-gray-100 px-4 py-3 rounded`}
+                pointerEvents="none"
+                keyboardType="numeric"
+                value={watch('paymentMethod')?.PaymentMethod?.name}
+                editable={false}
+              />
+
+              {errors.paymentMethod && (
+                <Text style={tw`text-red-500 mt-1`}>{(errors.paymentMethod as any)?.message as any}</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          <View style={tw`mb-4 flex-1`}>
+            <Text style={tw`mb-1 text-base`}>Deskripsi Transaksi</Text>
+            <Controller
+              control={control}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <CatetinInput
+                  placeholder="Deskripsi"
+                  onChangeText={(value: string) => {
+                    onChange(value);
+                  }}
+                  value={value}
                 />
               )}
-              name="total"
+              name="deskripsi"
             />
-            {errors.total && <Text style={tw`text-red-500 mt-1`}>{errors.total?.message as any}</Text>}
+            {errors.deskripsi && <Text style={tw`text-red-500 mt-1`}>{errors.deskripsi.message}</Text>}
           </View>
-        )}
 
-        <View style={tw`mb-4 flex-1`}>
-          <Text style={tw`mb-1 text-base`}>Metode Pembayaran</Text>
-          <TouchableOpacity
-            onPress={() => {
-              navigation.navigate('TransactionPaymentMethodScreen', {
-                data: watch('paymentMethod')?.PaymentMethod,
-              });
-            }}
-          >
-            <CatetinInput
-              placeholder="Metode Pembayaran"
-              style={tw`border-b border-gray-100 px-4 py-3 rounded`}
-              pointerEvents="none"
-              keyboardType="numeric"
-              value={watch('paymentMethod')?.PaymentMethod?.name}
-              editable={false}
+          <View>
+            <CatetinButton
+              title="Save"
+              onPress={() => {
+                handleSubmit(onSubmit)();
+              }}
+              loading={loading}
+              customStyle={'mb-3'}
             />
-
-            {errors.paymentMethod && (
-              <Text style={tw`text-red-500 mt-1`}>{(errors.paymentMethod as any)?.message as any}</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-
-        <View style={tw`mb-4 flex-1`}>
-          <Text style={tw`mb-1 text-base`}>Deskripsi Transaksi</Text>
-          <Controller
-            control={control}
-            render={({ field: { onChange, onBlur, value } }) => (
-              <CatetinInput
-                placeholder="Deskripsi"
-                onChangeText={(value: string) => {
-                  onChange(value);
+            {watch('transaksi_id') !== 0 && (
+              <CatetinButton
+                title="Delete"
+                theme="danger"
+                onPress={() => {
+                  Alert.alert('Confirm Deletion', 'Are you sure want to delete this transaction?', [
+                    {
+                      text: 'Cancel',
+                      style: 'cancel',
+                    },
+                    { text: 'OK', onPress: () => handleDelete() },
+                  ]);
                 }}
-                value={value}
+                loading={loadingDelete}
               />
             )}
-            name="deskripsi"
-          />
-          {errors.deskripsi && <Text style={tw`text-red-500 mt-1`}>{errors.deskripsi.message}</Text>}
-        </View>
-
-        <View>
-          <CatetinButton
-            title="Save"
-            onPress={() => {
-              handleSubmit(onSubmit)();
-            }}
-            loading={loading}
-            customStyle={'mb-3'}
-          />
-          {watch('transaksi_id') !== 0 && (
-            <CatetinButton
-              title="Delete"
-              theme="danger"
-              onPress={() => {
-                Alert.alert('Confirm Deletion', 'Are you sure want to delete this transaction?', [
-                  {
-                    text: 'Cancel',
-                    style: 'cancel',
-                  },
-                  { text: 'OK', onPress: () => handleDelete() },
-                ]);
-              }}
-              loading={loadingDelete}
-            />
-          )}
-        </View>
-      </CatetinScrollView>
+          </View>
+        </CatetinScrollView>
+      </KeyboardAvoidingView>
     </AppLayout>
   );
 }

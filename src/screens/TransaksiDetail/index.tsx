@@ -25,8 +25,6 @@ function TransactionDetailScreen() {
     refetch,
   } = useTransactionDetail(selectedTransaction);
 
-  console.log(dataDetail);
-
   const { navigate } = useNavigation();
 
   const { mutate: deleteTransactionDetail, isLoading: loadingDelete } = useDeleteTransactionDetail();
