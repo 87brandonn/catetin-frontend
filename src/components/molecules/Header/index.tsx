@@ -80,8 +80,6 @@ function Header({
     attributes: ['store'],
   });
 
-  const grantData = useMemo(() => storeData?.find((data) => data.StoreId === activeStore), [activeStore, storeData]);
-
   const { mutate: createStore, isLoading: loadingAddStore } = useCreateStore();
 
   const onSubmit = async (data: FormData, navigationSheet: any) => {
@@ -105,7 +103,7 @@ function Header({
                   {...props}
                   title="Store"
                   rightTitle="Add"
-                  showRight={grantData?.grant === 'owner'}
+                  showRight
                   onPressRight={() => {
                     reset({
                       name: '',
@@ -119,45 +117,43 @@ function Header({
                   }}
                 >
                   <View style={tw`flex-1 mb-3`}>
-                    {storeData
-                      ?.map((userStore) => userStore.Store)
-                      .map((store) => (
-                        <View key={store.id} style={tw`flex flex-row items-center justify-between mb-3`}>
-                          <View style={tw`flex flex-row items-center`}>
-                            <CatetinImagePicker
-                              title={store.name.slice(0, 1)}
-                              size={48}
-                              data={store.picture}
-                              pressable={false}
-                            />
-                            <View style={tw`ml-3`}>
-                              <Text style={tw`text-lg font-medium `}>{store.name}</Text>
-                              {grantData?.grant === 'owner' && (
-                                <Text
-                                  style={tw`underline font-medium text-blue-500 `}
-                                  onPress={() => {
-                                    setValue('storeId', store.id);
-                                    setValue('name', store.name);
-                                    setValue('picture', store.picture);
-                                    props.navigation.navigate('Add Store');
-                                  }}
-                                >
-                                  Edit
-                                </Text>
-                              )}
-                            </View>
-                          </View>
-                          <Icon
-                            name={`radio-button-${activeStore === store.id ? 'on' : 'off'}`}
-                            iconStyle={tw`${activeStore === store.id ? 'text-blue-500' : ''}`}
-                            tvParallaxProperties=""
-                            onPress={() => {
-                              bottomSheetRef.current?.close();
-                              dispatch(setActiveStore(store.id));
-                            }}
+                    {storeData?.map((store) => (
+                      <View key={store.Store?.id} style={tw`flex flex-row items-center justify-between mb-3`}>
+                        <View style={tw`flex flex-row items-center`}>
+                          <CatetinImagePicker
+                            title={store.Store?.name.slice(0, 1)}
+                            size={48}
+                            data={store.Store?.picture}
+                            pressable={false}
                           />
+                          <View style={tw`ml-3`}>
+                            <Text style={tw`text-lg font-medium `}>{store.Store?.name}</Text>
+                            {store.grant === 'owner' && (
+                              <Text
+                                style={tw`underline font-medium text-blue-500 `}
+                                onPress={() => {
+                                  setValue('storeId', store.Store?.id);
+                                  setValue('name', store.Store?.name);
+                                  setValue('picture', store.Store?.picture);
+                                  props.navigation.navigate('Add Store');
+                                }}
+                              >
+                                Edit
+                              </Text>
+                            )}
+                          </View>
                         </View>
-                      ))}
+                        <Icon
+                          name={`radio-button-${activeStore === store.Store?.id ? 'on' : 'off'}`}
+                          iconStyle={tw`${activeStore === store.Store?.id ? 'text-blue-500' : ''}`}
+                          tvParallaxProperties=""
+                          onPress={() => {
+                            bottomSheetRef.current?.close();
+                            dispatch(setActiveStore(store.Store?.id));
+                          }}
+                        />
+                      </View>
+                    ))}
                   </View>
                 </CatetinBottomSheetWrapper>
               )}
