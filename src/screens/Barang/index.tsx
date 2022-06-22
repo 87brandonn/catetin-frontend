@@ -33,6 +33,7 @@ export interface IFormSchema {
 
 function Barang() {
   const { activeStore } = useAppSelector((state: RootState) => state.store);
+  const { accessToken } = useAppSelector((state: RootState) => state.auth);
 
   const [params, setParams] = useState<{
     nama_barang: string;
@@ -77,6 +78,7 @@ function Barang() {
         method: 'POST',
         headers: {
           'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${accessToken}`,
         },
         body: form,
       });
